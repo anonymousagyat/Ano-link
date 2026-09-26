@@ -1,0 +1,35 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+
+    <!-- Squircle Obsidian Card Base -->
+    <path
+        android:pathData="M 12,4 L 36,4 A 8,8 0 0,1 44,12 L 44,36 A 8,8 0 0,1 36,44 L 12,44 A 8,8 0 0,1 4,36 L 4,12 A 8,8 0 0,1 12,4 Z"
+        android:fillColor="#0C1220"
+        android:strokeColor="#1E293B"
+        android:strokeWidth="1.2" />
+
+    <!-- Left Bracket (Phone) -->
+    <path
+        android:pathData="M 19,15 L 12,24 L 19,33"
+        android:strokeColor="#F8FAFC"
+        android:strokeWidth="2.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+    <!-- Right Bracket (PC) -->
+    <path
+        android:pathData="M 29,15 L 36,24 L 29,33"
+        android:strokeColor="#38BDF8"
+        android:strokeWidth="2.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+    <!-- Center Pulse Core -->
+    <path
+        android:pathData="M 24,24 m -2.2,0 a 2.2,2.2 0 1,0 4.4,0 a 2.2,2.2 0 1,0 -4.4,0"
+        android:fillColor="#F8FAFC" />
+
+</vector>

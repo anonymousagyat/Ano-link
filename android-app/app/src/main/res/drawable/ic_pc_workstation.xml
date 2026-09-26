@@ -1,0 +1,73 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="44dp"
+    android:height="44dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+
+    <!-- Stand Base Plate -->
+    <path
+        android:fillColor="#1E293B"
+        android:pathData="M16,40 L32,40 C33.1,40 34,40.9 34,42 L34,42 C34,42.6 33.6,43 33,43 L15,43 C14.4,43 14,42.6 14,42 L14,42 C14,40.9 14.9,40 16,40 Z" />
+
+    <!-- Stand Neck Column -->
+    <path
+        android:fillColor="#334155"
+        android:pathData="M22,32 L26,32 L26,40 L22,40 Z" />
+
+    <!-- Monitor Outer Chasis (Dark Aluminum Bezel with Cyan Stroke) -->
+    <path
+        android:fillColor="#0B132B"
+        android:strokeColor="#38BDF8"
+        android:strokeWidth="1.8"
+        android:pathData="M6,7 L42,7 C43.7,7 45,8.3 45,10 L45,30 C45,31.7 43.7,33 42,33 L6,33 C4.3,33 3,31.7 3,30 L3,10 C3,8.3 4.3,7 6,7 Z" />
+
+    <!-- Inner High-Contrast Screen Glass Area -->
+    <path
+        android:fillColor="#050B14"
+        android:pathData="M6,10 L42,10 L42,29 L6,29 Z" />
+
+    <!-- Screen Windows UI: Top Menu Bar -->
+    <path
+        android:fillColor="#00F2FE"
+        android:pathData="M8,12 L14,12 C14.6,12 15,12.4 15,13 L15,14 L8,14 Z" />
+
+    <!-- Screen Windows UI: Left App Window -->
+    <path
+        android:fillColor="#112240"
+        android:strokeColor="#00F2FE"
+        android:strokeWidth="0.8"
+        android:pathData="M8,16 L24,16 L24,26 L8,26 Z" />
+
+    <!-- Screen Windows UI: Right Code/Chart Window -->
+    <path
+        android:fillColor="#162942"
+        android:pathData="M27,16 L40,16 L40,26 L27,26 Z" />
+
+    <!-- Window Interior Lines (Chart / Code Lines) -->
+    <path
+        android:strokeColor="#38BDF8"
+        android:strokeWidth="1"
+        android:strokeLineCap="round"
+        android:pathData="M11,19 L21,19 M11,22 L18,22 M29,19 L38,19 M29,22 L35,22 M29,24 L37,24" />
+
+    <!-- Bottom Desktop Taskbar Strip -->
+    <path
+        android:fillColor="#0D1B2A"
+        android:pathData="M6,27 L42,27 L42,29 L6,29 Z" />
+
+    <!-- Taskbar Start Button & App Pips -->
+    <path
+        android:fillColor="#00F2FE"
+        android:pathData="M8,27.5 L10,27.5 L10,28.5 L8,28.5 Z" />
+    <path
+        android:fillColor="#A855F7"
+        android:pathData="M11.5,27.5 L13,27.5 L13,28.5 L11.5,28.5 Z" />
+    <path
+        android:fillColor="#10B981"
+        android:pathData="M14.5,27.5 L16,27.5 L16,28.5 L14.5,28.5 Z" />
+
+    <!-- Hardware Power LED Indicator -->
+    <path
+        android:fillColor="#10B981"
+        android:pathData="M24,31 A1,1 0 1,0 24,32 A1,1 0 1,0 24,31 Z" />
+</vector>

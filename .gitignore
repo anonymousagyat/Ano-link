@@ -1,0 +1,32 @@
+# Node dependencies & logs
+pc-controller/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Android & Gradle build artifacts
+.gradle/
+**/build/
+android-app/.idea/
+android-app/.gradle/
+android-app/local.properties
+*.apk
+*.aab
+*.dex
+
+# OS & Editor files
+.DS_Store
+Thumbs.db
+*.swp
+*.log
+
+# Runtime PC app scan caches
+app_icons/installed_apps.json
+app_icons/icons_b64.json
+
+# Local PC controller config
+pc-controller/config.json
+
+# Internal agent prompt rules
+GEMINI.md
+

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="96dp"
+    android:layout_margin="6dp"
+    android:background="@drawable/bg_start_menu_tile"
+    android:clickable="true"
+    android:focusable="true">
+
+    <!-- Big High-Resolution Logo Centered (Zero text, pure minimalist block) -->
+    <ImageView
+        android:id="@+id/imgGridIcon"
+        android:layout_width="54dp"
+        android:layout_height="54dp"
+        android:layout_gravity="center"
+        android:scaleType="fitCenter" />
+
+</FrameLayout>

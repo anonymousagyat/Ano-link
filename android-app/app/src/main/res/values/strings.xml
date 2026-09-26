@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Ano-Link</string>
+    <string name="accessibility_service_label">Ano-Link Remote Control</string>
+    <string name="accessibility_service_desc">Enables seamless zero-popup remote control and skeleton view rendering from your paired PC over Tailscale.</string>
+</resources>

@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ano-Link - Cross-Device Autonomous Mesh Bridge</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Top Header Bar -->
+    <header class="app-header">
+        <div class="brand">
+            <div class="logo-icon">
+                <svg width="26" height="26" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M 12,32 L 22,12 L 32,32" stroke="#FFFFFF" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M 18,25 L 32,25" stroke="#00F2FE" stroke-width="3.2" stroke-linecap="round"/>
+                    <circle cx="32" cy="25" r="2.8" fill="#00F2FE"/>
+                </svg>
+            </div>
+            <div>
+                <div class="brand-title-wrap">
+                    <h1>Ano<span class="brand-accent">Link</span></h1>
+                    <span class="pill-badge pill-cyan">v2.0</span>
+                </div>
+                <span class="sub-title">CROSS-DEVICE AUTONOMOUS MESH BRIDGE</span>
+            </div>
+        </div>
+
+        <div class="connection-bar">
+            <div class="target-info">
+                <span class="label">Target:</span>
+                <input type="text" id="targetIpInput" placeholder="Enter Phone IP (e.g. 192.168.1.x)" title="Phone IP">
+                <span class="port">:8081</span>
+            </div>
+            <div class="status-indicator">
+                <span id="statusDot" class="dot disconnected"></span>
+                <span id="statusText">DISCONNECTED</span>
+            </div>
+            <button id="connectBtn" class="btn btn-primary">Connect to Phone</button>
+        </div>
+    </header>
+
+    <!-- Telemetry Bar (5-min interval + Instant Refresh) -->
+    <section class="telemetry-bar">
+        <div class="telemetry-item">
+            <span class="telemetry-icon"><i data-lucide="battery-charging" class="ui-icon-telemetry"></i></span>
+            <div>
+                <span class="label">Battery</span>
+                <strong id="batteryVal">--%</strong>
+                <small id="chargingStatus">Standby</small>
+            </div>
+        </div>
+        <div class="telemetry-item">
+            <span class="telemetry-icon"><i data-lucide="thermometer" class="ui-icon-telemetry"></i></span>
+            <div>
+                <span class="label">Temperature</span>
+                <strong id="tempVal">-- °C</strong>
+            </div>
+        </div>
+        <div class="telemetry-item">
+            <span class="telemetry-icon"><i data-lucide="hard-drive" class="ui-icon-telemetry"></i></span>
+            <div>
+                <span class="label">Storage Free</span>
+                <strong id="storageVal">-- GB</strong>
+            </div>
+        </div>
+        <div class="telemetry-item">
+            <span class="telemetry-icon"><i data-lucide="cpu" class="ui-icon-telemetry"></i></span>
+            <div>
+                <span class="label">RAM Available</span>
+                <strong id="ramVal">-- GB</strong>
+            </div>
+        </div>
+        <div class="telemetry-item">
+            <span class="telemetry-icon"><i data-lucide="smartphone" class="ui-icon-telemetry"></i></span>
+            <div>
+                <span class="label">Device</span>
+                <strong id="deviceModel">Android (v2502)</strong>
+            </div>
+        </div>
+        <div class="telemetry-refresh-action">
+            <div class="update-schedule">
+                <span>Auto-sync: <strong>Every 5 mins</strong></span>
+                <small id="lastUpdatedText">Last updated: Never</small>
+            </div>
+            <button id="refreshTelemetryBtn" class="btn btn-secondary btn-sm" title="Fetch fresh telemetry immediately">
+                <i data-lucide="refresh-cw" class="ui-icon-sm"></i> Refresh Info
+            </button>
+        </div>
+    </section>
+
+    <!-- Main Workspace -->
+    <main class="workspace">
+        <!-- Remote Screen Launchpad -->
+        <section class="stream-launchpad">
+            <div class="launch-card skeleton-card">
+                <div class="launch-card-header">
+                    <div class="launch-badge"><i data-lucide="zap" class="ui-icon-xs"></i> ACCESSIBILITY PROTOCOL</div>
+                    <span class="launch-tag">0% Battery Draw in Standby</span>
+                </div>
+                <div class="launch-card-body">
+                    <div class="launch-icon"><i data-lucide="zap" class="launch-icon-svg"></i></div>
+                    <div class="launch-text">
+                        <h3>Skeleton Remote View</h3>
+                        <p>Zero-popup remote control using native Android Accessibility. Interact with touch elements, inspect UI layout, and inject keystrokes over ultra-low bandwidth.</p>
+                    </div>
+                </div>
+                <div class="launch-card-footer">
+                    <div class="launch-specs">
+                        <span><i data-lucide="shield-check" class="ui-icon-xs"></i> <strong>0 Popups</strong></span>
+                        <span><i data-lucide="activity" class="ui-icon-xs"></i> <strong>&lt; 5 KB/s</strong></span>
+                        <span><i data-lucide="mouse-pointer" class="ui-icon-xs"></i> <strong>Click & Type</strong></span>
+                    </div>
+                    <button id="btnLaunchSkeleton" class="btn btn-primary launch-btn">
+                        <i data-lucide="zap" class="ui-icon-sm"></i>
+                        <span>Launch Skeleton View</span>
+                        <span class="btn-arrow">↗</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="launch-card video-card">
+                <div class="launch-card-header">
+                    <div class="launch-badge video-badge"><i data-lucide="monitor" class="ui-icon-xs"></i> HARDWARE DISPLAY MIRROR</div>
+                    <span class="launch-tag">Live 30 FPS Stream</span>
+                </div>
+                <div class="launch-card-body">
+                    <div class="launch-icon video-icon"><i data-lucide="monitor" class="launch-icon-svg"></i></div>
+                    <div class="launch-text">
+                        <h3>Live Screen Video Stream</h3>
+                        <p>Pure, real-time hardware screen capture mirrored directly from Android MediaProjection. 100% clean video with zero wireframe clutter and direct touch interaction.</p>
+                    </div>
+                </div>
+                <div class="launch-card-footer">
+                    <div class="launch-specs">
+                        <span><i data-lucide="video" class="ui-icon-xs"></i> <strong>Pure Video</strong></span>
+                        <span><i data-lucide="gauge" class="ui-icon-xs"></i> <strong>30 FPS Smooth</strong></span>
+                        <span><i data-lucide="smartphone" class="ui-icon-xs"></i> <strong>Edge-to-Edge</strong></span>
+                    </div>
+                    <button id="btnLaunchVideo" class="btn btn-accent launch-btn">
+                        <i data-lucide="video" class="ui-icon-sm"></i>
+                        <span>Launch Video Stream</span>
+                        <span class="btn-arrow">↗</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="launch-card camera-card">
+                <div class="launch-card-header">
+                    <div class="launch-badge camera-badge"><i data-lucide="camera" class="ui-icon-xs"></i> HARDWARE SENSOR MIRROR</div>
+                    <span class="launch-tag">Front & Rear Lenses</span>
+                </div>
+                <div class="launch-card-body">
+                    <div class="launch-icon camera-icon"><i data-lucide="camera" class="launch-icon-svg"></i></div>
+                    <div class="launch-text">
+                        <h3>Remote Camera Feed</h3>
+                        <p>Live hardware optical sensor mirror with front/rear lens switching, torch/flashlight control, and one-click photo snapshots directly to your PC.</p>
+                    </div>
+                </div>
+                <div class="launch-card-footer">
+                    <div class="launch-specs">
+                        <span><i data-lucide="refresh-cw" class="ui-icon-xs"></i> <strong>Flip Lens</strong></span>
+                        <span><i data-lucide="flashlight" class="ui-icon-xs"></i> <strong>Flashlight</strong></span>
+                        <span><i data-lucide="camera" class="ui-icon-xs"></i> <strong>HD Snaps</strong></span>
+                    </div>
+                    <button id="btnLaunchCamera" class="btn btn-emerald launch-btn">
+                        <i data-lucide="camera" class="ui-icon-sm"></i>
+                        <span>Launch Camera Feed</span>
+                        <span class="btn-arrow">↗</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Right: Multi-Tool Tabs -->
+        <section class="tools-stage">
+            <div class="tabs-nav">
+                <button class="tab-btn active" data-tab="tab-actions"><i data-lucide="zap" class="ui-icon-sm"></i> Quick Actions</button>
+                <button class="tab-btn" data-tab="tab-files"><i data-lucide="folder" class="ui-icon-sm"></i> File Explorer</button>
+                <button class="tab-btn" data-tab="tab-sms"><i data-lucide="message-square" class="ui-icon-sm"></i> SMS & Dialer</button>
+                <button class="tab-btn" data-tab="tab-telemetry"><i data-lucide="bar-chart-2" class="ui-icon-sm"></i> Device Specs</button>
+                <button class="tab-btn" data-tab="tab-logs"><i data-lucide="terminal" class="ui-icon-sm"></i> Logs</button>
+            </div>
+
+            <!-- Tab 1: Quick Actions & Launcher -->
+            <div class="tab-pane active" id="tab-actions">
+                <div class="card">
+                    <h3><i data-lucide="globe" class="ui-icon-sm"></i> Open Webpage on Phone</h3>
+                    <p class="card-desc">Instantly launch any URL on the phone's default browser.</p>
+                    <div class="form-row">
+                        <input type="url" id="urlInput" placeholder="https://github.com or https://youtube.com">
+                        <button id="btnOpenUrl" class="btn btn-primary">Open on Phone</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3><i data-lucide="phone-call" class="ui-icon-sm"></i> Remote Phone Dialer</h3>
+                    <p class="card-desc">Dial any contact or telephone number directly from PC.</p>
+                    <div class="form-row">
+                        <input type="tel" id="dialerInput" placeholder="+1234567890">
+                        <button id="btnMakeCall" class="btn btn-secondary">Call Number</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3><i data-lucide="sliders" class="ui-icon-sm"></i> Quick Shortcuts</h3>
+                    <div class="button-grid">
+                        <button class="btn btn-outline" id="btnQuickSettings"><i data-lucide="settings" class="ui-icon-sm"></i> Quick Settings</button>
+                        <button class="btn btn-outline" id="btnVolUp"><i data-lucide="volume-2" class="ui-icon-sm"></i> Volume +</button>
+                        <button class="btn btn-outline" id="btnVolDown"><i data-lucide="volume-1" class="ui-icon-sm"></i> Volume -</button>
+                        <button class="btn btn-outline" id="btnWakeScreen"><i data-lucide="sun" class="ui-icon-sm"></i> Wake Screen</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Intercom & Two-Way Audio -->
+            <div class="tab-pane" id="tab-intercom">
+                <div class="intercom-grid">
+                    <!-- Card A: Walkie-Talkie (Speak to Phone) -->
+                    <div class="intercom-card">
+                        <div class="intercom-card-header">
+                            <div class="card-title-group">
+                                <h3><i data-lucide="mic" class="ui-icon-sm"></i> Walkie-Talkie</h3>
+                                <span class="badge badge-blue">PC ➔ Phone Speaker</span>
+                            </div>
+                            <button id="btnPlayChime" class="btn btn-sm btn-outline" title="Play Attention Chime on Phone">
+                                <i data-lucide="bell" class="ui-icon-xs"></i> Ring Chime
+                            </button>
+                        </div>
+
+                        <p class="card-desc">Speak into your PC microphone to output your voice in real time through the phone's speakerphone.</p>
+
+                        <div class="ptt-stage">
+                            <button id="btnPushToTalk" class="btn-ptt" title="Click and hold, or hold Spacebar">
+                                <div class="ptt-ring"></div>
+                                <div class="ptt-core">
+                                    <span class="ptt-mic-icon"><i data-lucide="mic" style="width: 44px; height: 44px; color: #93c5fd;"></i></span>
+                                    <span class="ptt-status-text">HOLD TO TALK</span>
+                                </div>
+                            </button>
+                            <div class="ptt-feedback">
+                                <span id="pttStatusLabel" class="ptt-status-label">Standby — Hold button or Spacebar</span>
+                                <div class="soundwaves" id="pttSoundwaves">
+                                    <span class="sw-bar"></span><span class="sw-bar"></span><span class="sw-bar"></span><span class="sw-bar"></span><span class="sw-bar"></span><span class="sw-bar"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="slider-control-group">
+                            <div class="slider-header">
+                                <span>Phone Speaker Volume</span>
+                                <strong id="lblSpeakerVolume">80%</strong>
+                            </div>
+                            <input type="range" id="speakerVolumeSlider" min="0" max="100" value="80" class="custom-slider">
+                        </div>
+                    </div>
+
+                    <!-- Card B: Remote Listening (Listen to Phone Mic) -->
+                    <div class="intercom-card">
+                        <div class="intercom-card-header">
+                            <div class="card-title-group">
+                                <h3><i data-lucide="headphones" class="ui-icon-sm"></i> Remote Ear</h3>
+                                <span class="badge badge-emerald">Phone Mic ➔ PC Speaker</span>
+                            </div>
+                            <div class="status-indicator">
+                                <span class="dot disconnected" id="micDot"></span>
+                                <span id="micStatusText" style="font-size: 11px;">OFF</span>
+                            </div>
+                        </div>
+
+                        <p class="card-desc">Stream live audio from the phone's microphone to your PC speakers or headphones.</p>
+
+                        <div class="mic-listen-stage">
+                            <button id="btnTogglePhoneMic" class="btn btn-primary btn-listen">
+                                <span id="micToggleIcon"><i data-lucide="play" class="ui-icon-sm"></i></span>
+                                <span id="micToggleText">Start Listening to Phone</span>
+                            </button>
+                        </div>
+
+                        <div class="vu-meter-group">
+                            <div class="vu-meter-label">
+                                <span>Incoming Mic Level (VU)</span>
+                                <small id="micDbLevel">-60 dB</small>
+                            </div>
+                            <div class="vu-track">
+                                <div class="vu-bar" id="micVuBar" style="width: 0%;"></div>
+                            </div>
+                        </div>
+
+                        <div class="slider-control-group" style="margin-top: 14px;">
+                            <div class="slider-header">
+                                <span>PC Playback Volume</span>
+                                <strong id="lblPcVolume">100%</strong>
+                            </div>
+                            <input type="range" id="pcVolumeSlider" min="0" max="100" value="100" class="custom-slider">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 2: Chunk-Based File Explorer (Windows Explorer Style) -->
+            <div class="tab-pane" id="tab-files">
+                <div class="file-browser-header">
+                    <div class="current-path">
+                        <span class="label">Path:</span>
+                        <input type="text" id="filePathInput" value="/storage/emulated/0" title="Directory path">
+                        <button id="btnBrowsePath" class="btn btn-sm btn-secondary">Go</button>
+                        <button id="btnPathUp" class="btn btn-sm btn-outline"><i data-lucide="arrow-up" class="ui-icon-xs"></i> Up</button>
+                    </div>
+                    <div class="file-browser-actions">
+                        <input type="text" id="fileSearchInput" placeholder="Search current folder..." class="file-search-input">
+                        <button id="btnRefreshFiles" class="btn btn-sm btn-secondary"><i data-lucide="refresh-cw" class="ui-icon-xs"></i> Refresh</button>
+                    </div>
+                </div>
+
+                <div class="explorer-table-wrapper">
+                    <div class="explorer-header" id="explorerHeader">
+                        <div class="col col-name sortable active" data-sort="name">
+                            <span>Name</span>
+                            <span class="sort-icon" id="sortIconName"></span>
+                        </div>
+                        <div class="col col-date sortable" data-sort="modified">
+                            <span>Date modified</span>
+                            <span class="sort-icon" id="sortIconModified"></span>
+                        </div>
+                        <div class="col col-type sortable" data-sort="type">
+                            <span>Type</span>
+                            <span class="sort-icon" id="sortIconType"></span>
+                        </div>
+                        <div class="col col-size sortable" data-sort="size">
+                            <span>Size</span>
+                            <span class="sort-icon" id="sortIconSize"></span>
+                        </div>
+                        <div class="col col-actions">
+                            <span>Actions</span>
+                        </div>
+                    </div>
+                    <div class="file-list-container" id="fileListContainer">
+                        <div class="empty-state">Connect to phone to browse files</div>
+                    </div>
+                </div>
+
+                <div class="download-manager-card">
+                    <h4>Chunk Downloads (Resumable)</h4>
+                    <div id="downloadsList" class="downloads-list">
+                        <small class="muted">No active transfers</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 3: SMS & Contacts -->
+            <div class="tab-pane" id="tab-sms">
+                <div class="sms-header">
+                    <div>
+                        <h3>SMS Inbox & OTP History</h3>
+                        <small class="sub-muted">Real-time incoming alerts & previous phone messages</small>
+                    </div>
+                    <div class="sms-actions">
+                        <button id="btnFetchSms" class="btn btn-sm btn-secondary"><i data-lucide="refresh-cw" class="ui-icon-xs"></i> Refresh History</button>
+                    </div>
+                </div>
+
+                <div class="sms-feed" id="smsFeed">
+                    <div class="empty-state">No recent SMS messages</div>
+                </div>
+            </div>
+
+            <!-- Tab 4: Detailed Telemetry Specs -->
+            <div class="tab-pane" id="tab-telemetry">
+                <div class="specs-grid">
+                    <div class="spec-card">
+                        <span class="label">Battery Health</span>
+                        <strong id="specBatteryHealth">Good</strong>
+                    </div>
+                    <div class="spec-card">
+                        <span class="label">Battery Voltage</span>
+                        <strong id="specBatteryVoltage">-- mV</strong>
+                    </div>
+                    <div class="spec-card">
+                        <span class="label">Total Storage</span>
+                        <strong id="specTotalStorage">-- GB</strong>
+                    </div>
+                    <div class="spec-card">
+                        <span class="label">Total RAM</span>
+                        <strong id="specTotalRam">-- GB</strong>
+                    </div>
+                    <div class="spec-card">
+                        <span class="label">Android OS</span>
+                        <strong id="specAndroidVer">Android 14 (API 34)</strong>
+                    </div>
+                    <div class="spec-card">
+                        <span class="label">Connected Phone IP</span>
+                        <strong id="specTailscaleIp">Not Connected</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 5: Live Activity Logs -->
+            <div class="tab-pane" id="tab-logs">
+                <div class="logs-header">
+                    <span>Real-time Stream & Action Events</span>
+                    <button id="btnClearLogs" class="btn btn-sm btn-outline"><i data-lucide="trash-2" class="ui-icon-xs"></i> Clear</button>
+                </div>
+                <div class="logs-console" id="logsConsole">
+                    <div class="log-entry info">[System] Web Controller initialized. Ready for connection.</div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Notification Toast Container (e.g. for incoming OTPs) -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script src="lucide.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

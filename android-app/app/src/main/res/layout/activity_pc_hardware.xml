@@ -1,0 +1,741 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/rootLayoutHardware"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#060911">
+
+    <!-- Top Bar: Back Button | Centered Header: Windows Logo & Two-Tone Task Manager -->
+    <!-- Top Bar: Back Button | Centered Header: Windows Logo & Two-Tone Task Manager -->
+    <FrameLayout
+        android:id="@+id/rlHardwareHeader"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp">
+
+            <!-- Back Button -->
+            <ImageButton
+                android:id="@+id/btnBack"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_gravity="start|center_vertical"
+                android:background="@drawable/bg_start_menu_tile"
+                android:src="@drawable/ic_arrow_back"
+                android:contentDescription="Back"
+                android:padding="8dp" />
+
+            <!-- Strictly Centered Header: Task (White) Manager (Yellow) -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <ImageView
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:src="@drawable/ic_taskmgr_yellow"
+                    android:layout_marginEnd="8dp"
+                    android:contentDescription="Task Manager Logo" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Task"
+                    android:textColor="#FFFFFF"
+                    android:textSize="20sp"
+                    android:fontFamily="@font/syne_extrabold"
+                    android:letterSpacing="0.02" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Manager"
+                    android:textColor="#F59E0B"
+                    android:textSize="20sp"
+                    android:fontFamily="@font/syne_extrabold"
+                    android:layout_marginStart="6dp"
+                    android:letterSpacing="0.02" />
+            </LinearLayout>
+
+            <!-- Status Dot / Live Indicator -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end|center_vertical"
+                android:background="@drawable/bg_status_online"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="4dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/tvLiveStatus"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="LIVE"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:fontFamily="monospace"
+                    android:textColor="#10B981" />
+            </LinearLayout>
+        </FrameLayout>
+    </FrameLayout>
+
+    <!-- Scrollable Content -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:id="@+id/llHardwareScrollContent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="24dp">
+
+            <!-- ===================================================== -->
+            <!-- 4 CATEGORY TABS (CPU, MEMORY, DISK, WI-FI)            -->
+            <!-- ===================================================== -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="8dp"
+                android:weightSum="4">
+
+                <!-- Tab 1: CPU -->
+                <LinearLayout
+                    android:id="@+id/tabCpu"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_hardware_tab_active"
+                    android:paddingVertical="10dp"
+                    android:paddingHorizontal="6dp"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:layout_marginEnd="4dp"
+                    android:clickable="true"
+                    android:focusable="true">
+
+                    <TextView
+                        android:id="@+id/tvTabCpuLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="CPU"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:textColor="#FFFFFF" />
+
+                    <TextView
+                        android:id="@+id/tvTabCpuVal"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="--%"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:fontFamily="monospace"
+                        android:textColor="#F59E0B"
+                        android:layout_marginTop="2dp" />
+                </LinearLayout>
+
+                <!-- Tab 2: Memory -->
+                <LinearLayout
+                    android:id="@+id/tabMemory"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_hardware_tab_inactive"
+                    android:paddingVertical="10dp"
+                    android:paddingHorizontal="6dp"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:layout_marginStart="2dp"
+                    android:layout_marginEnd="2dp"
+                    android:clickable="true"
+                    android:focusable="true">
+
+                    <TextView
+                        android:id="@+id/tvTabMemLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Memory"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:textColor="#94A3B8" />
+
+                    <TextView
+                        android:id="@+id/tvTabMemVal"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="--%"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:fontFamily="monospace"
+                        android:textColor="#94A3B8"
+                        android:layout_marginTop="2dp" />
+                </LinearLayout>
+
+                <!-- Tab 3: Disk -->
+                <LinearLayout
+                    android:id="@+id/tabDisk"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_hardware_tab_inactive"
+                    android:paddingVertical="10dp"
+                    android:paddingHorizontal="6dp"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:layout_marginStart="2dp"
+                    android:layout_marginEnd="2dp"
+                    android:clickable="true"
+                    android:focusable="true">
+
+                    <TextView
+                        android:id="@+id/tvTabDiskLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Disk"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:textColor="#94A3B8" />
+
+                    <TextView
+                        android:id="@+id/tvTabDiskVal"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="--%"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:fontFamily="monospace"
+                        android:textColor="#94A3B8"
+                        android:layout_marginTop="2dp" />
+                </LinearLayout>
+
+                <!-- Tab 4: Wi-Fi -->
+                <LinearLayout
+                    android:id="@+id/tabWifi"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_hardware_tab_inactive"
+                    android:paddingVertical="10dp"
+                    android:paddingHorizontal="6dp"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:layout_marginStart="4dp"
+                    android:clickable="true"
+                    android:focusable="true">
+
+                    <TextView
+                        android:id="@+id/tvTabWifiLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Wi-Fi"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:textColor="#94A3B8" />
+
+                    <TextView
+                        android:id="@+id/tvTabWifiVal"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="ON"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:fontFamily="monospace"
+                        android:textColor="#94A3B8"
+                        android:layout_marginTop="2dp" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- ===================================================== -->
+            <!-- HERO PERFORMANCE CARD WITH 60-SEC LIVE GRAPH          -->
+            <!-- ===================================================== -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/bg_hardware_card"
+                android:padding="16dp"
+                android:layout_marginTop="14dp">
+
+                <!-- Hero Header: Title, Big Metric & Secondary Spec -->
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentStart="true"
+                        android:layout_centerVertical="true"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/tvHeroCategory"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="CPU"
+                            android:textColor="#FFFFFF"
+                            android:textSize="18sp"
+                            android:fontFamily="@font/syne_extrabold" />
+
+                        <TextView
+                            android:id="@+id/tvHeroSubTitle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="% Utilization over 60 seconds"
+                            android:textColor="#64748B"
+                            android:textSize="11sp"
+                            android:fontFamily="monospace" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:gravity="end"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/tvHeroValue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="--%"
+                            android:textColor="#F59E0B"
+                            android:textSize="24sp"
+                            android:textStyle="bold"
+                            android:fontFamily="monospace" />
+
+                        <TextView
+                            android:id="@+id/tvHeroSecondary"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="-- GHz"
+                            android:textColor="#94A3B8"
+                            android:textSize="12sp"
+                            android:fontFamily="monospace" />
+                    </LinearLayout>
+                </RelativeLayout>
+
+                <!-- High Performance Real-Time Canvas Graph -->
+                <com.tailconnect.app.HardwareGraphView
+                    android:id="@+id/hardwareGraphView"
+                    android:layout_width="match_parent"
+                    android:layout_height="145dp" />
+
+                <!-- Graph Timeframe Scale Indicators -->
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentStart="true"
+                        android:text="60 seconds"
+                        android:textColor="#64748B"
+                        android:textSize="10sp"
+                        android:fontFamily="monospace" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:text="0"
+                        android:textColor="#64748B"
+                        android:textSize="10sp"
+                        android:fontFamily="monospace" />
+                </RelativeLayout>
+            </LinearLayout>
+
+            <!-- ===================================================== -->
+            <!-- TECHNICAL SPECIFICATIONS GRID (2 COLUMNS)             -->
+            <!-- ===================================================== -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="TECHNICAL SPECIFICATIONS"
+                android:textColor="#64748B"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:fontFamily="monospace"
+                android:letterSpacing="0.08"
+                android:layout_marginTop="18dp"
+                android:layout_marginBottom="8dp" />
+
+            <GridLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:columnCount="2"
+                android:rowCount="3">
+
+                <!-- Spec Tile 1 -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/bg_hardware_spec_tile"
+                    android:orientation="vertical"
+                    android:padding="12dp"
+                    android:layout_marginEnd="4dp"
+                    android:layout_marginBottom="8dp">
+
+                    <TextView
+                        android:id="@+id/tvSpecLabel1"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Processor"
+                        android:textColor="#64748B"
+                        android:textSize="11sp"
+                        android:fontFamily="monospace" />
+
+                    <TextView
+                        android:id="@+id/tvSpecVal1"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="--"
+                        android:textColor="#FFFFFF"
+                        android:textSize="12.5sp"
+                        android:textStyle="bold"
+                        android:ellipsize="end"
+                        android:maxLines="2"
+                        android:layout_marginTop="3dp" />
+                </LinearLayout>
+
+                <!-- Spec Tile 2 -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/bg_hardware_spec_tile"
+                    android:orientation="vertical"
+                    android:padding="12dp"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginBottom="8dp">
+
+                    <TextView
+                        android:id="@+id/tvSpecLabel2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Base Speed"
+                        android:textColor="#64748B"
+                        android:textSize="11sp"
+                        android:fontFamily="monospace" />
+
+                    <TextView
+                        android:id="@+id/tvSpecVal2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="--"
+                        android:textColor="#FFFFFF"
+                        android:textSize="12.5sp"
+                        android:textStyle="bold"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:layout_marginTop="3dp" />
+                </LinearLayout>
+
+                <!-- Spec Tile 3 -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/bg_hardware_spec_tile"
+                    android:orientation="vertical"
+                    android:padding="12dp"
+                    android:layout_marginEnd="4dp"
+                    android:layout_marginBottom="8dp">
+
+                    <TextView
+                        android:id="@+id/tvSpecLabel3"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Cores / Threads"
+                        android:textColor="#64748B"
+                        android:textSize="11sp"
+                        android:fontFamily="monospace" />
+
+                    <TextView
+                        android:id="@+id/tvSpecVal3"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="--"
+                        android:textColor="#FFFFFF"
+                        android:textSize="12.5sp"
+                        android:textStyle="bold"
+                        android:layout_marginTop="3dp" />
+                </LinearLayout>
+
+                <!-- Spec Tile 4 -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/bg_hardware_spec_tile"
+                    android:orientation="vertical"
+                    android:padding="12dp"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginBottom="8dp">
+
+                    <TextView
+                        android:id="@+id/tvSpecLabel4"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Processes"
+                        android:textColor="#64748B"
+                        android:textSize="11sp"
+                        android:fontFamily="monospace" />
+
+                    <TextView
+                        android:id="@+id/tvSpecVal4"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="--"
+                        android:textColor="#FFFFFF"
+                        android:textSize="12.5sp"
+                        android:textStyle="bold"
+                        android:layout_marginTop="3dp" />
+                </LinearLayout>
+
+                <!-- Spec Tile 5 -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/bg_hardware_spec_tile"
+                    android:orientation="vertical"
+                    android:padding="12dp"
+                    android:layout_marginEnd="4dp">
+
+                    <TextView
+                        android:id="@+id/tvSpecLabel5"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Threads"
+                        android:textColor="#64748B"
+                        android:textSize="11sp"
+                        android:fontFamily="monospace" />
+
+                    <TextView
+                        android:id="@+id/tvSpecVal5"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="--"
+                        android:textColor="#FFFFFF"
+                        android:textSize="12.5sp"
+                        android:textStyle="bold"
+                        android:layout_marginTop="3dp" />
+                </LinearLayout>
+
+                <!-- Spec Tile 6 -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/bg_hardware_spec_tile"
+                    android:orientation="vertical"
+                    android:padding="12dp"
+                    android:layout_marginStart="4dp">
+
+                    <TextView
+                        android:id="@+id/tvSpecLabel6"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Up Time"
+                        android:textColor="#64748B"
+                        android:textSize="11sp"
+                        android:fontFamily="monospace" />
+
+                    <TextView
+                        android:id="@+id/tvSpecVal6"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="--"
+                        android:textColor="#F59E0B"
+                        android:textSize="12.5sp"
+                        android:textStyle="bold"
+                        android:fontFamily="monospace"
+                        android:layout_marginTop="3dp" />
+                </LinearLayout>
+            </GridLayout>
+
+            <!-- ===================================================== -->
+            <!-- ALL-IN-ONE OVERVIEW (3 SUMMARY TILES)                 -->
+            <!-- ===================================================== -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="HARDWARE OVERVIEW"
+                android:textColor="#64748B"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:fontFamily="monospace"
+                android:letterSpacing="0.08"
+                android:layout_marginTop="20dp"
+                android:layout_marginBottom="8dp" />
+
+            <!-- Summary Tile 1 -->
+            <LinearLayout
+                android:id="@+id/summaryTile1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_hardware_summary_tile"
+                android:orientation="vertical"
+                android:padding="14dp"
+                android:layout_marginBottom="8dp"
+                android:clickable="true"
+                android:focusable="true">
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp">
+
+                    <TextView
+                        android:id="@+id/tvSumTitle1"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentStart="true"
+                        android:text="Memory"
+                        android:textColor="#FFFFFF"
+                        android:textSize="13.5sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvSumVal1"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:text="-- / -- GB (--%)"
+                        android:textColor="#F59E0B"
+                        android:textSize="12sp"
+                        android:fontFamily="monospace" />
+                </RelativeLayout>
+
+                <ProgressBar
+                    android:id="@+id/pbSum1"
+                    style="@android:style/Widget.ProgressBar.Horizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="6dp"
+                    android:max="100"
+                    android:progress="0"
+                    android:progressDrawable="@drawable/progress_hardware_yellow" />
+            </LinearLayout>
+
+            <!-- Summary Tile 2 -->
+            <LinearLayout
+                android:id="@+id/summaryTile2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_hardware_summary_tile"
+                android:orientation="vertical"
+                android:padding="14dp"
+                android:layout_marginBottom="8dp"
+                android:clickable="true"
+                android:focusable="true">
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp">
+
+                    <TextView
+                        android:id="@+id/tvSumTitle2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentStart="true"
+                        android:text="Disk (C:)"
+                        android:textColor="#FFFFFF"
+                        android:textSize="13.5sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvSumVal2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:text="-- GB Free (--%)"
+                        android:textColor="#F59E0B"
+                        android:textSize="12sp"
+                        android:fontFamily="monospace" />
+                </RelativeLayout>
+
+                <ProgressBar
+                    android:id="@+id/pbSum2"
+                    style="@android:style/Widget.ProgressBar.Horizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="6dp"
+                    android:max="100"
+                    android:progress="0"
+                    android:progressDrawable="@drawable/progress_hardware_yellow" />
+            </LinearLayout>
+
+            <!-- Summary Tile 3 -->
+            <LinearLayout
+                android:id="@+id/summaryTile3"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_hardware_summary_tile"
+                android:orientation="vertical"
+                android:padding="14dp"
+                android:clickable="true"
+                android:focusable="true">
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp">
+
+                    <TextView
+                        android:id="@+id/tvSumTitle3"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentStart="true"
+                        android:text="Wi-Fi"
+                        android:textColor="#FFFFFF"
+                        android:textSize="13.5sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvSumVal3"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:text="Connected"
+                        android:textColor="#10B981"
+                        android:textSize="12sp"
+                        android:fontFamily="monospace" />
+                </RelativeLayout>
+
+                <ProgressBar
+                    android:id="@+id/pbSum3"
+                    style="@android:style/Widget.ProgressBar.Horizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="6dp"
+                    android:max="100"
+                    android:progress="80"
+                    android:progressDrawable="@drawable/progress_hardware_yellow" />
+            </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

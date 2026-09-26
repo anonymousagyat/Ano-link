@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/rootLayoutFiles"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/bg_cyber_void">
+
+    <!-- TOP HEADER -->
+    <LinearLayout
+        android:id="@+id/llFilesHeader"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="16dp"
+        android:paddingTop="20dp"
+        android:paddingBottom="12dp">
+
+        <ImageButton
+            android:id="@+id/btnFilesBack"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:src="@drawable/ic_arrow_back"
+            android:scaleType="centerInside"
+            android:background="@drawable/bg_rail_tile"
+            android:contentDescription="Back" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:layout_marginStart="12dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="PC FILE EXPLORER"
+                android:textSize="17sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF"
+                android:fontFamily="sans-serif-black" />
+
+            <TextView
+                android:id="@+id/tvFilesSubtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="FILE EXPLORER • PARTH-DESKTOP"
+                android:textSize="10sp"
+                android:fontFamily="monospace"
+                android:textColor="#C084FC"
+                android:letterSpacing="0.08" />
+        </LinearLayout>
+
+        <ImageButton
+            android:id="@+id/btnFilesRefresh"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:src="@drawable/ic_refresh"
+            android:scaleType="centerInside"
+            android:background="@drawable/bg_rail_tile"
+            android:contentDescription="Refresh" />
+    </LinearLayout>
+
+    <!-- ZARCHIVER BREADCRUMB PATH STRIP -->
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#0A0E1A"
+        android:paddingVertical="8dp"
+        android:paddingHorizontal="16dp"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:id="@+id/llBreadcrumbs"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical" />
+    </HorizontalScrollView>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#1E293B" />
+
+    <!-- MAIN CONTENT FRAME -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <!-- BIG ELEGANT DRIVE GRID (ROOT DRIVES C: & D:) -->
+        <GridView
+            android:id="@+id/gvPcDrives"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:numColumns="2"
+            android:horizontalSpacing="14dp"
+            android:verticalSpacing="14dp"
+            android:padding="16dp"
+            android:clipToPadding="false"
+            android:visibility="gone" />
+
+        <!-- FILE / FOLDER LIST (SUBFOLDERS) -->
+        <ListView
+            android:id="@+id/lvPcFiles"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:divider="#0F172A"
+            android:dividerHeight="1dp"
+            android:paddingHorizontal="8dp"
+            android:clipToPadding="false" />
+
+        <!-- LOADING INDICATOR -->
+        <LinearLayout
+            android:id="@+id/llFilesLoading"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:visibility="gone">
+
+            <ProgressBar
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:indeterminateTint="#C084FC" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Reading PC drives..."
+                android:textSize="12sp"
+                android:fontFamily="monospace"
+                android:textColor="#94A3B8"
+                android:layout_marginTop="10dp" />
+        </LinearLayout>
+
+        <!-- EMPTY STATE -->
+        <TextView
+            android:id="@+id/tvFilesEmpty"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="Empty Directory"
+            android:textSize="14sp"
+            android:fontFamily="monospace"
+            android:textColor="#64748B"
+            android:visibility="gone" />
+
+        <!-- DOWNLOAD PROGRESS CARD (OVERLAY) -->
+        <LinearLayout
+            android:id="@+id/llDownloadProgressOverlay"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:background="#162038"
+            android:orientation="vertical"
+            android:padding="20dp"
+            android:elevation="12dp"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/tvDownloadFileName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Downloading: file.mp4"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF"
+                android:maxLines="1"
+                android:ellipsize="middle"
+                android:layout_marginBottom="8dp" />
+
+            <ProgressBar
+                android:id="@+id/pbDownloadProgress"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="8dp"
+                android:max="100"
+                android:progress="0"
+                android:progressTint="#C084FC"
+                android:progressBackgroundTint="#334155"
+                android:layout_marginBottom="8dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/tvDownloadPercent"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="0% (0 KB / 0 KB)"
+                    android:textSize="12sp"
+                    android:fontFamily="monospace"
+                    android:textColor="#C084FC" />
+
+                <Button
+                    android:id="@+id/btnCancelDownload"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:text="Cancel"
+                    android:textSize="11sp"
+                    android:textColor="#F43F5E"
+                    android:backgroundTint="#0F172A"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp" />
+            </LinearLayout>
+        </LinearLayout>
+    </FrameLayout>
+</LinearLayout>

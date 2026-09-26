@@ -1,0 +1,841 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/rootPcRemote"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#03060D">
+
+    <!-- Primary Landscape Interface: Direct 3-Column Stage (Left Rail | PC Viewport | Right Taskbar) -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal"
+        android:paddingHorizontal="4dp"
+        android:paddingVertical="4dp">
+
+        <!-- Left Flank: Sleek Thumb Controls Rail -->
+        <LinearLayout
+            android:id="@+id/leftFlankBar"
+            android:layout_width="56dp"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:background="@drawable/bg_frosted_rail"
+            android:gravity="center_horizontal"
+            android:layout_marginVertical="6dp"
+            android:layout_marginStart="6dp"
+            android:paddingHorizontal="4dp"
+            android:paddingVertical="8dp">
+
+            <ScrollView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:fillViewport="true"
+                android:scrollbars="none">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center_horizontal">
+
+                    <!-- Category: NAV -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="NAV"
+                        android:textSize="6.5sp"
+                        android:textStyle="bold"
+                        android:textColor="#64748B"
+                        android:letterSpacing="0.12"
+                        android:layout_marginBottom="3dp" />
+
+                    <!-- Tile 1: Back to Home -->
+                    <LinearLayout
+                        android:id="@+id/btnBackToHome"
+                        android:layout_width="46dp"
+                        android:layout_height="44dp"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:background="@drawable/bg_rail_tile"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:layout_marginBottom="4dp">
+
+                        <ImageView
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:src="@drawable/ic_arrow_back"
+                            app:tint="#F1F5F9"
+                            android:contentDescription="Back" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="BACK"
+                            android:textSize="7.5sp"
+                            android:textStyle="bold"
+                            android:textColor="#94A3B8"
+                            android:letterSpacing="0.05"
+                            android:layout_marginTop="2dp" />
+                    </LinearLayout>
+
+                    <!-- Hairline Divider -->
+                    <View
+                        android:layout_width="28dp"
+                        android:layout_height="1dp"
+                        android:background="#1E293B"
+                        android:layout_marginVertical="4dp" />
+
+                    <!-- Category: STREAM -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="STREAM"
+                        android:textSize="6.5sp"
+                        android:textStyle="bold"
+                        android:textColor="#64748B"
+                        android:letterSpacing="0.12"
+                        android:layout_marginBottom="3dp" />
+
+                    <!-- Tile 2: Stream Master Toggle (START / STOP) -->
+                    <LinearLayout
+                        android:id="@+id/btnToggleScreenStream"
+                        android:layout_width="46dp"
+                        android:layout_height="44dp"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:background="@drawable/bg_rail_tile_stream_start"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:layout_marginBottom="4dp">
+
+                        <ImageView
+                            android:id="@+id/ivStreamStatusIcon"
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:src="@drawable/ic_play"
+                            app:tint="#10B981"
+                            android:contentDescription="Stream Status" />
+
+                        <TextView
+                            android:id="@+id/tvStreamStatusText"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="START"
+                            android:textSize="7.5sp"
+                            android:textStyle="bold"
+                            android:textColor="#10B981"
+                            android:letterSpacing="0.05"
+                            android:layout_marginTop="2dp" />
+                    </LinearLayout>
+
+                    <!-- Tile 3: Stream Quality Preset -->
+                    <LinearLayout
+                        android:id="@+id/btnStreamQuality"
+                        android:layout_width="46dp"
+                        android:layout_height="44dp"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:background="@drawable/bg_rail_tile"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:layout_marginBottom="4dp">
+
+                        <ImageView
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:src="@drawable/ic_monitor"
+                            app:tint="#94A3B8"
+                            android:contentDescription="Quality" />
+
+                        <TextView
+                            android:id="@+id/tvStreamQualityText"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="540P"
+                            android:textSize="7.5sp"
+                            android:textStyle="bold"
+                            android:textColor="#94A3B8"
+                            android:letterSpacing="0.05"
+                            android:layout_marginTop="2dp" />
+                    </LinearLayout>
+
+                    <!-- Hairline Divider -->
+                    <View
+                        android:layout_width="28dp"
+                        android:layout_height="1dp"
+                        android:background="#1E293B"
+                        android:layout_marginVertical="4dp" />
+
+                    <!-- Category: INPUT -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="INPUT"
+                        android:textSize="6.5sp"
+                        android:textStyle="bold"
+                        android:textColor="#64748B"
+                        android:letterSpacing="0.12"
+                        android:layout_marginBottom="3dp" />
+
+                    <!-- Tile 4: Toggle Virtual Keyboard Drawer Visible -->
+                    <LinearLayout
+                        android:id="@+id/btnTopKeyboardToggle"
+                        android:layout_width="46dp"
+                        android:layout_height="44dp"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:background="@drawable/bg_rail_tile_active_amethyst"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:layout_marginBottom="4dp">
+
+                        <ImageView
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:src="@drawable/ic_keyboard"
+                            app:tint="#C084FC"
+                            android:contentDescription="Toggle Keyboard" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="KEYS"
+                            android:textSize="7.5sp"
+                            android:textStyle="bold"
+                            android:textColor="#C084FC"
+                            android:letterSpacing="0.05"
+                            android:layout_marginTop="2dp" />
+                    </LinearLayout>
+
+                    <!-- Tile 5: Show Desktop (Win+D) -->
+                    <LinearLayout
+                        android:id="@+id/btnFlankDesktop"
+                        android:layout_width="46dp"
+                        android:layout_height="44dp"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:background="@drawable/bg_rail_tile"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:layout_marginBottom="4dp">
+
+                        <ImageView
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:src="@drawable/ic_desktop"
+                            app:tint="#F8FAFC"
+                            android:contentDescription="Desktop" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="DESK"
+                            android:textSize="7.5sp"
+                            android:textStyle="bold"
+                            android:textColor="#94A3B8"
+                            android:letterSpacing="0.05"
+                            android:layout_marginTop="2dp" />
+                    </LinearLayout>
+
+                    <!-- Tile 6: Alt+Tab Switcher -->
+                    <LinearLayout
+                        android:id="@+id/btnFlankAltTab"
+                        android:layout_width="46dp"
+                        android:layout_height="44dp"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:background="@drawable/bg_rail_tile"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:layout_marginBottom="4dp">
+
+                        <ImageView
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:src="@drawable/ic_window_stack"
+                            app:tint="#F8FAFC"
+                            android:contentDescription="App Switcher" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="SWITCH"
+                            android:textSize="7sp"
+                            android:textStyle="bold"
+                            android:textColor="#94A3B8"
+                            android:letterSpacing="0.04"
+                            android:layout_marginTop="2dp" />
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="1dp"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:minHeight="8dp" />
+
+                    <!-- Tile 7: Power Options -->
+                    <LinearLayout
+                        android:id="@+id/btnFlankPower"
+                        android:layout_width="46dp"
+                        android:layout_height="44dp"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:background="@drawable/bg_rail_tile_power"
+                        android:clickable="true"
+                        android:focusable="true">
+
+                        <ImageView
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:src="@drawable/ic_power"
+                            app:tint="#F43F5E"
+                            android:contentDescription="Power" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="PWR"
+                            android:textSize="7.5sp"
+                            android:textStyle="bold"
+                            android:textColor="#F43F5E"
+                            android:letterSpacing="0.05"
+                            android:layout_marginTop="2dp" />
+                    </LinearLayout>
+
+                </LinearLayout>
+            </ScrollView>
+        </LinearLayout>
+
+        <!-- Center: PC Screen Viewport (Floating Frame with Margins so it doesn't touch edges) -->
+        <FrameLayout
+            android:id="@+id/flPcViewport"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginHorizontal="6dp"
+            android:layout_marginVertical="6dp"
+            android:background="@drawable/bg_pc_viewport_frame"
+            android:clipToOutline="true">
+
+            <ImageView
+                android:id="@+id/ivPcScreen"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="fitCenter"
+                android:contentDescription="PC Desktop Stream" />
+
+            <!-- Pure Clear Floating Ping (Top-Right, Zero Background) -->
+            <TextView
+                android:id="@+id/tvLivePing"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="top|end"
+                android:layout_marginTop="8dp"
+                android:layout_marginEnd="12dp"
+                android:text="● -- ms"
+                android:textColor="#10B981"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:fontFamily="monospace"
+                android:shadowColor="#E6000000"
+                android:shadowDx="0"
+                android:shadowDy="2"
+                android:shadowRadius="6"
+                android:elevation="20dp" />
+
+            <!-- Precision Crosshair (+) Virtual Cursor Overlay -->
+            <ImageView
+                android:id="@+id/ivVirtualCursor"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_virtual_cursor"
+                android:elevation="25dp"
+                android:visibility="visible"
+                android:contentDescription="Virtual Cursor" />
+
+            <TextView
+                android:id="@+id/tvViewportHint"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="top|start"
+                android:layout_margin="8dp"
+                android:text="Precision Trackpad Active"
+                android:textColor="#80FFFFFF"
+                android:textSize="10sp"
+                android:fontFamily="monospace"
+                android:background="#60000000"
+                android:paddingHorizontal="6dp"
+                android:paddingVertical="2dp" />
+
+            <!-- Standby Frosted Overlay when Stream is Paused / Stopped -->
+            <LinearLayout
+                android:id="@+id/llViewportStandbyOverlay"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="#E6040711"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:visibility="visible"
+                android:elevation="14dp"
+                android:clickable="true"
+                android:focusable="true">
+
+                <FrameLayout
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:background="@drawable/bg_dock_header_pill"
+                    android:layout_marginBottom="12dp">
+
+                    <ImageView
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_monitor"
+                        app:tint="#10B981"
+                        android:contentDescription="Monitor" />
+                </FrameLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="PC Remote Stream Paused"
+                    android:textColor="#FFFFFF"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="4dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Tap below to stream PC screen • Controls active"
+                    android:textColor="#94A3B8"
+                    android:textSize="11sp"
+                    android:layout_marginBottom="16dp" />
+
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/btnOverlayResumeStream"
+                    android:layout_width="wrap_content"
+                    android:layout_height="38dp"
+                    android:text="START STREAM"
+                    android:textColor="#03060D"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:background="@drawable/bg_topbar_success_pill"
+                    app:backgroundTint="@null"
+                    android:stateListAnimator="@null"
+                    android:paddingHorizontal="24dp" />
+            </LinearLayout>
+        </FrameLayout>
+
+        <!-- Right Flank: The Vertical Windows Taskbar Dock -->
+        <LinearLayout
+            android:id="@+id/rightTaskbarDock"
+            android:layout_width="74dp"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:background="@drawable/bg_frosted_rail"
+            android:gravity="center_horizontal"
+            android:layout_marginVertical="6dp"
+            android:layout_marginEnd="6dp"
+            android:paddingHorizontal="4dp"
+            android:paddingVertical="8dp">
+
+            <!-- Amethyst Header Pill -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:background="@drawable/bg_dock_header_pill"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="3dp"
+                android:layout_marginBottom="6dp">
+
+                <View
+                    android:layout_width="5dp"
+                    android:layout_height="5dp"
+                    android:background="#A855F7"
+                    android:layout_marginEnd="5dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="DOCK"
+                    android:textColor="#C084FC"
+                    android:textSize="8sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.08" />
+            </LinearLayout>
+
+            <ScrollView
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:scrollbars="none">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center_horizontal">
+
+                    <!-- Windows 11 Start Menu Tile -->
+                    <LinearLayout
+                        android:id="@+id/btnDockStartMenu"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:background="@drawable/bg_rail_tile"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:layout_marginBottom="6dp">
+
+                        <ImageView
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:src="@drawable/ic_win_logo"
+                            android:contentDescription="Windows Start" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Start"
+                            android:textSize="7.5sp"
+                            android:textStyle="bold"
+                            android:textColor="#94A3B8"
+                            android:layout_marginTop="2dp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/llTaskbarApps"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:gravity="center_horizontal">
+                        <!-- Dynamically populated app cards -->
+                    </LinearLayout>
+                </LinearLayout>
+            </ScrollView>
+
+            <!-- Decorated System Tray Dock -->
+            <LinearLayout
+                android:id="@+id/taskbarSystemTray"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_dock_tray"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:paddingHorizontal="4dp"
+                android:paddingVertical="5dp"
+                android:layout_marginTop="4dp">
+
+                <TextView
+                    android:id="@+id/tvTrayClock"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="20:45"
+                    android:textColor="#F8FAFC"
+                    android:textSize="9.5sp"
+                    android:textStyle="bold"
+                    android:fontFamily="monospace"
+                    android:layout_marginBottom="2dp" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <ImageView
+                        android:layout_width="11dp"
+                        android:layout_height="11dp"
+                        android:src="@drawable/ic_wifi"
+                        app:tint="#94A3B8"
+                        android:layout_marginEnd="3dp"
+                        android:contentDescription="Wi-Fi" />
+
+                    <ImageView
+                        android:layout_width="11dp"
+                        android:layout_height="11dp"
+                        android:src="@drawable/ic_battery"
+                        app:tint="#34D399"
+                        android:contentDescription="Battery" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="98%"
+                        android:textColor="#34D399"
+                        android:textSize="7.5sp"
+                        android:textStyle="bold"
+                        android:fontFamily="monospace"
+                        android:layout_marginStart="2dp" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- Tabs Flyout Card for Multiple Windows (e.g. Brave) -->
+    <LinearLayout
+        android:id="@+id/llTabsFlyout"
+        android:layout_width="260dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end|top"
+        android:layout_marginTop="50dp"
+        android:layout_marginEnd="84dp"
+        android:background="#162038"
+        android:orientation="vertical"
+        android:padding="12dp"
+        android:visibility="gone"
+        android:elevation="20dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:id="@+id/tvFlyoutAppName"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="App Windows"
+                android:textColor="#F8FAFC"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/btnCloseFlyout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="✕"
+                android:textColor="#94A3B8"
+                android:textSize="14sp"
+                android:padding="4dp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/llFlyoutTabsList"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+            <!-- Window item rows -->
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Windows Full Physical Keyboard Floating Dock (Complete 6-Row Compact Dark Chassis) -->
+    <LinearLayout
+        android:id="@+id/llWindowsKeyboard"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:maxWidth="720dp"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginHorizontal="20dp"
+        android:layout_marginBottom="8dp"
+        android:background="@drawable/bg_keyboard_dock"
+        android:orientation="vertical"
+        android:paddingTop="6dp"
+        android:paddingBottom="6dp"
+        android:paddingHorizontal="8dp"
+        android:visibility="gone"
+        android:elevation="35dp">
+
+        <!-- Integrated Direct Text Input Row at Top of Keyboard -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="32dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="5dp">
+
+            <EditText
+                android:id="@+id/etKbTextInput"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:hint="Type text directly to active PC window..."
+                android:textColorHint="#64748B"
+                android:textColor="#F8FAFC"
+                android:textSize="11sp"
+                android:background="@drawable/bg_kb_input_field"
+                android:paddingHorizontal="10dp"
+                android:imeOptions="actionSend"
+                android:inputType="text"
+                android:singleLine="true" />
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/btnKbSend"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:text="SEND"
+                android:textColor="#03060D"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:background="@drawable/bg_topbar_success_pill"
+                app:backgroundTint="@null"
+                android:stateListAnimator="@null"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                android:paddingHorizontal="12dp"
+                android:layout_marginStart="5dp" />
+
+            <TextView
+                android:id="@+id/btnCloseWinKb"
+                android:layout_width="28dp"
+                android:layout_height="match_parent"
+                android:text="✕"
+                android:textColor="#94A3B8"
+                android:textSize="13sp"
+                android:gravity="center"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="@drawable/bg_rail_tile"
+                android:layout_marginStart="5dp" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvStickyStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textColor="#10B981"
+            android:textSize="8sp"
+            android:textStyle="bold"
+            android:fontFamily="monospace"
+            android:layout_marginBottom="2dp"
+            android:visibility="gone" />
+
+        <!-- Row 0: Esc, F1..F12, Del -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="26dp"
+            android:orientation="horizontal"
+            android:layout_marginBottom="3dp">
+            <androidx.appcompat.widget.AppCompatButton android:tag="esc" android:text="Esc" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1.2" android:background="@drawable/bg_kb_key_action" app:backgroundTint="@null" android:textColor="#E2E8F0" android:textSize="9sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:textAllCaps="false" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="f1" android:text="F1" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#CBD5E1" android:textSize="9sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="f2" android:text="F2" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#CBD5E1" android:textSize="9sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="f3" android:text="F3" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#CBD5E1" android:textSize="9sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="f4" android:text="F4" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#CBD5E1" android:textSize="9sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="f5" android:text="F5" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#CBD5E1" android:textSize="9sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="f6" android:text="F6" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#CBD5E1" android:textSize="9sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="f7" android:text="F7" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#CBD5E1" android:textSize="9sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="f8" android:text="F8" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#CBD5E1" android:textSize="9sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="f9" android:text="F9" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#CBD5E1" android:textSize="9sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="f10" android:text="F10" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#CBD5E1" android:textSize="9sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="f11" android:text="F11" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#CBD5E1" android:textSize="9sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="f12" android:text="F12" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#CBD5E1" android:textSize="9sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="del" android:text="Del" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1.2" android:background="@drawable/bg_kb_key_action" app:backgroundTint="@null" android:textColor="#E2E8F0" android:textSize="9sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:textAllCaps="false" />
+        </LinearLayout>
+
+        <!-- Row 1: ~, 1..0, -, =, ⌫ -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="28dp"
+            android:orientation="horizontal"
+            android:layout_marginBottom="3dp">
+            <androidx.appcompat.widget.AppCompatButton android:tag="`" android:text="~" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#CBD5E1" android:textSize="11sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="1" android:text="1" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#F8FAFC" android:textSize="12sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="2" android:text="2" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#F8FAFC" android:textSize="12sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="3" android:text="3" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#F8FAFC" android:textSize="12sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="4" android:text="4" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#F8FAFC" android:textSize="12sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="5" android:text="5" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#F8FAFC" android:textSize="12sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="6" android:text="6" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#F8FAFC" android:textSize="12sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="7" android:text="7" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#F8FAFC" android:textSize="12sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="8" android:text="8" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#F8FAFC" android:textSize="12sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="9" android:text="9" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#F8FAFC" android:textSize="12sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="0" android:text="0" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#F8FAFC" android:textSize="12sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="-" android:text="-" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#CBD5E1" android:textSize="12sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="=" android:text="=" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#CBD5E1" android:textSize="12sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="backspace" android:text="⌫" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1.5" android:background="@drawable/bg_kb_key_action" app:backgroundTint="@null" android:textColor="#F43F5E" android:textSize="13sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" />
+        </LinearLayout>
+
+        <!-- Row 2: Tab, Q..P, [, ], \ -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="28dp"
+            android:orientation="horizontal"
+            android:layout_marginBottom="3dp">
+            <androidx.appcompat.widget.AppCompatButton android:tag="tab" android:text="Tab" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1.3" android:background="@drawable/bg_kb_key_modifier" app:backgroundTint="@null" android:textColor="#94A3B8" android:textSize="10sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:textAllCaps="false" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="q" android:text="Q" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#F8FAFC" android:textSize="12sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="w" android:text="W" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#F8FAFC" android:textSize="12sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="e" android:text="E" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#F8FAFC" android:textSize="12sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="r" android:text="R" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#F8FAFC" android:textSize="12sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="t" android:text="T" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#F8FAFC" android:textSize="12sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="y" android:text="Y" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#F8FAFC" android:textSize="12sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="u" android:text="U" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#F8FAFC" android:textSize="12sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="i" android:text="I" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#F8FAFC" android:textSize="12sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="o" android:text="O" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#F8FAFC" android:textSize="12sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="p" android:text="P" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#F8FAFC" android:textSize="12sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="[" android:text="[" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#CBD5E1" android:textSize="12sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="]" android:text="]" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#CBD5E1" android:textSize="12sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="\" android:text="\" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#CBD5E1" android:textSize="12sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" />
+        </LinearLayout>
+
+        <!-- Row 3: Caps, A..L, ;, ', Enter -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="28dp"
+            android:orientation="horizontal"
+            android:layout_marginBottom="3dp">
+            <androidx.appcompat.widget.AppCompatButton android:tag="caps" android:text="Caps" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1.4" android:background="@drawable/bg_kb_key_modifier" app:backgroundTint="@null" android:textColor="#94A3B8" android:textSize="10sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:textAllCaps="false" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="a" android:text="A" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#F8FAFC" android:textSize="12sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="s" android:text="S" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#F8FAFC" android:textSize="12sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="d" android:text="D" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#F8FAFC" android:textSize="12sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="f" android:text="F" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#F8FAFC" android:textSize="12sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="g" android:text="G" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#F8FAFC" android:textSize="12sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="h" android:text="H" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#F8FAFC" android:textSize="12sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="j" android:text="J" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#F8FAFC" android:textSize="12sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="k" android:text="K" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#F8FAFC" android:textSize="12sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="l" android:text="L" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#F8FAFC" android:textSize="12sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag=";" android:text=";" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#CBD5E1" android:textSize="12sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="'" android:text="'" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#CBD5E1" android:textSize="12sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="enter" android:text="Enter" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1.8" android:background="@drawable/bg_kb_key_action" app:backgroundTint="@null" android:textColor="#F8FAFC" android:textSize="10sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:textAllCaps="false" />
+        </LinearLayout>
+
+        <!-- Row 4: Shift, Z..M, ,, ., /, Shift -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="28dp"
+            android:orientation="horizontal"
+            android:layout_marginBottom="3dp">
+            <androidx.appcompat.widget.AppCompatButton android:tag="shift" android:text="Shift" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1.5" android:background="@drawable/bg_kb_key_modifier" app:backgroundTint="@null" android:textColor="#94A3B8" android:textSize="10sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:textAllCaps="false" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="z" android:text="Z" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#F8FAFC" android:textSize="12sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="x" android:text="X" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#F8FAFC" android:textSize="12sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="c" android:text="C" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#F8FAFC" android:textSize="12sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="v" android:text="V" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#F8FAFC" android:textSize="12sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="b" android:text="B" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#F8FAFC" android:textSize="12sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="n" android:text="N" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#F8FAFC" android:textSize="12sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="m" android:text="M" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#F8FAFC" android:textSize="12sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="," android:text="," android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#CBD5E1" android:textSize="12sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="." android:text="." android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#CBD5E1" android:textSize="12sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="/" android:text="/" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#CBD5E1" android:textSize="12sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="shift" android:text="Shift" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1.6" android:background="@drawable/bg_kb_key_modifier" app:backgroundTint="@null" android:textColor="#94A3B8" android:textSize="10sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:textAllCaps="false" />
+        </LinearLayout>
+
+        <!-- Row 5: Ctrl, Win, Alt, Space, Alt, Ctrl, ◄, ▲, ▼, ► -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="28dp"
+            android:orientation="horizontal">
+            <androidx.appcompat.widget.AppCompatButton android:tag="ctrl" android:text="Ctrl" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1.2" android:background="@drawable/bg_kb_key_modifier" app:backgroundTint="@null" android:textColor="#94A3B8" android:textSize="10sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:textAllCaps="false" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="win" android:text="Win" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1.0" android:background="@drawable/bg_kb_key_modifier" app:backgroundTint="@null" android:textColor="#94A3B8" android:textSize="10sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:textAllCaps="false" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="alt" android:text="Alt" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1.1" android:background="@drawable/bg_kb_key_modifier" app:backgroundTint="@null" android:textColor="#94A3B8" android:textSize="10sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:textAllCaps="false" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="space" android:text="Space" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="4.0" android:background="@drawable/bg_kb_key_normal" app:backgroundTint="@null" android:textColor="#F8FAFC" android:textSize="10sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:textAllCaps="false" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="alt" android:text="Alt" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1.1" android:background="@drawable/bg_kb_key_modifier" app:backgroundTint="@null" android:textColor="#94A3B8" android:textSize="10sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:textAllCaps="false" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="ctrl" android:text="Ctrl" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1.1" android:background="@drawable/bg_kb_key_modifier" app:backgroundTint="@null" android:textColor="#94A3B8" android:textSize="10sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:textAllCaps="false" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="left" android:text="◄" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.9" android:background="@drawable/bg_kb_key_action" app:backgroundTint="@null" android:textColor="#CBD5E1" android:textSize="11sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="2dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="up" android:text="▲" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.9" android:background="@drawable/bg_kb_key_action" app:backgroundTint="@null" android:textColor="#CBD5E1" android:textSize="11sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="2dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="down" android:text="▼" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.9" android:background="@drawable/bg_kb_key_action" app:backgroundTint="@null" android:textColor="#CBD5E1" android:textSize="11sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" android:layout_marginEnd="2dp" />
+            <androidx.appcompat.widget.AppCompatButton android:tag="right" android:text="►" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.9" android:background="@drawable/bg_kb_key_action" app:backgroundTint="@null" android:textColor="#CBD5E1" android:textSize="11sp" android:textStyle="bold" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:stateListAnimator="@null" />
+        </LinearLayout>
+    </LinearLayout>
+
+
+</FrameLayout>

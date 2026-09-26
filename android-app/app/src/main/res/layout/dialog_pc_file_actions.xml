@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_dialog_dark"
+    android:padding="20dp">
+
+    <!-- Header: File Icon + File Title & Details -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="18dp">
+
+        <ImageView
+            android:id="@+id/ivDialogFileIcon"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:src="@drawable/ic_file_generic"
+            android:background="@drawable/bg_gem_cyan"
+            android:padding="10dp"
+            android:scaleType="centerInside"
+            android:contentDescription="File Icon" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:layout_marginStart="14dp">
+
+            <TextView
+                android:id="@+id/tvDialogFileName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="example_file.ext"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF"
+                android:maxLines="2"
+                android:ellipsize="middle" />
+
+            <TextView
+                android:id="@+id/tvDialogFileDetails"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="14.2 MB • C:\\Path\\To\\File"
+                android:textSize="11sp"
+                android:textColor="#94A3B8"
+                android:fontFamily="monospace"
+                android:layout_marginTop="3dp"
+                android:maxLines="2"
+                android:ellipsize="start" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#1E293B"
+        android:layout_marginBottom="12dp" />
+
+    <!-- Action 1: Download to Phone -->
+    <LinearLayout
+        android:id="@+id/btnActionDownload"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingVertical="12dp"
+        android:paddingHorizontal="12dp"
+        android:background="@drawable/bg_rail_tile"
+        android:clickable="true"
+        android:focusable="true"
+        android:layout_marginBottom="8dp">
+
+        <ImageView
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:src="@drawable/ic_download"
+            app:tint="#34D399"
+            android:padding="4dp"
+            android:contentDescription="Download Icon" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:layout_marginStart="12dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Download to Phone"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="#34D399" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Save file directly into your phone's Download folder"
+                android:textSize="11sp"
+                android:textColor="#64748B" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Action 2: Open (View with App) -->
+    <LinearLayout
+        android:id="@+id/btnActionOpenPhone"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingVertical="12dp"
+        android:paddingHorizontal="12dp"
+        android:background="@drawable/bg_rail_tile"
+        android:clickable="true"
+        android:focusable="true"
+        android:layout_marginBottom="8dp">
+
+        <ImageView
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:src="@drawable/ic_open"
+            app:tint="#C084FC"
+            android:padding="4dp"
+            android:contentDescription="Open Icon" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:layout_marginStart="12dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Open on Phone"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="#C084FC" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Stream and open with your phone's default viewer"
+                android:textSize="11sp"
+                android:textColor="#64748B" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Action 3: Open on PC Desktop -->
+    <LinearLayout
+        android:id="@+id/btnActionOpenPc"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingVertical="12dp"
+        android:paddingHorizontal="12dp"
+        android:background="@drawable/bg_rail_tile"
+        android:clickable="true"
+        android:focusable="true"
+        android:layout_marginBottom="16dp">
+
+        <ImageView
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:src="@drawable/ic_monitor"
+            app:tint="#C084FC"
+            android:padding="4dp"
+            android:contentDescription="Desktop Icon" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:layout_marginStart="12dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Open on PC Desktop"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="#C084FC" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Launch file on your Windows desktop display"
+                android:textSize="11sp"
+                android:textColor="#64748B" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Close Button -->
+    <Button
+        android:id="@+id/btnDialogClose"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:text="Cancel"
+        android:textColor="#94A3B8"
+        android:textSize="12sp"
+        android:backgroundTint="#162032"
+        android:insetTop="0dp"
+        android:insetBottom="0dp" />
+
+</LinearLayout>

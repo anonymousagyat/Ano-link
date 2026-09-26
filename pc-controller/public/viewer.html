@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ano-Link - Remote Viewport</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #030712;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-sans);
+        }
+
+        .fullscreen-layout {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 28px;
+            padding: 16px;
+            box-sizing: border-box;
+        }
+
+        /* Maximized Phone Viewport: Expands to 96vh */
+        .phone-viewport-wrapper {
+            height: 96vh;
+            aspect-ratio: var(--phone-ratio, 1080 / 2400);
+            max-width: calc(100vw - 320px);
+            background: #000;
+            border-radius: 26px;
+            border: 5px solid #1e293b;
+            box-shadow: inset 0 0 0 1px #334155, 0 25px 60px rgba(0, 0, 0, 0.95), 0 0 40px rgba(37, 99, 235, 0.2);
+            position: relative;
+            overflow: hidden;
+            cursor: crosshair;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+        }
+
+        /* In Video & Camera mode: hide simulated hardware overlays so real phone screen is 100% unobstructed */
+        .mode-video .speaker-grill,
+        .mode-video .camera-punchhole,
+        .mode-video .phone-status-bar,
+        .mode-video .home-gesture-indicator,
+        .mode-camera .speaker-grill,
+        .mode-camera .camera-punchhole,
+        .mode-camera .phone-status-bar,
+        .mode-camera .home-gesture-indicator {
+            display: none !important;
+        }
+
+        .mode-video {
+            border-color: #334155;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.95), 0 0 40px rgba(139, 92, 246, 0.25);
+        }
+
+        .mode-camera {
+            border-color: #059669;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.95), 0 0 40px rgba(16, 185, 129, 0.25);
+        }
+
+        #popoutCanvas, #popoutVideoCanvas, #popoutVideo {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+            object-fit: contain;
+        }
+
+        #popoutVideoCanvas, #popoutVideo {
+            z-index: 1;
+        }
+
+        #popoutCanvas {
+            z-index: 2;
+        }
+
+        /* Sleek Vertical Dock on the side */
+        .vertical-dock {
+            width: 250px;
+            background: rgba(18, 24, 36, 0.88);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 20px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+            user-select: none;
+        }
+
+        .dock-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .dock-header .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        /* Mode Banner */
+        .mode-banner {
+            padding: 10px 12px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            background: rgba(11, 15, 23, 0.6);
+            border: 1px solid var(--border-color);
+        }
+
+        .mode-badge {
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .mode-badge.skeleton {
+            color: #60a5fa;
+        }
+
+        .mode-badge.video {
+            color: #c084fc;
+        }
+
+        .mode-badge.camera {
+            color: #34d399;
+        }
+
+        .mode-subtext {
+            font-size: 10px;
+            color: var(--text-muted);
+        }
+
+        /* Stream Toggle Button */
+        .btn-stream-action {
+            width: 100%;
+            padding: 10px 14px;
+            font-size: 13px;
+            font-weight: 700;
+            border-radius: 8px;
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            background: rgba(239, 68, 68, 0.15);
+            color: #fca5a5;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-stream-action:hover {
+            background: rgba(239, 68, 68, 0.25);
+            border-color: rgba(239, 68, 68, 0.7);
+            color: #fff;
+        }
+
+        .btn-stream-action.paused {
+            background: rgba(16, 185, 129, 0.15);
+            border-color: rgba(16, 185, 129, 0.4);
+            color: #6ee7b7;
+        }
+
+        .btn-stream-action.paused:hover {
+            background: rgba(16, 185, 129, 0.25);
+            border-color: rgba(16, 185, 129, 0.7);
+            color: #fff;
+        }
+
+        .dock-section-title {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 4px;
+        }
+
+        .dock-nav-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .dock-nav-grid .btn-nav {
+            padding: 10px 6px;
+            font-size: 12px;
+        }
+
+        .dock-divider {
+            height: 1px;
+            background: var(--border-color);
+            margin: 4px 0;
+        }
+
+        .dock-text-sender {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .dock-text-sender input {
+            background: rgba(11, 15, 23, 0.95);
+            border: 1px solid var(--border-color);
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            outline: none;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .dock-text-sender input:focus {
+            border-color: var(--accent-blue);
+        }
+    </style>
+</head>
+<body>
+    <div class="fullscreen-layout">
+        <!-- Maximized Phone Screen -->
+        <div class="phone-viewport-wrapper" id="popoutViewport">
+            <!-- Simulated hardware bezels (rendered only in skeleton mode) -->
+            <div class="speaker-grill"></div>
+            <div class="camera-punchhole"></div>
+
+            <!-- Android Virtual Status Bar (rendered only in skeleton mode) -->
+            <div class="phone-status-bar">
+                <span id="popoutClock">12:00</span>
+                <div class="phone-status-icons">
+                    <span>5G</span>
+                    <i data-lucide="wifi" class="status-bar-icon"></i>
+                    <span id="popoutStatusBarBattery"><i data-lucide="battery" class="status-bar-icon"></i> <span id="popoutBatteryVal">--%</span></span>
+                </div>
+            </div>
+
+            <!-- Live Screen Video Canvas (Pure Hardware Mirror) -->
+            <canvas id="popoutVideoCanvas" width="1080" height="2400" style="display: none;"></canvas>
+            <!-- Skeleton UI Canvas (Accessibility Protocol) -->
+            <canvas id="popoutCanvas" width="1080" height="2400"></canvas>
+            <video id="popoutVideo" autoplay playsinline style="display: none;"></video>
+            
+            <!-- Overlay Message when Stream Paused -->
+            <div id="popoutPausedOverlay" class="screen-overlay" style="display: none;">
+                <div class="overlay-card">
+                    <span class="overlay-icon"><i data-lucide="pause-circle" style="width: 44px; height: 44px; color: #fca5a5;"></i></span>
+                    <h3 id="pausedOverlayTitle">Stream Paused</h3>
+                    <p id="pausedOverlayDesc">Conserving phone battery & bandwidth.</p>
+                    <button id="btnPopoutResumeStreamOverlay" class="btn btn-primary btn-sm" style="margin-top: 10px;">
+                        <i data-lucide="play" class="ui-icon-xs"></i> Resume Stream
+                    </button>
+                </div>
+            </div>
+
+            <div id="popoutOverlay" class="screen-overlay" style="display: none;">
+                <div class="overlay-card">
+                    <span class="overlay-icon"><i data-lucide="power" style="width: 44px; height: 44px; color: #94a3b8;"></i></span>
+                    <h3>Phone Standby</h3>
+                    <p>Connecting to Ano-Link Hub...</p>
+                </div>
+            </div>
+
+            <!-- Bottom Gesture Navigation Line (rendered only in skeleton mode) -->
+            <div class="home-gesture-indicator"></div>
+        </div>
+
+        <!-- Vertical Control Dock -->
+        <aside class="vertical-dock">
+            <!-- Connection Header -->
+            <div class="dock-header">
+                <div class="status-indicator">
+                    <span class="dot connected" id="popoutDot"></span>
+                    <span id="popoutStatus">CONNECTED</span>
+                </div>
+                <button id="btnPopoutRefresh" class="btn btn-sm btn-outline" title="Refresh Telemetry">
+                    <i data-lucide="refresh-cw" class="ui-icon-xs"></i>
+                </button>
+            </div>
+
+            <!-- Dedicated Mode Identifier -->
+            <div class="mode-banner" id="modeBanner">
+                <span class="mode-badge skeleton" id="modeBadge"><i data-lucide="zap" class="ui-icon-xs"></i> <span>SKELETON REMOTE</span></span>
+                <small class="mode-subtext" id="modeSubText">Zero-Popup Low Bandwidth</small>
+            </div>
+
+            <!-- Dedicated Independent Start / Stop Control -->
+            <button id="btnToggleStream" class="btn-stream-action">
+                <span id="streamStatusIcon"><i data-lucide="pause" class="ui-icon-sm"></i></span>
+                <span id="streamStatusText">Stop Stream</span>
+            </button>
+
+            <!-- Mode Specific Controls: Skeleton Only -->
+            <div id="skeletonControlsSection">
+                <span class="dock-section-title">Skeleton Options</span>
+                <button id="btnToggleBoxLabels" class="btn btn-secondary" style="width: 100%; font-size: 12px; margin-top: 4px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                    <i data-lucide="type" class="ui-icon-xs"></i> <span id="lblBoxText">Box Text: ON</span>
+                </button>
+            </div>
+
+            <!-- Mode Specific Controls: Video Only -->
+            <div id="videoControlsSection" style="display: none;">
+                <span class="dock-section-title">Stream Framerate</span>
+                <div class="dock-nav-grid" id="dockFpsGrid" style="margin-top: 4px;">
+                    <button class="btn btn-sm btn-fps btn-nav" data-fps="15">15 FPS</button>
+                    <button class="btn btn-sm btn-fps btn-nav active" data-fps="30">30 FPS</button>
+                    <button class="btn btn-sm btn-fps btn-nav" data-fps="60">60 FPS</button>
+                </div>
+            </div>
+
+            <!-- Mode Specific Controls: Camera Only -->
+            <div id="cameraControlsSection" style="display: none;">
+                <span class="dock-section-title">Camera Controls</span>
+                <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 6px;">
+                    <button id="btnViewerFlipCam" class="btn btn-secondary" style="width: 100%; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                        <i data-lucide="switch-camera" class="ui-icon-xs"></i> <span id="lblViewerLens">Switch Lens (Rear)</span>
+                    </button>
+                    <button id="btnViewerToggleTorch" class="btn btn-outline" style="width: 100%; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                        <i data-lucide="flashlight" class="ui-icon-xs"></i> <span id="lblViewerTorch">Flashlight: OFF</span>
+                    </button>
+                    <button id="btnViewerSnapshot" class="btn btn-primary" style="width: 100%; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 6px; background: linear-gradient(135deg, #059669, #10b981); border: none;">
+                        <i data-lucide="camera" class="ui-icon-xs"></i> <span>Take Snapshot</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="dock-divider"></div>
+
+            <!-- Navigation Controls -->
+            <span class="dock-section-title">Navigation</span>
+            <div class="dock-nav-grid">
+                <button class="btn btn-nav" id="btnPopoutBack"><i data-lucide="arrow-left" class="ui-icon-xs"></i> Back</button>
+                <button class="btn btn-nav" id="btnPopoutHome"><i data-lucide="home" class="ui-icon-xs"></i> Home</button>
+                <button class="btn btn-nav" id="btnPopoutRecents"><i data-lucide="square" class="ui-icon-xs"></i> Recents</button>
+                <button class="btn btn-nav" id="btnPopoutNotif"><i data-lucide="bell" class="ui-icon-xs"></i> Notifs</button>
+            </div>
+            <button class="btn btn-nav" id="btnPopoutLock" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;"><i data-lucide="lock" class="ui-icon-xs"></i> Lock Screen</button>
+
+            <div class="dock-divider"></div>
+
+            <!-- Remote Typing -->
+            <span class="dock-section-title">Remote Typing</span>
+            <div class="dock-text-sender">
+                <input type="text" id="popoutTextInput" placeholder="Type text to phone...">
+                <button class="btn btn-primary" id="btnPopoutSendText">Send Text</button>
+            </div>
+        </aside>
+    </div>
+
+    <script src="lucide.min.js"></script>
+    <script src="viewer.js"></script>
+</body>
+</html>

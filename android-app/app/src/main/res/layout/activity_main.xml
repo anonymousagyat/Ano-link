@@ -1,0 +1,631 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/rootScrollMain"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_cyber_void"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:id="@+id/llMainContent"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingHorizontal="20dp"
+        android:paddingTop="28dp"
+        android:paddingBottom="24dp">
+
+        <!-- ===================================================== -->
+        <!-- BRAND HEADER: ANO-LINK IDENTITY + SETTINGS GEAR       -->
+        <!-- ===================================================== -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:layout_marginBottom="22dp">
+
+            <!-- Custom Neural Logo -->
+            <ImageView
+                android:layout_width="46dp"
+                android:layout_height="46dp"
+                android:src="@drawable/ic_ano_logo"
+                android:contentDescription="Ano-Link Neural Logo" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginStart="14dp">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Ano"
+                        android:textSize="24sp"
+                        android:textStyle="bold"
+                        android:fontFamily="@font/syne_extrabold"
+                        android:letterSpacing="-0.01"
+                        android:textColor="#FFFFFF" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="link"
+                        android:textSize="24sp"
+                        android:textStyle="bold"
+                        android:fontFamily="@font/syne_extrabold"
+                        android:letterSpacing="-0.01"
+                        android:textColor="#A855F7" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="PRO"
+                        android:textSize="10sp"
+                        android:textStyle="bold"
+                        android:textColor="#C084FC"
+                        android:background="@drawable/bg_badge_violet"
+                        android:paddingHorizontal="6dp"
+                        android:paddingVertical="2dp"
+                        android:layout_marginStart="8dp" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="By Anonymous/अज्ञात"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:textColor="#64748B"
+                    android:letterSpacing="0.16"
+                    android:layout_marginTop="3dp" />
+            </LinearLayout>
+
+            <!-- Settings Gear Button (Opens Settings Page) -->
+            <ImageButton
+                android:id="@+id/btnOpenSettings"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:src="@drawable/ic_settings"
+                android:scaleType="centerInside"
+                android:background="@drawable/bg_rail_tile"
+                android:contentDescription="Settings" />
+        </LinearLayout>
+
+        <!-- ===================================================== -->
+        <!-- CONNECTED PC CARD (NEURAL LINK TELEMETRY)             -->
+        <!-- ===================================================== -->
+        <LinearLayout
+            android:id="@+id/llPcStatusCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_card_medium_blue"
+            android:padding="18dp"
+            android:layout_marginBottom="24dp">
+
+            <!-- Card Head: PC Info & Status Capsule -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:layout_marginBottom="16dp">
+
+                <!-- PC Cyber Badge -->
+                <ImageView
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:background="@drawable/bg_gem_blue"
+                    android:src="@drawable/ic_pc_workstation"
+                    android:padding="6dp"
+                    android:contentDescription="Connected PC" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginStart="14dp">
+
+                    <!-- PC Name takes full remaining width - No Pill squeezing it -->
+                    <TextView
+                        android:id="@+id/tvPcName"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="No PC Connected"
+                        android:textSize="15.5sp"
+                        android:textStyle="bold"
+                        android:fontFamily="@font/syne_extrabold"
+                        android:letterSpacing="0.01"
+                        android:singleLine="true"
+                        android:maxLines="1"
+                        android:textColor="#FFFFFF" />
+
+                    <!-- Subtitle Row: Tailscale IP + Live Online Status Capsule -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginTop="3dp">
+
+                        <TextView
+                            android:id="@+id/tvTailscaleIp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Tap to add your PC IP"
+                            android:textSize="11sp"
+                            android:fontFamily="monospace"
+                            android:letterSpacing="0.02"
+                            android:textColor="#93C5FD" />
+
+                        <!-- Online Status Capsule moved here -->
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/bg_status_online"
+                            android:paddingHorizontal="7dp"
+                            android:paddingVertical="2dp"
+                            android:layout_marginStart="10dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:id="@+id/tvDaemonStatus"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="ONLINE"
+                                android:textSize="9.5sp"
+                                android:textStyle="bold"
+                                android:fontFamily="monospace"
+                                android:textColor="#10B981" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Telemetry Triad: Latency | Host Port | Link Quality -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:background="#0A0F1D"
+                android:paddingVertical="10dp"
+                android:paddingHorizontal="8dp">
+
+                <!-- Cell 1: Ping -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:gravity="center">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="LATENCY"
+                        android:textSize="9sp"
+                        android:textStyle="bold"
+                        android:fontFamily="monospace"
+                        android:textColor="#64748B" />
+
+                    <TextView
+                        android:id="@+id/tvTriadPing"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="-- ms"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:fontFamily="monospace"
+                        android:textColor="#10B981" />
+                </LinearLayout>
+
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="24dp"
+                    android:background="#1E293B"
+                    android:layout_gravity="center_vertical" />
+
+                <!-- Cell 2: Target Port -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:gravity="center">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="PORT"
+                        android:textSize="9sp"
+                        android:textStyle="bold"
+                        android:fontFamily="monospace"
+                        android:textColor="#64748B" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="8080"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:fontFamily="monospace"
+                        android:textColor="#3B82F6" />
+                </LinearLayout>
+
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="24dp"
+                    android:background="#1E293B"
+                    android:layout_gravity="center_vertical" />
+
+                <!-- Cell 3: Link Type -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:gravity="center">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="TUNNEL"
+                        android:textSize="9sp"
+                        android:textStyle="bold"
+                        android:fontFamily="monospace"
+                        android:textColor="#64748B" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="TAILSCALE"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:fontFamily="monospace"
+                        android:textColor="#E2E8F0" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- ===================================================== -->
+        <!-- HUB FEATURES: PHONE CONTROLLING PC MODULES            -->
+        <!-- ===================================================== -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="PC CONTROL'S"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:fontFamily="monospace"
+                android:textColor="#94A3B8"
+                android:letterSpacing="0.08" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="5 ACTIVE"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:fontFamily="monospace"
+                android:textColor="#60A5FA" />
+        </LinearLayout>
+
+        <!-- MODULE 1: REMOTE SCREEN (YELLOW THEME) -->
+        <LinearLayout
+            android:id="@+id/btnLaunchPcRemote"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_glass_card_amber"
+            android:padding="16dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:clickable="true"
+            android:focusable="true"
+            android:layout_marginBottom="12dp">
+
+            <ImageView
+                android:layout_width="46dp"
+                android:layout_height="46dp"
+                android:background="@drawable/bg_gem_amber"
+                android:src="@drawable/ic_monitor"
+                app:tint="#F59E0B"
+                android:padding="10dp"
+                android:contentDescription="Remote Screen" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginStart="14dp">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Remote Screen"
+                        android:textSize="15sp"
+                        android:textStyle="bold"
+                        android:textColor="#FFFFFF" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="CONTROL"
+                        android:textSize="9sp"
+                        android:textStyle="bold"
+                        android:textColor="#03060D"
+                        android:background="@drawable/bg_badge_yellow"
+                        android:paddingHorizontal="8dp"
+                        android:paddingVertical="2dp"
+                        android:singleLine="true"
+                        android:maxLines="1"
+                        android:layout_marginStart="14dp" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Access your pc"
+                    android:textSize="12sp"
+                    android:textColor="#94A3B8"
+                    android:layout_marginTop="2dp" />
+            </LinearLayout>
+
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_chevron_right"
+                app:tint="#F59E0B"
+                android:contentDescription="Open" />
+        </LinearLayout>
+
+        <!-- MODULE 2: PC FILE EXPLORER (ZARCHIVER STYLE) -->
+        <LinearLayout
+            android:id="@+id/btnLaunchPcFiles"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_glass_card_purple"
+            android:padding="16dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:clickable="true"
+            android:focusable="true"
+            android:layout_marginBottom="12dp">
+
+            <ImageView
+                android:layout_width="46dp"
+                android:layout_height="46dp"
+                android:background="@drawable/bg_gem_purple"
+                android:src="@drawable/ic_folder_purple"
+                android:padding="10dp"
+                android:contentDescription="File Explorer" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginStart="14dp">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="File Explorer"
+                        android:textSize="15sp"
+                        android:textStyle="bold"
+                        android:textColor="#FFFFFF" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="FILES"
+                        android:textSize="9sp"
+                        android:textStyle="bold"
+                        android:textColor="#03060D"
+                        android:background="@drawable/bg_badge_purple_solid"
+                        android:paddingHorizontal="8dp"
+                        android:paddingVertical="2dp"
+                        android:singleLine="true"
+                        android:maxLines="1"
+                        android:layout_marginStart="14dp" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Browse C:, D: drives, download files &amp; open directly"
+                    android:textSize="12sp"
+                    android:textColor="#94A3B8"
+                    android:layout_marginTop="2dp" />
+            </LinearLayout>
+
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_chevron_right"
+                app:tint="#C084FC"
+                android:contentDescription="Open" />
+        </LinearLayout>
+
+        <!-- MODULE 3: START MENU & SEARCH -->
+        <LinearLayout
+            android:id="@+id/btnHubStartMenu"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_glass_card_blue"
+            android:padding="16dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:clickable="true"
+            android:focusable="true"
+            android:layout_marginBottom="12dp">
+
+            <ImageView
+                android:layout_width="46dp"
+                android:layout_height="46dp"
+                android:background="@drawable/bg_gem_blue"
+                android:src="@drawable/ic_windows_logo"
+                android:padding="11dp"
+                android:contentDescription="Windows Menu" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginStart="14dp">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Start Menu"
+                        android:textSize="15sp"
+                        android:textStyle="bold"
+                        android:textColor="#FFFFFF" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="OPEN APPS"
+                        android:textSize="9sp"
+                        android:textStyle="bold"
+                        android:textColor="#FFFFFF"
+                        android:background="@drawable/bg_badge_win_blue"
+                        android:paddingHorizontal="8dp"
+                        android:paddingVertical="2dp"
+                        android:singleLine="true"
+                        android:maxLines="1"
+                        android:layout_marginStart="14dp" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Toggle Windows Start menu &amp; search on PC"
+                    android:textSize="12sp"
+                    android:textColor="#94A3B8"
+                    android:layout_marginTop="2dp" />
+            </LinearLayout>
+
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_chevron_right"
+                app:tint="#0078D4"
+                android:contentDescription="Open" />
+        </LinearLayout>
+
+        <!-- MODULE 4: SYSTEM INFO (TASK MANAGER) -->
+        <LinearLayout
+            android:id="@+id/btnHubSystemInfo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_glass_card_amber"
+            android:padding="16dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:clickable="true"
+            android:focusable="true"
+            android:layout_marginBottom="24dp">
+
+            <ImageView
+                android:layout_width="46dp"
+                android:layout_height="46dp"
+                android:background="@drawable/bg_gem_amber"
+                android:src="@drawable/ic_taskmgr_yellow"
+                android:padding="11dp"
+                android:contentDescription="Task Manager" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginStart="14dp">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Task Manager"
+                        android:textSize="15sp"
+                        android:textStyle="bold"
+                        android:textColor="#FFFFFF" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="HARDWARE"
+                        android:textSize="9sp"
+                        android:textStyle="bold"
+                        android:textColor="#03060D"
+                        android:background="@drawable/bg_badge_yellow"
+                        android:paddingHorizontal="8dp"
+                        android:paddingVertical="2dp"
+                        android:singleLine="true"
+                        android:maxLines="1"
+                        android:layout_marginStart="14dp" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Live CPU, Memory, Disk, Wi-Fi graphs &amp; PC telemetry"
+                    android:textSize="12sp"
+                    android:textColor="#94A3B8"
+                    android:layout_marginTop="2dp" />
+            </LinearLayout>
+
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_chevron_right"
+                app:tint="#F59E0B"
+                android:contentDescription="Open" />
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>
+

@@ -1,0 +1,471 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/rootScrollSettings"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_cyber_void"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:id="@+id/llSettingsContent"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingHorizontal="20dp"
+        android:paddingTop="24dp"
+        android:paddingBottom="36dp">
+
+        <!-- Top Navigation Bar -->
+        <LinearLayout
+            android:id="@+id/llSettingsHeader"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="24dp">
+
+            <ImageButton
+                android:id="@+id/btnSettingsBack"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:src="@drawable/ic_arrow_back"
+                android:scaleType="centerInside"
+                android:background="@drawable/bg_rail_tile"
+                android:contentDescription="Back" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginStart="14dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="SETTINGS"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:textColor="#FFFFFF"
+                    android:fontFamily="@font/syne_extrabold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="TARGET PC &amp; PERMISSION CONTROLS"
+                    android:textSize="10sp"
+                    android:fontFamily="monospace"
+                    android:textColor="#94A3B8"
+                    android:letterSpacing="0.08"
+                    android:layout_marginTop="2dp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- ===================================================== -->
+        <!-- OPTION 1: TARGET PC CONFIGURATIONS (MEDIUM DARK BLUE) -->
+        <!-- ===================================================== -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_card_medium_blue"
+            android:padding="18dp"
+            android:layout_marginBottom="20dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="TARGET PC CONFIGURATIONS"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="#60A5FA"
+                android:fontFamily="monospace"
+                android:letterSpacing="0.05"
+                android:layout_marginBottom="4dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Configure paired Windows PC address and port"
+                android:textSize="11sp"
+                android:textColor="#94A3B8"
+                android:layout_marginBottom="14dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Target PC IP Address:"
+                android:textSize="11.5sp"
+                android:textColor="#CBD5E1"
+                android:layout_marginBottom="4dp" />
+
+            <EditText
+                android:id="@+id/etPcHost"
+                android:layout_width="match_parent"
+                android:layout_height="46dp"
+                android:background="#0A0F1D"
+                android:textColor="#FFFFFF"
+                android:textSize="13.5sp"
+                android:fontFamily="monospace"
+                android:paddingHorizontal="14dp"
+                android:hint="e.g. 192.168.1.50 or 100.x.y.z"
+                android:textColorHint="#475569"
+                android:singleLine="true"
+                android:layout_marginBottom="12dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Target PC Port:"
+                android:textSize="11.5sp"
+                android:textColor="#CBD5E1"
+                android:layout_marginBottom="4dp" />
+
+            <EditText
+                android:id="@+id/etPcPort"
+                android:layout_width="match_parent"
+                android:layout_height="46dp"
+                android:background="#0A0F1D"
+                android:textColor="#FFFFFF"
+                android:textSize="13.5sp"
+                android:fontFamily="monospace"
+                android:paddingHorizontal="14dp"
+                android:text="8080"
+                android:hint="8080"
+                android:textColorHint="#475569"
+                android:inputType="number"
+                android:singleLine="true"
+                android:layout_marginBottom="16dp" />
+
+            <Button
+                android:id="@+id/btnSavePcConfig"
+                android:layout_width="match_parent"
+                android:layout_height="46dp"
+                android:text="SAVE &amp; CONNECT"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF"
+                android:backgroundTint="#1D4ED8"
+                android:insetTop="0dp"
+                android:insetBottom="0dp" />
+
+            <TextView
+                android:id="@+id/tvTestResult"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=""
+                android:textSize="11sp"
+                android:fontFamily="monospace"
+                android:layout_marginTop="8dp" />
+        </LinearLayout>
+
+        <!-- ===================================================== -->
+        <!-- OPTION 2: PC TO PHONE CONTROL (PERMISSIONS LIST)      -->
+        <!-- ===================================================== -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_card_medium_blue"
+            android:padding="18dp"
+            android:layout_marginBottom="20dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="PC TO PHONE CONTROL"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="#60A5FA"
+                android:fontFamily="monospace"
+                android:letterSpacing="0.05"
+                android:layout_marginBottom="4dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Tap any item below to grant or verify access"
+                android:textSize="11sp"
+                android:textColor="#94A3B8"
+                android:layout_marginBottom="14dp" />
+
+            <!-- Permission Item 1: Accessibility Service -->
+            <LinearLayout
+                android:id="@+id/itemAccessibility"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/bg_item_setting"
+                android:padding="12dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:layout_marginBottom="8dp">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Remote Touch &amp; Gestures"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:textColor="#FFFFFF" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Accessibility service for PC mouse clicks"
+                        android:textSize="10.5sp"
+                        android:textColor="#94A3B8"
+                        android:layout_marginTop="2dp" />
+                </LinearLayout>
+
+                <ImageView
+                    android:id="@+id/ivStatusAccessibility"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:src="@drawable/ic_cross_mark"
+                    android:layout_marginStart="10dp"
+                    android:contentDescription="Status" />
+            </LinearLayout>
+
+            <!-- Permission Item 2: All Files Storage -->
+            <LinearLayout
+                android:id="@+id/itemStorage"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/bg_item_setting"
+                android:padding="12dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:layout_marginBottom="8dp">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="All Files Access (Storage)"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:textColor="#FFFFFF" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Direct storage browsing &amp; file transfers"
+                        android:textSize="10.5sp"
+                        android:textColor="#94A3B8"
+                        android:layout_marginTop="2dp" />
+                </LinearLayout>
+
+                <ImageView
+                    android:id="@+id/ivStatusStorage"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:src="@drawable/ic_cross_mark"
+                    android:layout_marginStart="10dp"
+                    android:contentDescription="Status" />
+            </LinearLayout>
+
+            <!-- Permission Item 3: Calls, Contacts & SMS -->
+            <LinearLayout
+                android:id="@+id/itemPhoneSms"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/bg_item_setting"
+                android:padding="12dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:layout_marginBottom="8dp">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Phone Calls &amp; SMS Sync"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:textColor="#FFFFFF" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Dial numbers &amp; read incoming SMS from PC"
+                        android:textSize="10.5sp"
+                        android:textColor="#94A3B8"
+                        android:layout_marginTop="2dp" />
+                </LinearLayout>
+
+                <ImageView
+                    android:id="@+id/ivStatusPhoneSms"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:src="@drawable/ic_cross_mark"
+                    android:layout_marginStart="10dp"
+                    android:contentDescription="Status" />
+            </LinearLayout>
+
+            <!-- Permission Item 4: Camera & Microphone -->
+            <LinearLayout
+                android:id="@+id/itemCameraMic"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/bg_item_setting"
+                android:padding="12dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:layout_marginBottom="8dp">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Camera &amp; Audio Intercom"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:textColor="#FFFFFF" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Live lens viewing &amp; voice intercom"
+                        android:textSize="10.5sp"
+                        android:textColor="#94A3B8"
+                        android:layout_marginTop="2dp" />
+                </LinearLayout>
+
+                <ImageView
+                    android:id="@+id/ivStatusCameraMic"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:src="@drawable/ic_cross_mark"
+                    android:layout_marginStart="10dp"
+                    android:contentDescription="Status" />
+            </LinearLayout>
+
+            <!-- Permission Item 5: Battery Optimization Exemption -->
+            <LinearLayout
+                android:id="@+id/itemBattery"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/bg_item_setting"
+                android:padding="12dp"
+                android:clickable="true"
+                android:focusable="true">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Battery Optimization Exemption"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:textColor="#FFFFFF" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Keeps connection alive in background"
+                        android:textSize="10.5sp"
+                        android:textColor="#94A3B8"
+                        android:layout_marginTop="2dp" />
+                </LinearLayout>
+
+                <ImageView
+                    android:id="@+id/ivStatusBattery"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:src="@drawable/ic_cross_mark"
+                    android:layout_marginStart="10dp"
+                    android:contentDescription="Status" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- ===================================================== -->
+        <!-- BOTTOM: PHONE DAEMON STATUS (KEPT AS IS)              -->
+        <!-- ===================================================== -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_card_medium_blue"
+            android:padding="18dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="PHONE DAEMON STATUS"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="#60A5FA"
+                android:fontFamily="monospace"
+                android:letterSpacing="0.05"
+                android:layout_marginBottom="10dp" />
+
+            <TextView
+                android:id="@+id/tvPhoneTailscaleIp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Phone IP: Detecting..."
+                android:textSize="12sp"
+                android:fontFamily="monospace"
+                android:textColor="#E2E8F0"
+                android:layout_marginBottom="4dp" />
+
+            <TextView
+                android:id="@+id/tvPhoneDaemonState"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Port 8081: Standby Listening"
+                android:textSize="12sp"
+                android:textColor="#94A3B8"
+                android:layout_marginBottom="14dp" />
+
+            <Button
+                android:id="@+id/btnRestartDaemon"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:text="Restart Background Daemon"
+                android:textSize="12sp"
+                android:textColor="#FFFFFF"
+                android:backgroundTint="#162038"
+                android:insetTop="0dp"
+                android:insetBottom="0dp" />
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>
