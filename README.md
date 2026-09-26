@@ -74,7 +74,7 @@
 
 1. Download or clone this repository:
    ```bash
-   git clone https://github.com/<your-username>/ano-link.git
+   git clone https://github.com/anonymousagyat/Ano-link
    ```
 2. Double-click **`run.bat`** in the root folder.
    *(Or run manually via terminal)*:
