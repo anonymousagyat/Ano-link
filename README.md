@@ -99,7 +99,7 @@
 
 ### Step 2: Install the Android App
 
-1. Download **`AnoLink.apk`** from [Releases](https://github.com/<your-username>/ano-link/releases).
+1. Download **`AnoLink.apk`** from [Releases](https://github.com/anonymousagyat/Ano-link/releases).
 2. Install the APK on your Android device.
 3. Open **AnoLink**.
 4. A popup will automatically appear: **"Connect Your PC Device"**.
