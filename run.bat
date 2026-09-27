@@ -6,7 +6,7 @@ where node >nul 2>nul
 if %errorlevel% neq 0 (
     echo =======================================================
     echo [ERROR] Node.js is not installed!
-    echo Please download and install Node.js (LTS) from:
+    echo Please download and install Node.js LTS from:
     echo https://nodejs.org
     echo =======================================================
     pause
@@ -21,4 +21,7 @@ if not exist node_modules (
 )
 
 start http://localhost:8080
-call npm start
+node server.js
+if %errorlevel% neq 0 (
+    pause
+)

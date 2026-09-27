@@ -11,9 +11,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="horizontal"
-        android:paddingHorizontal="4dp"
-        android:paddingVertical="4dp">
+        android:orientation="horizontal">
 
         <!-- Left Flank: Sleek Thumb Controls Rail -->
         <LinearLayout
@@ -23,8 +21,6 @@
             android:orientation="vertical"
             android:background="@drawable/bg_frosted_rail"
             android:gravity="center_horizontal"
-            android:layout_marginVertical="6dp"
-            android:layout_marginStart="6dp"
             android:paddingHorizontal="4dp"
             android:paddingVertical="8dp">
 
@@ -309,16 +305,13 @@
             </ScrollView>
         </LinearLayout>
 
-        <!-- Center: PC Screen Viewport (Floating Frame with Margins so it doesn't touch edges) -->
+        <!-- Center: PC Screen Viewport -->
         <FrameLayout
             android:id="@+id/flPcViewport"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:layout_marginHorizontal="6dp"
-            android:layout_marginVertical="6dp"
-            android:background="@drawable/bg_pc_viewport_frame"
-            android:clipToOutline="true">
+            android:background="@drawable/bg_pc_viewport_frame">
 
             <ImageView
                 android:id="@+id/ivPcScreen"
@@ -438,8 +431,6 @@
             android:orientation="vertical"
             android:background="@drawable/bg_frosted_rail"
             android:gravity="center_horizontal"
-            android:layout_marginVertical="6dp"
-            android:layout_marginEnd="6dp"
             android:paddingHorizontal="4dp"
             android:paddingVertical="8dp">
 
@@ -551,24 +542,37 @@
                     android:gravity="center_vertical">
 
                     <ImageView
+                        android:id="@+id/ivTrayWifi"
                         android:layout_width="11dp"
                         android:layout_height="11dp"
                         android:src="@drawable/ic_wifi"
                         app:tint="#94A3B8"
-                        android:layout_marginEnd="3dp"
+                        android:layout_marginEnd="2dp"
                         android:contentDescription="Wi-Fi" />
 
                     <ImageView
+                        android:id="@+id/ivTrayBattery"
                         android:layout_width="11dp"
                         android:layout_height="11dp"
                         android:src="@drawable/ic_battery"
                         app:tint="#34D399"
                         android:contentDescription="Battery" />
 
+                    <ImageView
+                        android:id="@+id/ivTrayBatteryCharging"
+                        android:layout_width="9dp"
+                        android:layout_height="9dp"
+                        android:src="@drawable/ic_bolt"
+                        app:tint="#10B981"
+                        android:visibility="gone"
+                        android:layout_marginStart="1dp"
+                        android:contentDescription="Charging" />
+
                     <TextView
+                        android:id="@+id/tvTrayBattery"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="98%"
+                        android:text="--%"
                         android:textColor="#34D399"
                         android:textSize="7.5sp"
                         android:textStyle="bold"

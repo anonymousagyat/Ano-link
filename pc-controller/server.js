@@ -138,7 +138,16 @@ wssPhoneRemote.on('connection', (ws) => {
     console.log('[PC] Phone Remote connected directly to PC WebSocket (/ws-remote)!');
     if (winBridge && winBridge.stdin && winBridge.stdin.writable) {
         winBridge.stdin.write('GET_WINDOWS\n');
+        winBridge.stdin.write('GET_POWER\n');
     }
+    try {
+        ws.send(JSON.stringify({
+            type: 'pc_battery_status',
+            percent: batteryInfoCache.percent,
+            isCharging: batteryInfoCache.isCharging,
+            hasBattery: batteryInfoCache.hasBattery
+        }));
+    } catch (_) {}
 
     ws.on('message', (data, isBinary) => {
         if (isBinary) return;
@@ -205,7 +214,14 @@ function handleBridgeMessage(msg) {
         return;
     }
 
-    if (msg.type === 'taskbar_apps' || msg.type === 'window_focused' || msg.type === 'power_status' || msg.type === 'pong' || msg.type === 'start_apps' || msg.type === 'launch_status') {
+    if (msg.type === 'taskbar_apps' || msg.type === 'window_focused' || msg.type === 'power_status' || msg.type === 'pong' || msg.type === 'start_apps' || msg.type === 'launch_status' || msg.type === 'pc_battery_status') {
+        if (msg.type === 'pc_battery_status') {
+            batteryInfoCache = {
+                percent: typeof msg.percent === 'number' ? msg.percent : 100,
+                isCharging: !!msg.isCharging,
+                hasBattery: msg.hasBattery !== false
+            };
+        }
         sendToPhone(msg);
         broadcastToPhoneRemote(msg);
         broadcastToBrowsers(msg);
@@ -447,7 +463,14 @@ function handlePhoneMessage(msg) {
     if (action === 'pc_get_taskbar') {
         if (winBridge && winBridge.stdin && winBridge.stdin.writable) {
             winBridge.stdin.write('GET_WINDOWS\n');
+            winBridge.stdin.write('GET_POWER\n');
         }
+        broadcastToPhoneRemote({
+            type: 'pc_battery_status',
+            percent: batteryInfoCache.percent,
+            isCharging: batteryInfoCache.isCharging,
+            hasBattery: batteryInfoCache.hasBattery
+        });
         return;
     }
     if (action === 'pc_focus_window') {
@@ -938,6 +961,14 @@ app.get('/api/pc/apps', (req, res) => {
 let prevCpuTimes = null;
 let currentCpuPercent = 0;
 let processCountCache = 180;
+let batteryInfoCache = { percent: 100, isCharging: true, hasBattery: true };
+
+function updateBatteryTelemetry() {
+    if (winBridge && winBridge.stdin && winBridge.stdin.writable) {
+        winBridge.stdin.write('GET_POWER\n');
+    }
+}
+setInterval(updateBatteryTelemetry, 4000);
 
 function getCpuTimes() {
     const cpus = os.cpus();
@@ -1056,7 +1087,8 @@ function getHardwareTelemetrySnapshot() {
             slots: '2 of 2'
         },
         disk: diskInfo,
-        wifi: activeNet
+        wifi: activeNet,
+        battery: batteryInfoCache
     };
 }
 

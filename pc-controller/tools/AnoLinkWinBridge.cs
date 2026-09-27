@@ -535,6 +535,10 @@ namespace AnoLink
                     EnumerateStartApps();
                     break;
 
+                case "GET_POWER":
+                    SendPowerStatus();
+                    break;
+
                 case "PING":
                     _workerWriter.WriteLine("{\"type\":\"pong\",\"time\":" + DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + "}");
                     break;
@@ -880,6 +884,21 @@ namespace AnoLink
             json.Append("]}");
 
             _workerWriter.WriteLine(json.ToString());
+            SendPowerStatus();
+        }
+
+        static void SendPowerStatus()
+        {
+            try
+            {
+                var ps = SystemInformation.PowerStatus;
+                int pct = (int)Math.Round(ps.BatteryLifePercent * 100);
+                if (pct < 0 || pct > 100) pct = 100;
+                bool online = ps.PowerLineStatus == PowerLineStatus.Online;
+                bool hasBat = (ps.BatteryChargeStatus & BatteryChargeStatus.NoSystemBattery) == 0;
+                _workerWriter.WriteLine("{\"type\":\"pc_battery_status\",\"percent\":" + pct + ",\"isCharging\":" + (online ? "true" : "false") + ",\"hasBattery\":" + (hasBat ? "true" : "false") + "}");
+            }
+            catch { }
         }
 
         static string GetFriendlyAppName(string procName, string title)

@@ -51,6 +51,9 @@ class PcRemoteActivity : AppCompatActivity(), PcRemoteEventListener {
     private lateinit var btnKbSend: Button
     private lateinit var btnCloseWinKb: TextView
     private lateinit var tvTrayClock: TextView
+    private lateinit var ivTrayBattery: ImageView
+    private lateinit var ivTrayBatteryCharging: ImageView
+    private lateinit var tvTrayBattery: TextView
     private lateinit var btnStreamQuality: View
     private lateinit var tvStreamQualityText: TextView
     private lateinit var btnBackToHome: View
@@ -59,6 +62,7 @@ class PcRemoteActivity : AppCompatActivity(), PcRemoteEventListener {
     // State
     private var isScreenStreaming = false
     private var streamInactivityJob: Job? = null
+    private var taskbarSyncJob: Job? = null
     private val activeStickyKeys = mutableSetOf<String>()
     private val modifierButtons = mutableMapOf<String, MutableList<Button>>()
 
@@ -134,6 +138,9 @@ class PcRemoteActivity : AppCompatActivity(), PcRemoteEventListener {
         btnKbSend = findViewById(R.id.btnKbSend)
         btnCloseWinKb = findViewById(R.id.btnCloseWinKb)
         tvTrayClock = findViewById(R.id.tvTrayClock)
+        ivTrayBattery = findViewById(R.id.ivTrayBattery)
+        ivTrayBatteryCharging = findViewById(R.id.ivTrayBatteryCharging)
+        tvTrayBattery = findViewById(R.id.tvTrayBattery)
 
         updateSystemTrayClock()
 
@@ -245,10 +252,25 @@ class PcRemoteActivity : AppCompatActivity(), PcRemoteEventListener {
         // 2. Also register with TailConnectService as secondary listener
         TailConnectService.setPcRemoteListener(this)
         TailConnectService.sendToPc(mapOf("action" to "pc_get_taskbar"))
+
+        // 3. Immediately request taskbar from PC and start background sync loop
+        PcRemoteClient.send("pc_get_taskbar")
+        taskbarSyncJob?.cancel()
+        taskbarSyncJob = activityScope.launch {
+            while (isActive) {
+                if (PcRemoteClient.isConnected()) {
+                    PcRemoteClient.send("pc_get_taskbar")
+                }
+                delay(3500)
+            }
+        }
     }
 
     override fun onPause() {
         super.onPause()
+        taskbarSyncJob?.cancel()
+        taskbarSyncJob = null
+
         // If app is closed or backgrounded, start 5-minute auto-stop countdown
         streamInactivityJob?.cancel()
         streamInactivityJob = CoroutineScope(Dispatchers.Main).launch {
@@ -926,11 +948,39 @@ class PcRemoteActivity : AppCompatActivity(), PcRemoteEventListener {
 
     override fun onPcMessage(type: String, json: JsonObject) {
         activityScope.launch {
-            if (type == "power_status") {
-                val action = json.get("action")?.asString ?: "power"
-                showShortToast("PC Power: $action executed")
+            when (type) {
+                "power_status" -> {
+                    val action = json.get("action")?.asString ?: "power"
+                    showShortToast("PC Power: $action executed")
+                }
+                "pc_battery_status" -> {
+                    val percent = json.get("percent")?.asInt ?: 100
+                    val isCharging = json.get("isCharging")?.asBoolean ?: false
+                    updateBatteryUi(percent, isCharging)
+                }
+                "pc_hardware_stats" -> {
+                    val data = json.getAsJsonObject("data")
+                    if (data != null && data.has("battery")) {
+                        val bat = data.getAsJsonObject("battery")
+                        val percent = bat.get("percent")?.asInt ?: 100
+                        val isCharging = bat.get("isCharging")?.asBoolean ?: false
+                        updateBatteryUi(percent, isCharging)
+                    }
+                }
             }
         }
+    }
+
+    private fun updateBatteryUi(percent: Int, isCharging: Boolean) {
+        tvTrayBattery.text = "$percent%"
+        ivTrayBatteryCharging.visibility = if (isCharging) View.VISIBLE else View.GONE
+        val batColor = when {
+            percent <= 20 && !isCharging -> android.graphics.Color.parseColor("#F43F5E")
+            percent <= 40 && !isCharging -> android.graphics.Color.parseColor("#FBBF24")
+            else -> android.graphics.Color.parseColor("#34D399")
+        }
+        tvTrayBattery.setTextColor(batColor)
+        ivTrayBattery.setColorFilter(batColor)
     }
 
     private fun showShortToast(msg: String) {
