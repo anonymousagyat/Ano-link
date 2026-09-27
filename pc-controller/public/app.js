@@ -3,8 +3,15 @@ let ws = null;
 let connectionState = 'DISCONNECTED';
 
 // DOM Elements
-const connectBtn = document.getElementById('connectBtn');
-const targetIpInput = document.getElementById('targetIpInput');
+const targetDeviceText = document.getElementById('targetDeviceText');
+const openSettingsBtn = document.getElementById('openSettingsBtn');
+const settingsModal = document.getElementById('settingsModal');
+const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+const settingsIpInput = document.getElementById('settingsIpInput');
+const settingsPortInput = document.getElementById('settingsPortInput');
+const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+const disconnectModalBtn = document.getElementById('disconnectModalBtn');
+const modalStatusText = document.getElementById('modalStatusText');
 const statusDot = document.getElementById('statusDot');
 const statusText = document.getElementById('statusText');
 const refreshTelemetryBtn = document.getElementById('refreshTelemetryBtn');
@@ -79,8 +86,8 @@ function handleServerMessage(msg) {
     switch (msg.type) {
         case 'initial_state':
             updateConnectionUI(msg.state);
-            if (msg.phoneConfig && msg.phoneConfig.ip && targetIpInput) {
-                targetIpInput.value = msg.phoneConfig.ip;
+            if (msg.phoneConfig) {
+                updateTargetDeviceDisplay(msg.phoneConfig);
             }
             if (msg.telemetry) updateTelemetryUI(msg.telemetry, msg.lastTelemetryTime);
             if (msg.smsHistory && msg.smsHistory.length > 0) {
@@ -90,6 +97,9 @@ function handleServerMessage(msg) {
 
         case 'status_change':
             updateConnectionUI(msg.state);
+            if (msg.phoneConfig) {
+                updateTargetDeviceDisplay(msg.phoneConfig);
+            }
             break;
 
         case 'telemetry_update':
@@ -141,26 +151,28 @@ function updateConnectionUI(state) {
     connectionState = state;
     if (statusText) statusText.textContent = state;
     if (statusDot) statusDot.className = `dot ${state.toLowerCase()}`;
+    if (modalStatusText) modalStatusText.textContent = state;
+
+    if (disconnectModalBtn) {
+        disconnectModalBtn.style.display = (state === 'CONNECTED') ? 'inline-block' : 'none';
+    }
 
     if (state === 'CONNECTED') {
-        if (connectBtn) {
-            connectBtn.textContent = 'Disconnect';
-            connectBtn.className = 'btn btn-secondary';
-        }
-        log('Phone connected over Tailscale mesh!', 'success');
+        log('Phone connected over cross-device bridge!', 'success');
         // Automatically fetch initial files and SMS history
         sendToGateway({ action: 'get_sms' });
         sendToGateway({ action: 'list_dir', path: currentFolderPath });
-    } else if (state === 'CONNECTING') {
-        if (connectBtn) {
-            connectBtn.textContent = 'Connecting...';
-            connectBtn.className = 'btn btn-secondary';
-        }
+    }
+}
+
+function updateTargetDeviceDisplay(config) {
+    if (!config) return;
+    if (config.ip) {
+        if (targetDeviceText) targetDeviceText.textContent = `${config.ip}:${config.port || 8081}`;
+        if (settingsIpInput) settingsIpInput.value = config.ip;
+        if (settingsPortInput) settingsPortInput.value = config.port || 8081;
     } else {
-        if (connectBtn) {
-            connectBtn.textContent = 'Connect to Phone';
-            connectBtn.className = 'btn btn-primary';
-        }
+        if (targetDeviceText) targetDeviceText.textContent = 'Auto-Detecting...';
     }
 }
 
@@ -215,23 +227,45 @@ function updateTelemetryUI(data, timestamp) {
     }
 }
 
-// Connect / Disconnect Handlers
-if (connectBtn) {
-    connectBtn.addEventListener('click', () => {
-        if (connectionState === 'CONNECTED') {
-            sendToGateway({ action: 'disconnect' });
-        } else {
-            const ip = targetIpInput ? targetIpInput.value.trim() : '';
-            if (!ip) {
-                log('Please enter the Phone IP address first (e.g. 192.168.1.x or 100.x.y.z)', 'error');
-                if (targetIpInput) targetIpInput.focus();
-                return;
-            }
-            sendToGateway({
-                action: 'connect',
-                phoneConfig: { ip }
-            });
+// Settings Modal Handlers
+function openSettingsModal() {
+    if (settingsModal) settingsModal.style.display = 'flex';
+}
+function closeSettingsModal() {
+    if (settingsModal) settingsModal.style.display = 'none';
+}
+
+if (openSettingsBtn) openSettingsBtn.addEventListener('click', openSettingsModal);
+if (closeSettingsBtn) closeSettingsBtn.addEventListener('click', closeSettingsModal);
+if (settingsModal) {
+    settingsModal.addEventListener('click', (e) => {
+        if (e.target === settingsModal) closeSettingsModal();
+    });
+}
+
+if (saveSettingsBtn) {
+    saveSettingsBtn.addEventListener('click', () => {
+        const ip = settingsIpInput ? settingsIpInput.value.trim() : '';
+        const port = settingsPortInput ? parseInt(settingsPortInput.value.trim(), 10) || 8081 : 8081;
+        if (!ip) {
+            showToast('Settings', 'Please enter a valid Phone IP address');
+            if (settingsIpInput) settingsIpInput.focus();
+            return;
         }
+        sendToGateway({
+            action: 'connect',
+            phoneConfig: { ip, port }
+        });
+        showToast('Settings Saved', `Connecting to ${ip}:${port}...`);
+        closeSettingsModal();
+    });
+}
+
+if (disconnectModalBtn) {
+    disconnectModalBtn.addEventListener('click', () => {
+        sendToGateway({ action: 'disconnect' });
+        showToast('Disconnected', 'Disconnected from Phone daemon');
+        closeSettingsModal();
     });
 }
 

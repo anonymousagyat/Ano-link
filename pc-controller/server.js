@@ -134,8 +134,32 @@ function broadcastBinaryToBrowsers(buffer) {
     });
 }
 
-wssPhoneRemote.on('connection', (ws) => {
-    console.log('[PC] Phone Remote connected directly to PC WebSocket (/ws-remote)!');
+wssPhoneRemote.on('connection', (ws, request) => {
+    let clientIp = (request && request.socket && request.socket.remoteAddress) || (ws._socket && ws._socket.remoteAddress) || '';
+    clientIp = clientIp.replace(/^.*:/, '').trim();
+
+    console.log(`[PC] Phone Remote connected directly from ${clientIp || 'network'} (/ws-remote)!`);
+
+    // Auto-discover phone IP from the incoming connection & persist to config.json
+    if (clientIp && clientIp !== '127.0.0.1' && clientIp !== 'localhost' && clientIp !== '::1') {
+        const wasDifferent = phoneConfig.ip !== clientIp;
+        phoneConfig.ip = clientIp;
+        saveConfig();
+        if (wasDifferent) {
+            console.log(`[PC] Auto-paired with Phone IP: ${clientIp} (saved to config.json)`);
+        }
+        if (connectionState !== 'CONNECTED' && connectionState !== 'CONNECTING') {
+            connectToPhone();
+        }
+    }
+
+    // Broadcast updated configuration to all connected browser dashboards
+    broadcastToBrowsers({
+        type: 'status_change',
+        state: connectionState,
+        phoneConfig
+    });
+
     if (winBridge && winBridge.stdin && winBridge.stdin.writable) {
         winBridge.stdin.write('GET_WINDOWS\n');
         winBridge.stdin.write('GET_POWER\n');
@@ -643,10 +667,16 @@ wssBrowser.on('connection', (ws) => {
 function handleBrowserMessage(msg) {
     switch (msg.action) {
         case 'connect':
+        case 'save_config':
             if (msg.phoneConfig) {
                 phoneConfig = { ...phoneConfig, ...msg.phoneConfig };
+                saveConfig();
             }
-            connectToPhone();
+            if (msg.action !== 'save_config') {
+                connectToPhone();
+            } else {
+                broadcastToBrowsers({ type: 'status_change', state: connectionState, phoneConfig });
+            }
             break;
 
         case 'disconnect':
@@ -1155,27 +1185,11 @@ server.listen(PORT, '0.0.0.0', () => {
     initWinBridge();
 
     if (phoneConfig.ip) {
-        console.log(`📱 Configured Phone Target: ${phoneConfig.ip}:${phoneConfig.port}`);
+        console.log(`📱 Saved Phone Target: ${phoneConfig.ip}:${phoneConfig.port}`);
         connectToPhone();
     } else {
-        console.log(`📱 Phone IP is not configured.`);
-        console.log(`   Configure via Web Dashboard at http://localhost:${PORT}, or enter below:\n`);
-        const rl = readline.createInterface({
-            input: process.stdin,
-            output: process.stdout
-        });
-        rl.question('👉 Enter Phone IP (e.g. 192.168.1.25 or 100.x.y.z) [or Enter to skip]: ', (answer) => {
-            const enteredIp = answer.trim();
-            if (enteredIp) {
-                phoneConfig.ip = enteredIp;
-                saveConfig();
-                console.log(`[PC] Saved Phone target: ${phoneConfig.ip}:${phoneConfig.port}`);
-                connectToPhone();
-            } else {
-                console.log(`[PC] Waiting for phone configuration via Web Dashboard at http://localhost:${PORT}...`);
-            }
-            rl.close();
-        });
+        console.log(`📱 Waiting for Phone connection...`);
+        console.log(`   (Open the Ano-Link app on your phone and enter your PC IP. The PC will auto-detect and pair instantly!)`);
     }
 });
 

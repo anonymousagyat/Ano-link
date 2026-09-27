@@ -30,16 +30,18 @@
         </div>
 
         <div class="connection-bar">
-            <div class="target-info">
+            <div class="target-badge" id="targetBadge" title="Current Connected Target Phone">
                 <span class="label">Target:</span>
-                <input type="text" id="targetIpInput" placeholder="Enter Phone IP (e.g. 192.168.1.x)" title="Phone IP">
-                <span class="port">:8081</span>
+                <strong id="targetDeviceText">Auto-Detecting...</strong>
             </div>
             <div class="status-indicator">
                 <span id="statusDot" class="dot disconnected"></span>
                 <span id="statusText">DISCONNECTED</span>
             </div>
-            <button id="connectBtn" class="btn btn-primary">Connect to Phone</button>
+            <button id="openSettingsBtn" class="btn btn-secondary btn-icon" title="Configure Target Phone Settings">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px;"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                <span>Settings</span>
+            </button>
         </div>
     </header>
 
@@ -410,6 +412,52 @@
             </div>
         </section>
     </main>
+
+    <!-- Connection Settings Modal -->
+    <div id="settingsModal" class="modal-backdrop" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <div class="modal-icon-badge">⚙️</div>
+                    <div>
+                        <h3>Target Phone Settings</h3>
+                        <small>Configure or override your phone connection</small>
+                    </div>
+                </div>
+                <button id="closeSettingsBtn" class="modal-close-btn" title="Close Settings">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="auto-pair-banner">
+                    <span class="banner-icon">⚡</span>
+                    <div>
+                        <strong>Zero-Config Auto-Pairing Active</strong>
+                        <p>When you open the Ano-Link app on your phone and connect to this PC, the IP is automatically detected and saved.</p>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="settingsIpInput">Phone IP Address:</label>
+                    <input type="text" id="settingsIpInput" placeholder="e.g. 192.168.1.15 or 100.x.y.z" class="form-input">
+                    <small class="field-hint">Local Wi-Fi IP or Tailscale mesh IP of your smartphone.</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="settingsPortInput">Phone Daemon Port:</label>
+                    <input type="number" id="settingsPortInput" value="8081" class="form-input">
+                    <small class="field-hint">Default is 8081 (Phone background daemon service).</small>
+                </div>
+
+                <div class="settings-status-box">
+                    <span class="status-label">Current Connection:</span>
+                    <strong id="modalStatusText">DISCONNECTED</strong>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="disconnectModalBtn" class="btn btn-secondary">Disconnect</button>
+                <button id="saveSettingsBtn" class="btn btn-primary">Save & Connect</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Notification Toast Container (e.g. for incoming OTPs) -->
     <div id="toastContainer" class="toast-container"></div>
