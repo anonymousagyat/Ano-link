@@ -1,0 +1,1143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ano-Link Task Manager — Telegram Disintegration</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-void: #03050B;
+      --bg-surface: #060913;
+      --card-gradient: linear-gradient(165deg, rgba(17, 25, 46, 0.9) 0%, rgba(9, 14, 28, 0.98) 100%);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --card-hover-border: rgba(245, 158, 11, 0.4);
+      --primary-amber: #F59E0B;
+      --accent-cyan: #06B6D4;
+      --accent-purple: #A855F7;
+      --danger-red: #EF4444;
+      --danger-gradient: linear-gradient(135deg, rgba(239, 68, 68, 0.18) 0%, rgba(185, 28, 28, 0.32) 100%);
+      --danger-border: rgba(239, 68, 68, 0.45);
+      --text-main: #FFFFFF;
+      --text-dim: #94A3B8;
+      --text-muted: #64748B;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: var(--bg-void);
+      background-image: 
+        radial-gradient(circle at 50% 0%, rgba(245, 158, 11, 0.05) 0%, transparent 60%),
+        radial-gradient(circle at 100% 100%, rgba(168, 85, 247, 0.04) 0%, transparent 50%);
+      color: var(--text-main);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 24px;
+      overflow-x: hidden;
+    }
+
+    /* Device Viewport Frame */
+    .device-viewport {
+      width: 100%;
+      max-width: 440px;
+      height: 920px;
+      background: var(--bg-surface);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 46px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 
+        0 35px 90px -20px rgba(0, 0, 0, 0.98),
+        0 0 0 1px rgba(255, 255, 255, 0.05),
+        0 0 50px rgba(245, 158, 11, 0.08);
+      position: relative;
+    }
+
+    /* Full-Screen Canvas for Telegram Shatter Sand Drift */
+    #particleCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 50;
+    }
+
+    /* Top App Header */
+    .app-header {
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 18px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      background: rgba(6, 9, 19, 0.85);
+      backdrop-filter: blur(20px);
+      z-index: 20;
+    }
+
+    .btn-header-back {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--text-dim);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .btn-header-back:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #FFFFFF;
+      transform: translateX(-1px);
+    }
+
+    .header-branding {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+    .header-brand-icon {
+      width: 22px;
+      height: 22px;
+      color: var(--primary-amber);
+      filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.4));
+    }
+    .header-title-text {
+      font-size: 19px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      letter-spacing: 0.3px;
+    }
+    .title-white { color: #FFFFFF; }
+    .title-amber { 
+      background: linear-gradient(135deg, #FBBF24 0%, #F59E0B 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .live-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      font-weight: 700;
+      color: #10B981;
+      box-shadow: 0 0 14px rgba(16, 185, 129, 0.15);
+    }
+    .live-dot {
+      width: 6px;
+      height: 6px;
+      background: #10B981;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #10B981;
+      animation: livePulse 1.6s infinite ease-in-out;
+    }
+    @keyframes livePulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.35; transform: scale(0.8); }
+    }
+
+    /* ============================================================ */
+    /* 5-COLUMN TAB BAR (CPU, MEMORY, DISK, WI-FI, PROCESSES)       */
+    /* ============================================================ */
+    .tab-bar {
+      display: flex;
+      padding: 10px 14px;
+      gap: 6px;
+      background: #080D1A;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      z-index: 10;
+    }
+    .tab-item {
+      flex: 1;
+      padding: 9px 4px;
+      border-radius: 13px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .tab-item:hover {
+      background: rgba(255, 255, 255, 0.06);
+    }
+    .tab-item.active {
+      background: linear-gradient(145deg, rgba(245, 158, 11, 0.16) 0%, rgba(217, 119, 6, 0.08) 100%);
+      border-color: rgba(245, 158, 11, 0.45);
+      box-shadow: 0 4px 20px rgba(245, 158, 11, 0.14);
+    }
+    .tab-item.active .tab-title {
+      color: #FFFFFF;
+      font-weight: 700;
+    }
+    .tab-item.active .tab-value {
+      color: var(--primary-amber);
+    }
+
+    .tab-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-dim);
+      white-space: nowrap;
+    }
+    .tab-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Content Area */
+    .view-content-area {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      scrollbar-width: thin;
+      scrollbar-color: #1E293B transparent;
+      position: relative;
+    }
+
+    /* Controls Strip */
+    .proc-controls-header {
+      padding: 14px 16px 8px 16px;
+      background: var(--bg-surface);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      position: sticky;
+      top: 0;
+      z-index: 15;
+      backdrop-filter: blur(16px);
+    }
+
+    .search-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .search-icon {
+      position: absolute;
+      left: 14px;
+      width: 17px;
+      height: 17px;
+      color: #64748B;
+      pointer-events: none;
+    }
+    .search-input {
+      width: 100%;
+      height: 44px;
+      background: linear-gradient(180deg, #0C1428 0%, #080D1D 100%);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-top: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 14px;
+      padding: 0 38px 0 42px;
+      color: #FFFFFF;
+      font-size: 13.5px;
+      font-family: inherit;
+      outline: none;
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+      transition: all 0.22s ease;
+    }
+    .search-input:focus {
+      border-color: var(--primary-amber);
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5), 0 0 20px rgba(245, 158, 11, 0.2);
+    }
+    .search-input::placeholder { color: #475569; }
+
+    .btn-search-clear {
+      position: absolute;
+      right: 12px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-dim);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      cursor: pointer;
+    }
+
+    /* Filter Chips Row */
+    .filter-chips {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      padding-bottom: 2px;
+    }
+    .filter-chips::-webkit-scrollbar { display: none; }
+    .chip {
+      padding: 5px 13px;
+      border-radius: 20px;
+      font-size: 11.5px;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      color: var(--text-dim);
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .chip:hover {
+      background: rgba(255, 255, 255, 0.07);
+      color: #fff;
+    }
+    .chip.active {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.25);
+      color: #FFFFFF;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+    }
+
+    /* Sub-header Summary Bar */
+    .summary-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 7px 18px;
+      font-size: 10.5px;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    /* Process Cards Container */
+    .process-card-list {
+      padding: 10px 14px 28px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      position: relative;
+    }
+
+    /* ============================================================ */
+    /* DECORATED PROCESS CARD                                       */
+    /* ============================================================ */
+    .proc-card {
+      background: var(--card-gradient);
+      border: 1px solid var(--card-border);
+      border-top: 1px solid rgba(255, 255, 255, 0.14); /* Specular top highlight */
+      border-radius: 18px;
+      padding: 13px 14px;
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+      position: relative;
+      overflow: hidden;
+      /* Silky smooth layout collapse transition */
+      transition: 
+        max-height 0.42s cubic-bezier(0.25, 1, 0.35, 1),
+        margin 0.42s cubic-bezier(0.25, 1, 0.35, 1),
+        padding 0.42s cubic-bezier(0.25, 1, 0.35, 1);
+      max-height: 90px;
+      will-change: max-height, clip-path;
+    }
+    .proc-card:hover {
+      border-color: var(--card-hover-border);
+      box-shadow: 0 8px 26px rgba(0, 0, 0, 0.6), 0 0 16px rgba(245, 158, 11, 0.08);
+      transform: translateY(-1px);
+    }
+
+    /* Card collapsing state: after JS clip-path wipe finishes, empty slot smoothly closes */
+    .proc-card.collapsing {
+      max-height: 0 !important;
+      padding-top: 0 !important;
+      padding-bottom: 0 !important;
+      margin-top: -5px !important;
+      margin-bottom: -5px !important;
+      border-width: 0 !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+      clip-path: inset(0 0 0 100%) !important;
+    }
+
+    /* Icon Frame */
+    .proc-logo-frame {
+      width: 44px;
+      height: 44px;
+      border-radius: 13px;
+      background: linear-gradient(145deg, #090E1F 0%, #040813 100%);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-top: 1px solid rgba(255, 255, 255, 0.18);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    }
+    .proc-logo-frame svg {
+      width: 25px;
+      height: 25px;
+      filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.5));
+    }
+
+    /* Middle Details */
+    .proc-body {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .proc-header-line {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .proc-app-name {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #FFFFFF;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      letter-spacing: -0.1px;
+    }
+    .proc-pid-pill {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      color: #64748B;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      padding: 1px 6px;
+      border-radius: 5px;
+    }
+
+    /* Telemetry Meters (CPU & RAM) */
+    .proc-telemetry {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .gauge-cpu {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      color: var(--accent-cyan);
+    }
+    .gauge-mem {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      color: var(--accent-purple);
+    }
+
+    .meter-track {
+      width: 38px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .meter-bar-cpu {
+      height: 100%;
+      background: linear-gradient(90deg, #00F2FE 0%, #4FACFE 100%);
+      box-shadow: 0 0 6px rgba(0, 242, 254, 0.6);
+      border-radius: 2px;
+    }
+    .meter-bar-mem {
+      height: 100%;
+      background: linear-gradient(90deg, #A855F7 0%, #EC4899 100%);
+      box-shadow: 0 0 6px rgba(168, 85, 247, 0.6);
+      border-radius: 2px;
+    }
+
+    /* ============================================================ */
+    /* UPGRADED END BUTTON                                          */
+    /* ============================================================ */
+    .btn-end {
+      padding: 8px 13px;
+      border-radius: 12px;
+      font-size: 11.5px;
+      font-weight: 700;
+      font-family: 'Inter', sans-serif;
+      background: var(--danger-gradient);
+      border: 1px solid var(--danger-border);
+      border-top: 1px solid rgba(255, 120, 120, 0.5); /* Specular highlight */
+      color: #FFA4A4;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 3px 12px rgba(220, 38, 38, 0.2);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      flex-shrink: 0;
+      position: relative;
+    }
+    .btn-end:hover {
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.35) 0%, rgba(220, 38, 38, 0.55) 100%);
+      border-color: #EF4444;
+      color: #FFFFFF;
+      box-shadow: 0 0 16px rgba(239, 68, 68, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+      transform: translateY(-1px);
+    }
+    .btn-end:active {
+      transform: scale(0.92);
+    }
+    .btn-end svg {
+      width: 12px;
+      height: 12px;
+      stroke-width: 2.8;
+    }
+
+    /* Hardware Performance View Mock */
+    .perf-view {
+      display: none;
+      padding: 16px;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .perf-card {
+      background: var(--card-gradient);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .perf-val {
+      font-size: 34px;
+      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+      color: #fff;
+    }
+
+    /* Floating Toast Notification */
+    .system-toast {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(70px);
+      background: rgba(14, 22, 42, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(16px);
+      padding: 10px 20px;
+      border-radius: 30px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #E2E8F0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.8);
+      transition: all 0.34s cubic-bezier(0.34, 1.56, 0.64, 1);
+      pointer-events: none;
+      opacity: 0;
+      z-index: 60;
+      white-space: nowrap;
+    }
+    .system-toast.visible {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+    .toast-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #EF4444;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Phone Container Viewport -->
+  <div class="device-viewport" id="deviceViewport">
+
+    <!-- High-Performance GPU Canvas for Silky Smooth Sand Disintegration -->
+    <canvas id="particleCanvas"></canvas>
+
+    <!-- Top Header -->
+    <header class="app-header">
+      <button class="btn-header-back" title="Back">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </button>
+
+      <div class="header-branding">
+        <svg class="header-brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+          <line x1="8" y1="21" x2="16" y2="21"></line>
+          <line x1="12" y1="17" x2="12" y2="21"></line>
+        </svg>
+        <div class="header-title-text">
+          <span class="title-white">Task</span>
+          <span class="title-amber">Manager</span>
+        </div>
+      </div>
+
+      <div class="live-badge">
+        <span class="live-dot"></span>
+        <span>LIVE</span>
+      </div>
+    </header>
+
+    <!-- 5-COLUMN TAB BAR (CPU, MEMORY, DISK, WI-FI, PROCESSES) -->
+    <nav class="tab-bar">
+      <!-- Tab 1: CPU -->
+      <div class="tab-item" id="tab-cpu" onclick="switchTab('cpu')">
+        <span class="tab-title">CPU</span>
+        <span class="tab-value">28%</span>
+      </div>
+
+      <!-- Tab 2: Memory -->
+      <div class="tab-item" id="tab-mem" onclick="switchTab('mem')">
+        <span class="tab-title">Memory</span>
+        <span class="tab-value">54%</span>
+      </div>
+
+      <!-- Tab 3: Disk -->
+      <div class="tab-item" id="tab-disk" onclick="switchTab('disk')">
+        <span class="tab-title">Disk</span>
+        <span class="tab-value">3%</span>
+      </div>
+
+      <!-- Tab 4: Wi-Fi -->
+      <div class="tab-item" id="tab-wifi" onclick="switchTab('wifi')">
+        <span class="tab-title">Wi-Fi</span>
+        <span class="tab-value">5.4M</span>
+      </div>
+
+      <!-- Tab 5: Processes (ACTIVE) -->
+      <div class="tab-item active" id="tab-proc" onclick="switchTab('proc')">
+        <span class="tab-title">Processes</span>
+        <span class="tab-value" id="badgeCount">8</span>
+      </div>
+    </nav>
+
+    <!-- ============================================================ -->
+    <!-- VIEW: PROCESSES TAB VIEW                                      -->
+    <!-- ============================================================ -->
+    <div class="view-content-area" id="processesView">
+      
+      <!-- Search & Filters -->
+      <div class="proc-controls-header">
+        <div class="search-wrapper">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" id="procSearchInput" class="search-input" placeholder="Search processes by name or PID..." oninput="handleSearch()">
+          <span id="btnClearSearch" class="btn-search-clear" onclick="clearSearch()">✕</span>
+        </div>
+
+        <!-- Filter Chips -->
+        <div class="filter-chips">
+          <div class="chip active" onclick="applyFilter('all', this)">All (8)</div>
+          <div class="chip" onclick="applyFilter('high-ram', this)">Highest RAM</div>
+          <div class="chip" onclick="applyFilter('high-cpu', this)">Highest CPU</div>
+          <div class="chip" onclick="applyFilter('apps', this)">User Apps</div>
+        </div>
+      </div>
+
+      <!-- Summary Bar -->
+      <div class="summary-bar">
+        <span id="summaryText">SHOWING 8 ACTIVE PROCESSES</span>
+        <span>RAM ALLOCATED: 8.6 GB / 16.0 GB</span>
+      </div>
+
+      <!-- Process Rows Container -->
+      <div class="process-card-list" id="procListContainer">
+        <!-- Injected via JavaScript -->
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- VIEW: PERFORMANCE HARDWARE TELEMETRY PREVIEW                 -->
+    <!-- ============================================================ -->
+    <div class="view-content-area perf-view" id="performanceView">
+      <div class="perf-card">
+        <div style="font-size: 12px; color: var(--text-dim);" id="perfTitle">Processor Utilization</div>
+        <div class="perf-val" id="perfVal">28%</div>
+        <div style="font-size: 13px; color: var(--primary-amber); font-family: 'JetBrains Mono', monospace;">3.42 GHz Base Clock</div>
+        
+        <!-- Graph SVG -->
+        <svg viewBox="0 0 400 120" style="width: 100%; height: 120px; margin-top: 10px;">
+          <defs>
+            <linearGradient id="sparkGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#F59E0B" stop-opacity="0.3"/>
+              <stop offset="100%" stop-color="#F59E0B" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <path d="M 0 80 Q 50 60, 100 75 T 200 40 T 300 55 T 400 25 L 400 120 L 0 120 Z" fill="url(#sparkGrad)" />
+          <path d="M 0 80 Q 50 60, 100 75 T 200 40 T 300 55 T 400 25" stroke="#F59E0B" stroke-width="2.5" fill="none" stroke-linecap="round" />
+        </svg>
+      </div>
+    </div>
+
+    <!-- System Action Toast -->
+    <div class="system-toast" id="systemToast">
+      <span class="toast-dot"></span>
+      <span id="toastMsg">Terminated process</span>
+    </div>
+
+  </div>
+
+  <script>
+    // Authentic High-Resolution Vector Brand Logos (Zero Emojis)
+    const BRAND_SVGS = {
+      brave: `
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M12 2L3 6V11C3 16.5 6.8 21.7 12 23C17.2 21.7 21 16.5 21 11V6L12 2Z" fill="url(#braveGrad)"/>
+          <path d="M12 5.5L7 8V11.5C7 15 9.1 18.2 12 19.5C14.9 18.2 17 15 17 11.5V8L12 5.5Z" fill="#FFFFFF" fill-opacity="0.9"/>
+          <defs>
+            <linearGradient id="braveGrad" x1="3" y1="2" x2="21" y2="23" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#FF5A00"/>
+              <stop offset="1" stop-color="#FF1E00"/>
+            </linearGradient>
+          </defs>
+        </svg>`,
+      vscode: `
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M17.5 2L5.8 11.4L2 8.5L0.5 9.5L2 14.5L5.8 12.6L17.5 22L23.5 19V5L17.5 2Z" fill="#007ACC"/>
+          <path d="M17.5 22L7 12L17.5 2L23.5 5V19L17.5 22Z" fill="#1F9CF0"/>
+          <path d="M17.5 7.5L9.5 12L17.5 16.5V7.5Z" fill="#0065A9"/>
+        </svg>`,
+      chrome: `
+        <svg viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" fill="#4285F4"/>
+          <circle cx="12" cy="12" r="4.5" fill="#FFFFFF"/>
+          <circle cx="12" cy="12" r="3.2" fill="#1A73E8"/>
+          <path d="M12 7.5H21.5C20.2 4.4 17.5 2.2 14.2 2.05L12 7.5Z" fill="#EA4335"/>
+          <path d="M4.5 16.2L8.5 9.2L6.3 5.4C3.8 7.2 2.2 10.1 2.05 13.4L4.5 16.2Z" fill="#34A853"/>
+          <path d="M12 16.5L16.2 9.2L18.4 13C17.3 16.2 14.6 18.5 11.2 18.7L12 16.5Z" fill="#FBBC05"/>
+        </svg>`,
+      explorer: `
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M3 5C3 3.9 3.9 3 5 3H10L12 6H19C20.1 6 21 6.9 21 8V18C21 19.1 20.1 20 19 20H5C3.9 20 3 19.1 3 18V5Z" fill="#0078D4"/>
+          <path d="M21 9H3V18C3 19.1 3.9 20 5 20H19C20.1 20 21 19.1 21 18V9Z" fill="#2896F3"/>
+        </svg>`,
+      steam: `
+        <svg viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="10" fill="#171A21"/>
+          <path d="M12 2C6.5 2 2 6.5 2 12C2 16.8 5.4 20.7 10 21.7V15.5L7.8 14.6C6.7 14.2 6.1 12.9 6.6 11.8C7 10.7 8.3 10.1 9.4 10.6L12.5 11.8C13.4 10.7 15 10.4 16.2 11.2C17.4 12 17.8 13.6 17.1 14.9C16.4 16.1 14.8 16.7 13.5 16.1L10.5 17.2V21.9C11 22 11.5 22 12 22C17.5 22 22 17.5 22 12C22 6.5 17.5 2 12 2Z" fill="#FFFFFF"/>
+        </svg>`,
+      discord: `
+        <svg viewBox="0 0 24 24" fill="#5865F2">
+          <path d="M20.3 4.4C18.8 3.7 17.1 3.2 15.4 3C15.2 3.4 15 3.9 14.8 4.3C13 4 11.1 4 9.3 4.3C9.1 3.9 8.9 3.4 8.7 3C7 3.2 5.3 3.7 3.7 4.4C0.6 9 -0.2 13.5 0.1 17.9C2.2 19.4 4.2 20.3 6.1 20.9C6.6 20.2 7.1 19.5 7.5 18.7C6.8 18.4 6.1 18.1 5.4 17.7C5.6 17.5 5.8 17.4 5.9 17.2C9.8 19 14.2 19 18.1 17.2C18.3 17.4 18.5 17.5 18.7 17.7C18 18.1 17.3 18.5 16.6 18.7C17 19.5 17.5 20.2 18 20.9C19.9 20.3 21.9 19.4 24 17.9C24.4 12.8 23.1 8.4 20.3 4.4ZM8 15.3C6.8 15.3 5.9 14.2 5.9 12.9C5.9 11.6 6.8 10.5 8 10.5C9.2 10.5 10.1 11.6 10.1 12.9C10.1 14.2 9.2 15.3 8 15.3ZM16 15.3C14.8 15.3 13.9 14.2 13.9 12.9C13.9 11.6 14.8 10.5 16 10.5C17.2 10.5 18.1 11.6 18.1 12.9C18.1 14.2 17.2 15.3 16 15.3Z"/>
+        </svg>`,
+      spotify: `
+        <svg viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" fill="#1ED760"/>
+          <path d="M16.5 15.5C16.3 15.8 15.9 15.9 15.6 15.7C13.2 14.2 10.2 13.9 6.4 14.7C6 14.8 5.7 14.5 5.6 14.2C5.5 13.8 5.8 13.5 6.1 13.4C10.3 12.5 13.6 12.8 16.3 14.5C16.6 14.7 16.7 15.1 16.5 15.5ZM17.6 12.9C17.3 13.3 16.8 13.4 16.4 13.2C13.7 11.5 9.7 11.1 6.3 12.1C5.9 12.2 5.4 12 5.3 11.5C5.2 11.1 5.4 10.7 5.8 10.5C9.7 9.4 14.2 9.9 17.3 11.7C17.7 12 17.8 12.5 17.6 12.9ZM17.7 10.2C14.5 8.3 9.1 8.1 5.7 9.1C5.1 9.3 4.6 9 4.4 8.5C4.2 8 4.5 7.4 5 7.2C8.9 6.1 14.8 6.3 18.5 8.5C19 8.8 19.2 9.4 18.9 9.9C18.7 10.4 18.1 10.5 17.7 10.2Z" fill="#121212"/>
+        </svg>`,
+      terminal: `
+        <svg viewBox="0 0 24 24" fill="none">
+          <rect x="2" y="4" width="20" height="16" rx="3" fill="#1C1C1E" stroke="#3A3A3C"/>
+          <path d="M6 8L10 12L6 16" stroke="#4FACFE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <line x1="12" y1="16" x2="17" y2="16" stroke="#A855F7" stroke-width="2" stroke-linecap="round"/>
+        </svg>`,
+      security: `
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M12 2L4 5V11C4 16.5 7.4 21.6 12 23C16.6 21.6 20 16.5 20 11V5L12 2Z" fill="#0078D4"/>
+          <path d="M9 12L11 14L15 10" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>`,
+      node: `
+        <svg viewBox="0 0 24 24" fill="#68A063">
+          <path d="M12 2L3.5 7V17L12 22L20.5 17V7L12 2Z"/>
+          <path d="M12 6.5L7 9.4V14.6L12 17.5L17 14.6V9.4L12 6.5Z" fill="#222"/>
+        </svg>`
+    };
+
+    // ============================================================
+    // TELEGRAM ULTRA-FINE PARTICLES ENGINE (NO RANDOMNESS, NO LAG)
+    // ============================================================
+    const canvas = document.getElementById('particleCanvas');
+    const ctx = canvas.getContext('2d', { alpha: true });
+    let particles = [];
+    let isAnimating = false;
+
+    function resizeCanvas() {
+      const container = document.getElementById('deviceViewport');
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = Math.round(container.clientWidth * dpr);
+      canvas.height = Math.round(container.clientHeight * dpr);
+      ctx.resetTransform();
+      ctx.scale(dpr, dpr);
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // A single microscopic sand dot — a piece of the card itself flying away
+    class MicroDustParticle {
+      constructor(x, y, color) {
+        this.x = x;
+        this.y = y;
+        this.active = false; // dormant until the wipe edge reaches this column
+
+        // Structured, smooth laminar vector: flying slowly right-up diagonally (~45-55 deg)
+        this.vx = 0.50 + Math.random() * 0.28;
+        this.vy = -(0.70 + Math.random() * 0.35);
+
+        // Ultra-microscopic sand speck (0.45px to 0.75px)
+        this.size = 0.45 + Math.random() * 0.30;
+        this.color = color;
+        this.life = 1.0;
+        this.decayRate = 0.0052; // ~2.2s cinematic slow-motion flight
+      }
+
+      update() {
+        if (!this.active) return true; // still waiting to be released
+
+        this.x += this.vx;
+        this.y += this.vy;
+        this.vx *= 0.995;
+        this.vy *= 0.995;
+        this.life -= this.decayRate;
+        return this.life > 0;
+      }
+
+      draw(c) {
+        if (!this.active || this.life <= 0) return;
+        c.globalAlpha = Math.max(0, this.life * 0.85);
+        c.fillStyle = this.color;
+        const s = Math.max(0.25, this.size * Math.min(1.0, this.life * 1.15));
+        c.fillRect(this.x, this.y, s, s);
+      }
+    }
+
+    // Active dissolve jobs (each is a card being wiped)
+    let activeDissolves = [];
+    const SLATE_PALETTE = ['#94A3B8', '#CBD5E1', '#64748B', '#E2E8F0', '#475569'];
+
+    // Build a column-indexed particle grid matching the card's exact rounded shape
+    function buildParticleColumns(cardElement) {
+      const containerRect = document.getElementById('deviceViewport').getBoundingClientRect();
+      const rect = cardElement.getBoundingClientRect();
+      const ox = rect.left - containerRect.left;
+      const oy = rect.top - containerRect.top;
+      const w = rect.width;
+      const h = rect.height;
+      const r = 18; // must match the card's border-radius
+      const step = 2.3;
+      const columns = [];
+      for (let x = 0; x < w; x += step) {
+        const col = [];
+        for (let y = 0; y < h; y += step) {
+          // Skip particles outside the rounded corners
+          if (!isInsideRoundedRect(x, y, w, h, r)) continue;
+
+          const jx = Math.random() * 0.8 - 0.4;
+          const jy = Math.random() * 0.8 - 0.4;
+          const color = SLATE_PALETTE[Math.floor(Math.random() * SLATE_PALETTE.length)];
+          col.push(new MicroDustParticle(ox + x + jx, oy + y + jy, color));
+        }
+        columns.push(col);
+      }
+      return columns;
+    }
+
+    // Check if a point (x, y) in local card coords is inside a rounded rectangle
+    function isInsideRoundedRect(x, y, w, h, r) {
+      // Top-left corner
+      if (x < r && y < r) {
+        const dx = x - r, dy = y - r;
+        return (dx * dx + dy * dy) <= r * r;
+      }
+      // Top-right corner
+      if (x > w - r && y < r) {
+        const dx = x - (w - r), dy = y - r;
+        return (dx * dx + dy * dy) <= r * r;
+      }
+      // Bottom-left corner
+      if (x < r && y > h - r) {
+        const dx = x - r, dy = y - (h - r);
+        return (dx * dx + dy * dy) <= r * r;
+      }
+      // Bottom-right corner
+      if (x > w - r && y > h - r) {
+        const dx = x - (w - r), dy = y - (h - r);
+        return (dx * dx + dy * dy) <= r * r;
+      }
+      // Inside the straight edges
+      return true;
+    }
+
+    // Launch synchronized dissolve: clip-path wipe + column-by-column particle release
+    function triggerSyncDissolve(cardElement) {
+      const columns = buildParticleColumns(cardElement);
+      const WIPE_MS = 420;
+
+      // Add all particles (dormant) to global pool
+      for (const col of columns) {
+        for (const p of col) particles.push(p);
+      }
+
+      activeDissolves.push({
+        card: cardElement,
+        columns: columns,
+        totalCols: columns.length,
+        lastCol: -1,
+        startTime: performance.now(),
+        wipeMs: WIPE_MS,
+        done: false,
+
+        tick(now) {
+          const progress = Math.min(1.0, (now - this.startTime) / this.wipeMs);
+
+          // Wipe the card from left to right via clip-path
+          this.card.style.clipPath = `inset(0 0 0 ${(progress * 100).toFixed(1)}%)`;
+
+          // Activate particle columns the wipe has passed over
+          const targetCol = Math.floor(progress * this.totalCols);
+          if (targetCol > this.lastCol) {
+            for (let c = this.lastCol + 1; c <= Math.min(targetCol, this.totalCols - 1); c++) {
+              for (const p of this.columns[c]) p.active = true;
+            }
+            this.lastCol = targetCol;
+          }
+          if (progress >= 1.0) this.done = true;
+        }
+      });
+
+      if (!isAnimating) {
+        isAnimating = true;
+        requestAnimationFrame(renderParticleLoop);
+      }
+    }
+
+    function renderParticleLoop(now) {
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.restore();
+
+      // Tick dissolve jobs (advances wipe + activates particle columns)
+      for (let i = activeDissolves.length - 1; i >= 0; i--) {
+        activeDissolves[i].tick(now);
+        if (activeDissolves[i].done) activeDissolves.splice(i, 1);
+      }
+
+      // Update and draw particles
+      let aliveCount = 0;
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        if (!p.active) { aliveCount++; continue; } // dormant, still waiting
+        if (p.update()) {
+          p.draw(ctx);
+          aliveCount++;
+        } else {
+          particles.splice(i, 1);
+        }
+      }
+
+      if (aliveCount > 0 || activeDissolves.length > 0) {
+        requestAnimationFrame(renderParticleLoop);
+      } else {
+        isAnimating = false;
+        particles = [];
+        ctx.save();
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.restore();
+      }
+    }
+
+    // ============================================================
+    // APPLICATION DATA & LOGIC
+    // ============================================================
+    let processes = [
+      { pid: 2020, name: 'Brave Browser', exe: 'brave.exe', logo: 'brave', cpu: 14.8, mem: 266.6, type: 'app' },
+      { pid: 7792, name: 'Node.js Controller', exe: 'node.exe', logo: 'node', cpu: 8.4, mem: 881.7, type: 'app' },
+      { pid: 18020, name: 'Visual Studio Code', exe: 'Code.exe', logo: 'vscode', cpu: 6.5, mem: 448.2, type: 'app' },
+      { pid: 14836, name: 'Windows Explorer', exe: 'explorer.exe', logo: 'explorer', cpu: 1.2, mem: 312.4, type: 'app' },
+      { pid: 5200, name: 'Windows Security', exe: 'MsMpEng.exe', logo: 'security', cpu: 0.8, mem: 264.1, type: 'system' },
+      { pid: 11600, name: 'Steam Client', exe: 'steam.exe', logo: 'steam', cpu: 2.1, mem: 195.2, type: 'app' },
+      { pid: 12076, name: 'Spotify Music', exe: 'Spotify.exe', logo: 'spotify', cpu: 4.1, mem: 153.9, type: 'app' },
+      { pid: 4890, name: 'Windows Terminal', exe: 'wt.exe', logo: 'terminal', cpu: 1.5, mem: 112.0, type: 'app' }
+    ];
+
+    let activeFilter = 'all';
+
+    function renderList() {
+      const container = document.getElementById('procListContainer');
+      const query = document.getElementById('procSearchInput').value.trim().toLowerCase();
+
+      let list = processes.filter(p => {
+        const matchesQuery = p.name.toLowerCase().includes(query) || 
+                             p.exe.toLowerCase().includes(query) || 
+                             p.pid.toString().includes(query);
+        if (!matchesQuery) return false;
+        if (activeFilter === 'apps') return p.type === 'app';
+        return true;
+      });
+
+      if (activeFilter === 'high-ram') list.sort((a, b) => b.mem - a.mem);
+      else if (activeFilter === 'high-cpu') list.sort((a, b) => b.cpu - a.cpu);
+
+      document.getElementById('badgeCount').textContent = processes.length;
+      document.getElementById('summaryText').textContent = `SHOWING ${list.length} ACTIVE PROCESSES`;
+
+      if (list.length === 0) {
+        container.innerHTML = `
+          <div style="text-align: center; padding: 60px 20px; color: var(--text-muted);">
+            <svg style="width: 36px; height: 36px; margin-bottom: 8px; opacity: 0.4;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <div style="font-size: 14px; font-weight: 600; color: #94A3B8;">No processes matched</div>
+            <div style="font-size: 12px; margin-top: 4px;">Try searching for a different app name or PID</div>
+          </div>`;
+        return;
+      }
+
+      container.innerHTML = list.map(p => {
+        const logoSvg = BRAND_SVGS[p.logo] || BRAND_SVGS.terminal;
+        return `
+          <div class="proc-card" id="card-${p.pid}">
+            <div class="proc-logo-frame">
+              ${logoSvg}
+            </div>
+
+            <div class="proc-body">
+              <div class="proc-header-line">
+                <span class="proc-app-name">${p.name}</span>
+                <span class="proc-pid-pill">PID ${p.pid}</span>
+              </div>
+
+              <div class="proc-telemetry">
+                <!-- CPU Meter -->
+                <div class="gauge-cpu">
+                  <span>${p.cpu.toFixed(1)}% CPU</span>
+                  <div class="meter-track">
+                    <div class="meter-bar-cpu" style="width: ${Math.min(100, p.cpu * 3.5)}%;"></div>
+                  </div>
+                </div>
+
+                <!-- RAM Meter -->
+                <div class="gauge-mem">
+                  <span>${p.mem >= 1000 ? (p.mem / 1024).toFixed(1) + ' GB' : p.mem.toFixed(0) + ' MB'}</span>
+                  <div class="meter-track">
+                    <div class="meter-bar-mem" style="width: ${Math.min(100, (p.mem / 1000) * 100)}%;"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Instant One-Tap End Task Button (NO Confirmation) -->
+            <button class="btn-end" onclick="instantShatterEndTask(${p.pid}, '${p.exe}', ${p.mem})">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+              <span>End</span>
+            </button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // The bar itself flies away as particles — synchronized dissolve
+    function instantShatterEndTask(pid, exeName, memMb) {
+      const card = document.getElementById(`card-${pid}`);
+      if (!card || card.dataset.dissolving) return;
+      card.dataset.dissolving = '1';
+      card.style.pointerEvents = 'none';
+
+      // 1. Launch synchronized clip-path wipe + particle column release
+      triggerSyncDissolve(card);
+
+      // 2. After clip wipe finishes (420ms), smoothly collapse the empty slot
+      setTimeout(() => {
+        card.classList.add('collapsing');
+      }, 440);
+
+      // 3. After collapse, remove from data and re-render
+      setTimeout(() => {
+        processes = processes.filter(p => p.pid !== pid);
+        renderList();
+        showToast(`Terminated ${exeName} (PID ${pid}) • Freed ${memMb.toFixed(0)} MB`);
+      }, 880);
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('systemToast');
+      document.getElementById('toastMsg').textContent = msg;
+      toast.classList.add('visible');
+      setTimeout(() => {
+        toast.classList.remove('visible');
+      }, 2600);
+    }
+
+    function handleSearch() {
+      const val = document.getElementById('procSearchInput').value;
+      document.getElementById('btnClearSearch').style.display = val ? 'flex' : 'none';
+      renderList();
+    }
+
+    function clearSearch() {
+      document.getElementById('procSearchInput').value = '';
+      document.getElementById('btnClearSearch').style.display = 'none';
+      renderList();
+    }
+
+    function applyFilter(f, el) {
+      activeFilter = f;
+      document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      el.classList.add('active');
+      renderList();
+    }
+
+    function switchTab(key) {
+      document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+      const target = document.getElementById(`tab-${key}`);
+      if (target) target.classList.add('active');
+
+      const procView = document.getElementById('processesView');
+      const perfView = document.getElementById('performanceView');
+
+      if (key === 'proc') {
+        procView.style.display = 'flex';
+        perfView.style.display = 'none';
+        renderList();
+      } else {
+        procView.style.display = 'none';
+        perfView.style.display = 'flex';
+
+        const titles = { cpu: 'Processor Utilization', mem: 'Memory (RAM) Footprint', disk: 'Storage I/O Active Time', wifi: 'Network Throughput' };
+        const vals = { cpu: '28%', mem: '8.6 GB / 16 GB (54%)', disk: '3% Active', wifi: '5.4 Mbps' };
+
+        document.getElementById('perfTitle').textContent = titles[key] || 'Hardware Metric';
+        document.getElementById('perfVal').textContent = vals[key] || '--';
+      }
+    }
+
+    // Initial render
+    renderList();
+  </script>
+</body>
+</html>

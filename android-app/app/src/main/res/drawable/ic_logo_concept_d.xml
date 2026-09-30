@@ -1,0 +1,40 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+
+    <!-- Squircle Obsidian Card Base -->
+    <path
+        android:pathData="M 12,4 L 36,4 A 8,8 0 0,1 44,12 L 44,36 A 8,8 0 0,1 36,44 L 12,44 A 8,8 0 0,1 4,36 L 4,12 A 8,8 0 0,1 12,4 Z"
+        android:fillColor="#0C1220"
+        android:strokeColor="#1E293B"
+        android:strokeWidth="1.2" />
+
+    <!-- Monitor frame -->
+    <path
+        android:pathData="M 14,13 L 34,13 A 3,3 0 0,1 37,16 L 37,28 A 3,3 0 0,1 34,31 L 14,31 A 3,3 0 0,1 11,28 L 11,16 A 3,3 0 0,1 14,13 Z"
+        android:strokeColor="#CBD5E1"
+        android:strokeWidth="2" />
+
+    <!-- Monitor Stand -->
+    <path
+        android:pathData="M 20,31 L 18,35 L 30,35 L 28,31"
+        android:strokeColor="#64748B"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+    <!-- Phone Overlay Silhouette -->
+    <path
+        android:pathData="M 27,19 L 35,19 A 2.5,2.5 0 0,1 37.5,21.5 L 37.5,34.5 A 2.5,2.5 0 0,1 35,37 L 27,37 A 2.5,2.5 0 0,1 24.5,34.5 L 24.5,21.5 A 2.5,2.5 0 0,1 27,19 Z"
+        android:fillColor="#0C1220"
+        android:strokeColor="#38BDF8"
+        android:strokeWidth="2" />
+
+    <!-- Link Node Indicator -->
+    <path
+        android:pathData="M 31,23 m -1.2,0 a 1.2,1.2 0 1,0 2.4,0 a 1.2,1.2 0 1,0 -2.4,0"
+        android:fillColor="#38BDF8" />
+
+</vector>

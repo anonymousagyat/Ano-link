@@ -1,0 +1,38 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+
+    <!-- Squircle Obsidian Card Base -->
+    <path
+        android:pathData="M 12,4 L 36,4 A 8,8 0 0,1 44,12 L 44,36 A 8,8 0 0,1 36,44 L 12,44 A 8,8 0 0,1 4,36 L 4,12 A 8,8 0 0,1 12,4 Z"
+        android:fillColor="#0C1220"
+        android:strokeColor="#1E293B"
+        android:strokeWidth="1.2" />
+
+    <!-- Minimal Infinity Loop Bridge -->
+    <path
+        android:pathData="M 15,19 C 11.5,19 9,21.2 9,24 C 9,26.8 11.5,29 15,29 C 19,29 22,24 24,24 C 26,24 29,29 33,29 C 36.5,29 39,26.8 39,24 C 39,21.2 36.5,19 33,19 C 29,19 26,24 24,24 C 22,24 19,19 15,19 Z"
+        android:strokeWidth="2.6"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round">
+        <aapt:attr name="android:strokeColor">
+            <gradient
+                android:startX="9"
+                android:startY="24"
+                android:endX="39"
+                android:endY="24"
+                android:startColor="#38BDF8"
+                android:centerColor="#FFFFFF"
+                android:endColor="#10B981" />
+        </aapt:attr>
+    </path>
+
+    <!-- Nexus Center Node -->
+    <path
+        android:pathData="M 24,24 m -2.5,0 a 2.5,2.5 0 1,0 5,0 a 2.5,2.5 0 1,0 -5,0"
+        android:fillColor="#10B981" />
+
+</vector>

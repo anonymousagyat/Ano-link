@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_dialog_cyber"
+    android:padding="26dp">
+
+    <!-- Header: Neural Logo + Syne Brand Title -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="22dp">
+
+        <ImageView
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:src="@drawable/ic_ano_logo"
+            android:contentDescription="Ano-Link Logo" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:layout_marginStart="14dp">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Ano"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:fontFamily="@font/syne_extrabold"
+                    android:letterSpacing="-0.01"
+                    android:textColor="#FFFFFF" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="link"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:fontFamily="@font/syne_extrabold"
+                    android:letterSpacing="-0.01"
+                    android:textColor="#9333EA" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="PRO"
+                    android:textSize="9.5sp"
+                    android:textStyle="bold"
+                    android:textColor="#D8B4FE"
+                    android:background="@drawable/bg_badge_violet"
+                    android:paddingHorizontal="6dp"
+                    android:paddingVertical="2dp"
+                    android:layout_marginStart="8dp" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Connecting Workstation..."
+                android:textSize="12sp"
+                android:textColor="#D8B4FE"
+                android:layout_marginTop="3dp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Professional Grade HTML-Matching Continuous Shimmer Bar -->
+    <com.tailconnect.app.CyberShimmerBar
+        android:id="@+id/shimmerBar"
+        android:layout_width="match_parent"
+        android:layout_height="8.5dp"
+        android:layout_marginBottom="16dp" />
+
+    <!-- Live Status Update -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="20dp">
+
+        <View
+            android:layout_width="7dp"
+            android:layout_height="7dp"
+            android:background="@drawable/bg_btn_connect_gradient"
+            android:layout_marginEnd="8dp" />
+
+        <TextView
+            android:id="@+id/tvHudStatusDetail"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Establishing direct P2P tunnel..."
+            android:textSize="12.5sp"
+            android:textColor="#D8B4FE"
+            android:fontFamily="monospace" />
+    </LinearLayout>
+
+    <!-- Telemetry Details Container -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="#090C18"
+        android:padding="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="10dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Target Workstation:"
+                android:textSize="12sp"
+                android:textColor="#94A3B8" />
+
+            <TextView
+                android:id="@+id/tvHudPcName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Windows PC"
+                android:textSize="12.5sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="10dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Pairing PIN:"
+                android:textSize="12sp"
+                android:textColor="#94A3B8" />
+
+            <TextView
+                android:id="@+id/tvHudPin"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="------"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:fontFamily="monospace"
+                android:letterSpacing="0.1"
+                android:textColor="#D8B4FE" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Tunnel Protocol:"
+                android:textSize="12sp"
+                android:textColor="#94A3B8" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Pure WebRTC P2P (UDP)"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF" />
+        </LinearLayout>
+    </LinearLayout>
+
+</LinearLayout>

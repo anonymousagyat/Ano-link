@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_dialog_cyber"
+    android:padding="26dp">
+
+    <!-- Header: Workstation Icon & Name -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="20dp">
+
+        <ImageView
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:background="@drawable/bg_btn_connect_gradient"
+            android:src="@drawable/ic_pc_workstation"
+            android:padding="9dp"
+            android:contentDescription="Workstation Icon" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:layout_marginStart="14dp">
+
+            <TextView
+                android:id="@+id/tvDetailsPcName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Windows PC"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF" />
+
+            <TextView
+                android:id="@+id/tvDetailsStatusBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="● P2P DIRECT ONLINE"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:fontFamily="monospace"
+                android:textColor="#10B981"
+                android:layout_marginTop="2dp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Workstation Telemetry Card -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="#090C18"
+        android:padding="16dp"
+        android:layout_marginBottom="16dp">
+
+        <!-- PIN Row with Sleek Inline Change Action -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Pairing PIN"
+                android:textSize="12sp"
+                android:textColor="#94A3B8" />
+
+            <TextView
+                android:id="@+id/tvDetailsPin"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="359202"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:fontFamily="monospace"
+                android:letterSpacing="0.08"
+                android:textColor="#D8B4FE"
+                android:background="@drawable/bg_pin_display_pill"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="4dp" />
+
+            <Button
+                android:id="@+id/btnDetailsChangePin"
+                android:layout_width="wrap_content"
+                android:layout_height="32dp"
+                android:text="Change"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF"
+                android:background="@drawable/bg_btn_change_chip"
+                android:layout_marginStart="8dp"
+                android:paddingHorizontal="12dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:stateListAnimator="@null" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#152033"
+            android:layout_marginVertical="12dp" />
+
+        <!-- Protocol Row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Tunnel Protocol"
+                android:textSize="12sp"
+                android:textColor="#94A3B8" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Pure WebRTC UDP Direct"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#152033"
+            android:layout_marginVertical="12dp" />
+
+        <!-- Desktop Stream Row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Desktop Stream"
+                android:textSize="12sp"
+                android:textColor="#94A3B8" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="30 FPS Hardware Accel"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="#D8B4FE" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Danger Zone / Unlink PC Tile (Minimal, Refined, Discreet) -->
+    <LinearLayout
+        android:id="@+id/btnDetailsForgetPc"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@drawable/bg_danger_tile"
+        android:padding="14dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:layout_marginBottom="16dp">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Unlink Workstation"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:textColor="#F43F5E" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Clear saved pairing PIN and credentials"
+                android:textSize="11sp"
+                android:textColor="#94A3B8"
+                android:layout_marginTop="2dp" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="➔"
+            android:textSize="14sp"
+            android:textColor="#F43F5E"
+            android:layout_marginStart="8dp" />
+    </LinearLayout>
+
+    <!-- Done Action Button -->
+    <Button
+        android:id="@+id/btnDetailsClose"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:text="Done"
+        android:textSize="13sp"
+        android:textStyle="bold"
+        android:textColor="#FFFFFF"
+        android:background="@drawable/bg_btn_secondary_cyber"
+        android:stateListAnimator="@null" />
+
+</LinearLayout>

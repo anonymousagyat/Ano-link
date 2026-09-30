@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/llProcCardRoot"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:background="@drawable/bg_process_card"
+    android:padding="14dp"
+    android:gravity="center_vertical"
+    android:layout_marginBottom="10dp">
+
+    <!-- App Icon in 40x40dp Frame -->
+    <FrameLayout
+        android:id="@+id/flProcIconFrame"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="@drawable/bg_process_logo_frame">
+
+        <ImageView
+            android:id="@+id/ivProcIcon"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="center"
+            android:scaleType="fitCenter"
+            android:contentDescription="Process Icon" />
+    </FrameLayout>
+
+    <!-- Center Info Column -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="10dp">
+
+        <!-- Header: App Name & PID Pill -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/tvProcName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Brave Browser"
+                android:textColor="#F1F5F9"
+                android:textSize="13.5sp"
+                android:textStyle="bold"
+                android:ellipsize="end"
+                android:singleLine="true"
+                android:maxWidth="170dp" />
+
+            <TextView
+                android:id="@+id/tvProcPid"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="PID 2020"
+                android:textColor="#64748B"
+                android:textSize="9.5sp"
+                android:fontFamily="monospace"
+                android:background="@drawable/bg_pid_pill"
+                android:paddingHorizontal="6dp"
+                android:paddingVertical="1dp"
+                android:layout_marginStart="8dp" />
+        </LinearLayout>
+
+        <!-- Telemetry Meters Row (CPU & RAM) -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="5dp">
+
+            <!-- CPU Gauge -->
+            <TextView
+                android:id="@+id/tvProcCpu"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="14.8% CPU"
+                android:textColor="#F59E0B"
+                android:textSize="10.5sp"
+                android:fontFamily="monospace" />
+
+            <ProgressBar
+                android:id="@+id/pbProcCpu"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="34dp"
+                android:layout_height="3.5dp"
+                android:max="100"
+                android:progress="45"
+                android:progressDrawable="@drawable/progress_bar_cpu"
+                android:layout_marginStart="6dp" />
+
+            <!-- RAM Gauge -->
+            <TextView
+                android:id="@+id/tvProcMem"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="267 MB"
+                android:textColor="#C4B5FD"
+                android:textSize="10.5sp"
+                android:fontFamily="monospace"
+                android:layout_marginStart="14dp" />
+
+            <ProgressBar
+                android:id="@+id/pbProcMem"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="34dp"
+                android:layout_height="3.5dp"
+                android:max="1000"
+                android:progress="267"
+                android:progressDrawable="@drawable/progress_bar_mem"
+                android:layout_marginStart="6dp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Minimal Ghost Pill End Task Button (Instant One-Tap) -->
+    <LinearLayout
+        android:id="@+id/btnEndTask"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="@drawable/bg_btn_end_ghost"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:paddingTop="6dp"
+        android:paddingBottom="6dp"
+        android:gravity="center_vertical"
+        android:clickable="true"
+        android:focusable="true">
+
+        <ImageView
+            android:layout_width="11dp"
+            android:layout_height="11dp"
+            android:src="@drawable/ic_proc_close"
+            android:contentDescription="End Task Icon" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="End"
+            android:textColor="#F87171"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:layout_marginStart="4dp" />
+    </LinearLayout>
+
+</LinearLayout>

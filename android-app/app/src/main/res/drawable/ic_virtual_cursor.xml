@@ -1,0 +1,25 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- High-Contrast Black Outline for Full Background Contrast -->
+    <path
+        android:pathData="M 12,3 L 12,21 M 3,12 L 21,12"
+        android:strokeColor="#000000"
+        android:strokeWidth="3.4"
+        android:strokeLineCap="round" />
+
+    <!-- Pure Crisp White Crosshair (+) Lines -->
+    <path
+        android:pathData="M 12,3 L 12,21 M 3,12 L 21,12"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round" />
+
+    <!-- Center Precision Dot in Ano-Link Accent -->
+    <path
+        android:pathData="M 12,12 m -1.5,0 a 1.5,1.5 0 1,0 3,0 a 1.5,1.5 0 1,0 -3,0"
+        android:fillColor="#C084FC" />
+</vector>

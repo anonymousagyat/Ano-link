@@ -1,0 +1,33 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="44"
+    android:viewportHeight="44">
+
+    <!-- Squircle Obsidian Card Base -->
+    <path
+        android:pathData="M 12,0 L 32,0 A 12,12 0 0,1 44,12 L 44,32 A 12,12 0 0,1 32,44 L 12,44 A 12,12 0 0,1 0,32 L 0,12 A 12,12 0 0,1 12,0 Z"
+        android:fillColor="#0E1424"
+        android:strokeColor="#1E293B"
+        android:strokeWidth="1.2" />
+
+    <!-- Razor-sharp Dynamic Cross-Slash Link -->
+    <path
+        android:pathData="M 12,32 L 22,12 L 32,32"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+    <path
+        android:pathData="M 18,25 L 32,25"
+        android:strokeColor="#A855F7"
+        android:strokeWidth="3"
+        android:strokeLineCap="round" />
+
+    <!-- Accent Node Pulse -->
+    <path
+        android:pathData="M 32,25 m -2.5,0 a 2.5,2.5 0 1,0 5,0 a 2.5,2.5 0 1,0 -5,0"
+        android:fillColor="#A855F7" />
+
+</vector>
