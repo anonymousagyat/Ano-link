@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="145dp"
+    android:layout_height="wrap_content"
+    android:minHeight="145dp"
     android:orientation="vertical"
     android:background="@drawable/bg_glass_card_purple"
     android:padding="16dp"
@@ -61,5 +62,34 @@
         android:textColor="#94A3B8"
         android:fontFamily="monospace"
         android:layout_marginTop="3dp" />
+
+    <!-- Capacity Bar & Label -->
+    <LinearLayout
+        android:id="@+id/llDriveCapacity"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginTop="10dp">
+
+        <ProgressBar
+            android:id="@+id/pbDriveCapacity"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="4dp"
+            android:max="100"
+            android:progress="65"
+            android:progressTint="#F59E0B"
+            android:progressBackgroundTint="#334155" />
+
+        <TextView
+            android:id="@+id/tvDriveCapacity"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="245 GB free of 476 GB"
+            android:textSize="9.5sp"
+            android:fontFamily="monospace"
+            android:textColor="#94A3B8"
+            android:layout_marginTop="4dp" />
+    </LinearLayout>
 
 </LinearLayout>

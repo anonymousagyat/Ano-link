@@ -169,6 +169,19 @@
             android:maxLength="1" />
     </LinearLayout>
 
+    <!-- Direct WAN URL Option -->
+    <TextView
+        android:id="@+id/btnPasteTunnelUrl"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:text="🌐 Connect via Cloudflare Tunnel URL"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        android:textColor="#C084FC"
+        android:padding="8dp"
+        android:layout_marginBottom="14dp" />
+
     <!-- Action Buttons -->
     <LinearLayout
         android:layout_width="match_parent"

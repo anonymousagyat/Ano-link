@@ -61,14 +61,6 @@ dependencies {
     implementation("io.ktor:ktor-server-websockets:$ktorVersion")
     implementation("io.ktor:ktor-server-cors:$ktorVersion")
 
-    // Ktor Client for direct Phone Controlling PC connection
-    implementation("io.ktor:ktor-client-core:$ktorVersion")
-    implementation("io.ktor:ktor-client-cio:$ktorVersion")
-    implementation("io.ktor:ktor-client-websockets:$ktorVersion")
-
-    // WebRTC Android SDK
-    implementation("io.getstream:stream-webrtc-android:1.1.1")
-
-    // OkHttp for Cloudflare Quick Tunnel WebSocket
+    // OkHttp for Cloudflare Quick Tunnel & LAN Fast-Path WebSocket
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
 }

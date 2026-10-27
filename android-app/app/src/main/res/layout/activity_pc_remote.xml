@@ -41,9 +41,9 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="NAV"
-                        android:textSize="6.5sp"
+                        android:textSize="8sp"
                         android:textStyle="bold"
-                        android:textColor="#64748B"
+                        android:textColor="#94A3B8"
                         android:letterSpacing="0.12"
                         android:layout_marginBottom="3dp" />
 
@@ -51,7 +51,7 @@
                     <LinearLayout
                         android:id="@+id/btnBackToHome"
                         android:layout_width="46dp"
-                        android:layout_height="44dp"
+                        android:layout_height="46dp"
                         android:orientation="vertical"
                         android:gravity="center"
                         android:background="@drawable/bg_rail_tile"
@@ -70,9 +70,9 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="BACK"
-                            android:textSize="7.5sp"
+                            android:textSize="8.5sp"
                             android:textStyle="bold"
-                            android:textColor="#94A3B8"
+                            android:textColor="#E2E8F0"
                             android:letterSpacing="0.05"
                             android:layout_marginTop="2dp" />
                     </LinearLayout>
@@ -89,9 +89,9 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="STREAM"
-                        android:textSize="6.5sp"
+                        android:textSize="8sp"
                         android:textStyle="bold"
-                        android:textColor="#64748B"
+                        android:textColor="#94A3B8"
                         android:letterSpacing="0.12"
                         android:layout_marginBottom="3dp" />
 
@@ -99,7 +99,7 @@
                     <LinearLayout
                         android:id="@+id/btnToggleScreenStream"
                         android:layout_width="46dp"
-                        android:layout_height="44dp"
+                        android:layout_height="46dp"
                         android:orientation="vertical"
                         android:gravity="center"
                         android:background="@drawable/bg_rail_tile_stream_start"
@@ -120,7 +120,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="START"
-                            android:textSize="7.5sp"
+                            android:textSize="8.5sp"
                             android:textStyle="bold"
                             android:textColor="#10B981"
                             android:letterSpacing="0.05"
@@ -131,7 +131,7 @@
                     <LinearLayout
                         android:id="@+id/btnStreamQuality"
                         android:layout_width="46dp"
-                        android:layout_height="44dp"
+                        android:layout_height="46dp"
                         android:orientation="vertical"
                         android:gravity="center"
                         android:background="@drawable/bg_rail_tile"
@@ -151,9 +151,9 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="540P"
-                            android:textSize="7.5sp"
+                            android:textSize="8.5sp"
                             android:textStyle="bold"
-                            android:textColor="#94A3B8"
+                            android:textColor="#E2E8F0"
                             android:letterSpacing="0.05"
                             android:layout_marginTop="2dp" />
                     </LinearLayout>
@@ -170,7 +170,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="INPUT"
-                        android:textSize="6.5sp"
+                        android:textSize="8sp"
                         android:textStyle="bold"
                         android:textColor="#64748B"
                         android:letterSpacing="0.12"
@@ -180,7 +180,7 @@
                     <LinearLayout
                         android:id="@+id/btnTopKeyboardToggle"
                         android:layout_width="46dp"
-                        android:layout_height="44dp"
+                        android:layout_height="46dp"
                         android:orientation="vertical"
                         android:gravity="center"
                         android:background="@drawable/bg_rail_tile_active_amethyst"
@@ -199,7 +199,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="KEYS"
-                            android:textSize="7.5sp"
+                            android:textSize="8.5sp"
                             android:textStyle="bold"
                             android:textColor="#C084FC"
                             android:letterSpacing="0.05"
@@ -210,7 +210,7 @@
                     <LinearLayout
                         android:id="@+id/btnFlankDesktop"
                         android:layout_width="46dp"
-                        android:layout_height="44dp"
+                        android:layout_height="46dp"
                         android:orientation="vertical"
                         android:gravity="center"
                         android:background="@drawable/bg_rail_tile"
@@ -229,7 +229,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="DESK"
-                            android:textSize="7.5sp"
+                            android:textSize="8.5sp"
                             android:textStyle="bold"
                             android:textColor="#94A3B8"
                             android:letterSpacing="0.05"
@@ -240,7 +240,7 @@
                     <LinearLayout
                         android:id="@+id/btnFlankAltTab"
                         android:layout_width="46dp"
-                        android:layout_height="44dp"
+                        android:layout_height="46dp"
                         android:orientation="vertical"
                         android:gravity="center"
                         android:background="@drawable/bg_rail_tile"
@@ -259,7 +259,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="SWITCH"
-                            android:textSize="7sp"
+                            android:textSize="8sp"
                             android:textStyle="bold"
                             android:textColor="#94A3B8"
                             android:letterSpacing="0.04"
@@ -276,7 +276,7 @@
                     <LinearLayout
                         android:id="@+id/btnFlankPower"
                         android:layout_width="46dp"
-                        android:layout_height="44dp"
+                        android:layout_height="46dp"
                         android:orientation="vertical"
                         android:gravity="center"
                         android:background="@drawable/bg_rail_tile_power"
@@ -294,7 +294,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="PWR"
-                            android:textSize="7.5sp"
+                            android:textSize="8.5sp"
                             android:textStyle="bold"
                             android:textColor="#F43F5E"
                             android:letterSpacing="0.05"
@@ -320,24 +320,48 @@
                 android:scaleType="fitCenter"
                 android:contentDescription="PC Desktop Stream" />
 
-            <!-- Pure Clear Floating Ping (Top-Right, Zero Background) -->
-            <TextView
-                android:id="@+id/tvLivePing"
+            <!-- Heads-Up Stream Status HUD Pill (Top-Right) -->
+            <LinearLayout
+                android:id="@+id/llStreamHud"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="top|end"
                 android:layout_marginTop="8dp"
                 android:layout_marginEnd="12dp"
-                android:text="● -- ms"
-                android:textColor="#10B981"
-                android:textSize="11sp"
-                android:textStyle="bold"
-                android:fontFamily="monospace"
-                android:shadowColor="#E6000000"
-                android:shadowDx="0"
-                android:shadowDy="2"
-                android:shadowRadius="6"
-                android:elevation="20dp" />
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/bg_hud_pill"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="4dp"
+                android:elevation="20dp">
+
+                <TextView
+                    android:id="@+id/tvStreamFps"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="30 FPS"
+                    android:textColor="#F59E0B"
+                    android:textSize="10.5sp"
+                    android:textStyle="bold"
+                    android:fontFamily="monospace"
+                    android:letterSpacing="0.04" />
+
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="10dp"
+                    android:background="#334155"
+                    android:layout_marginHorizontal="6dp" />
+
+                <TextView
+                    android:id="@+id/tvLivePing"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="● -- ms"
+                    android:textColor="#10B981"
+                    android:textSize="10.5sp"
+                    android:textStyle="bold"
+                    android:fontFamily="monospace" />
+            </LinearLayout>
 
             <!-- Precision Crosshair (+) Virtual Cursor Overlay -->
             <ImageView

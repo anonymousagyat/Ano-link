@@ -1,6 +1,7 @@
 package com.tailconnect.app
 
 import android.app.AlertDialog
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.RectF
 import android.os.Build
@@ -33,6 +34,7 @@ class PcRemoteActivity : AppCompatActivity(), PcRemoteEventListener {
 
     // Views
     private lateinit var tvLivePing: TextView
+    private var tvStreamFps: TextView? = null
     private lateinit var btnToggleScreenStream: View
     private lateinit var ivStreamStatusIcon: ImageView
     private lateinit var tvStreamStatusText: TextView
@@ -86,6 +88,14 @@ class PcRemoteActivity : AppCompatActivity(), PcRemoteEventListener {
         Triple("720p", 1280, 720)
     )
 
+    private var frameCount = 0
+    private var lastFpsTimestamp = 0L
+
+    // Double-buffered Bitmap reuse to eliminate 60MB/sec GC allocation churn during 30 FPS stream
+    private var bufferA: Bitmap? = null
+    private var bufferB: Bitmap? = null
+    private var toggleBuffer = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         hideSystemUI()
@@ -122,6 +132,7 @@ class PcRemoteActivity : AppCompatActivity(), PcRemoteEventListener {
 
     private fun initViews() {
         tvLivePing = findViewById(R.id.tvLivePing)
+        tvStreamFps = findViewById(R.id.tvStreamFps)
         btnToggleScreenStream = findViewById(R.id.btnToggleScreenStream)
         ivStreamStatusIcon = findViewById(R.id.ivStreamStatusIcon)
         tvStreamStatusText = findViewById(R.id.tvStreamStatusText)
@@ -221,8 +232,8 @@ class PcRemoteActivity : AppCompatActivity(), PcRemoteEventListener {
                         tvLivePing.setTextColor(
                             when {
                                 rttMs < 60 -> android.graphics.Color.parseColor("#10B981")
-                                rttMs < 150 -> android.graphics.Color.parseColor("#00F2FE")
-                                else -> android.graphics.Color.parseColor("#FBBF24")
+                                rttMs < 150 -> android.graphics.Color.parseColor("#C4B5FD")
+                                else -> android.graphics.Color.parseColor("#F59E0B")
                             }
                         )
                     } else {
@@ -300,6 +311,10 @@ class PcRemoteActivity : AppCompatActivity(), PcRemoteEventListener {
         PcRemoteClient.setListener(null)
         PcRemoteClient.setConnectionStateListener(null)
         TailConnectService.setPcRemoteListener(null)
+        bufferA?.let { if (!it.isRecycled) it.recycle() }
+        bufferB?.let { if (!it.isRecycled) it.recycle() }
+        bufferA = null
+        bufferB = null
         activityScope.cancel()
     }
 
@@ -923,11 +938,48 @@ class PcRemoteActivity : AppCompatActivity(), PcRemoteEventListener {
         }
     }
 
+    private fun decodeWithReuse(data: ByteArray, offset: Int, length: Int): Bitmap? {
+        val targetReuse = if (toggleBuffer) bufferA else bufferB
+        val options = BitmapFactory.Options().apply {
+            inMutable = true
+            inSampleSize = 1
+            if (targetReuse != null && !targetReuse.isRecycled) {
+                inBitmap = targetReuse
+            }
+        }
+        val decoded = try {
+            BitmapFactory.decodeByteArray(data, offset, length, options)
+        } catch (e: IllegalArgumentException) {
+            options.inBitmap = null
+            BitmapFactory.decodeByteArray(data, offset, length, options)
+        }
+        if (decoded != null) {
+            if (toggleBuffer) {
+                bufferA = decoded
+            } else {
+                bufferB = decoded
+            }
+            toggleBuffer = !toggleBuffer
+        }
+        return decoded
+    }
+
     override fun onPcScreenBinaryFrame(jpegBytes: ByteArray) {
         if (!isScreenStreaming) return
         activityScope.launch(Dispatchers.Default) {
             try {
-                val bmp = BitmapFactory.decodeByteArray(jpegBytes, 0, jpegBytes.size)
+                frameCount++
+                val now = System.currentTimeMillis()
+                if (now - lastFpsTimestamp >= 1000) {
+                    val currentFps = if (lastFpsTimestamp > 0) ((frameCount * 1000f) / (now - lastFpsTimestamp)).toInt() else frameCount
+                    frameCount = 0
+                    lastFpsTimestamp = now
+                    withContext(Dispatchers.Main) {
+                        tvStreamFps?.text = "$currentFps FPS"
+                    }
+                }
+
+                val bmp = decodeWithReuse(jpegBytes, 0, jpegBytes.size)
                 if (bmp != null) {
                     withContext(Dispatchers.Main) {
                         if (!isScreenStreaming) return@withContext
@@ -958,8 +1010,19 @@ class PcRemoteActivity : AppCompatActivity(), PcRemoteEventListener {
         if (!isScreenStreaming) return
         activityScope.launch(Dispatchers.Default) {
             try {
+                frameCount++
+                val now = System.currentTimeMillis()
+                if (now - lastFpsTimestamp >= 1000) {
+                    val currentFps = if (lastFpsTimestamp > 0) ((frameCount * 1000f) / (now - lastFpsTimestamp)).toInt() else frameCount
+                    frameCount = 0
+                    lastFpsTimestamp = now
+                    withContext(Dispatchers.Main) {
+                        tvStreamFps?.text = "$currentFps FPS"
+                    }
+                }
+
                 val bytes = Base64.decode(base64Jpeg, Base64.DEFAULT)
-                val bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                val bmp = decodeWithReuse(bytes, 0, bytes.size)
                 if (bmp != null) {
                     withContext(Dispatchers.Main) {
                         if (!isScreenStreaming) return@withContext

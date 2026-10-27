@@ -1,30 +1,49 @@
 package com.tailconnect.app
 
 import android.app.AlertDialog
+import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Color
+import android.Manifest
+import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.PowerManager
+import android.provider.Settings
+import android.util.Log
 import android.view.View
 import android.view.WindowManager
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.*
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var tvPcName: TextView
-    private lateinit var tvTailscaleIp: TextView
-    private lateinit var tvDaemonStatus: TextView
-    private lateinit var tvTriadPing: TextView
-    private lateinit var llDaemonStatusPill: View
-    private lateinit var viewStatusDot: View
-    private lateinit var viewPingLiveDot: View
+    private lateinit var tvViewportStatus: TextView
+    private lateinit var tvViewportLatency: TextView
+    private lateinit var dotStatusJewel: View
+    private lateinit var ivWallpaperA: ImageView
+    private lateinit var ivWallpaperB: ImageView
+    private lateinit var cardPcViewport: View
+
+    private var wallpaperFiles = listOf<String>()
+    private var currentWallpaperIdx = 0
+    private var slideshowJob: Job? = null
+    private var activeLayerIsA = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -56,28 +75,36 @@ class MainActivity : AppCompatActivity() {
 
         initViews()
         startDaemon()
+        checkNotificationPermission()
+        checkBatteryOptimizationExemption()
         setupFeatureCards()
         PcAppsRepository.preload(this)
     }
 
     private fun initViews() {
         tvPcName = findViewById(R.id.tvPcName)
-        tvTailscaleIp = findViewById(R.id.tvTailscaleIp)
-        tvDaemonStatus = findViewById(R.id.tvDaemonStatus)
-        tvTriadPing = findViewById(R.id.tvTriadPing)
-        llDaemonStatusPill = findViewById(R.id.llDaemonStatusPill)
-        viewStatusDot = findViewById(R.id.viewStatusDot)
-        viewPingLiveDot = findViewById(R.id.viewPingLiveDot)
+        tvViewportStatus = findViewById(R.id.tvViewportStatus)
+        tvViewportLatency = findViewById(R.id.tvViewportLatency)
+        dotStatusJewel = findViewById(R.id.dotStatusJewel)
+        ivWallpaperA = findViewById(R.id.ivWallpaperA)
+        ivWallpaperB = findViewById(R.id.ivWallpaperB)
+        cardPcViewport = findViewById(R.id.cardPcViewport)
 
         // Settings Gear Icon (Opens Page 3: Settings & Permissions)
         findViewById<View>(R.id.btnOpenSettings).setOnClickListener {
             startActivity(Intent(this, SettingsActivity::class.java))
         }
 
-        // Tapping PC Card also allows configuring target PC
-        findViewById<View>(R.id.llPcStatusCard)?.setOnClickListener {
-            showEditPcIpDialog()
+        // Tapping PC Viewport Card launches Remote Screen feature (Landscape Viewport)
+        cardPcViewport.setOnClickListener {
+            if (!PcRemoteClient.hasConfiguredPc(this)) {
+                showEditPcIpDialog(showPromptNotice = true)
+                return@setOnClickListener
+            }
+            startActivity(Intent(this, PcRemoteActivity::class.java))
         }
+
+        setupWallpaperSlideshow()
     }
 
     private fun setupFeatureCards() {
@@ -90,7 +117,7 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, PcRemoteActivity::class.java))
         }
 
-        // Module 2: PC File Explorer (Opens ZArchiver-style Explorer)
+        // Module 2: PC File Explorer (ZArchiver-style Explorer)
         findViewById<View>(R.id.btnLaunchPcFiles).setOnClickListener {
             if (!PcRemoteClient.hasConfiguredPc(this)) {
                 showEditPcIpDialog(showPromptNotice = true)
@@ -99,7 +126,7 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, PcFilesActivity::class.java))
         }
 
-        // Module 3: Start Menu & Windows
+        // Module 3: Start Menu & Windows (Windows Blue - User's Authentic Design)
         findViewById<View>(R.id.btnHubStartMenu).setOnClickListener {
             if (!PcRemoteClient.hasConfiguredPc(this)) {
                 showEditPcIpDialog(showPromptNotice = true)
@@ -137,7 +164,7 @@ class MainActivity : AppCompatActivity() {
 
         dialog.findViewById<TextView>(R.id.tvHudPcName)?.text = PcRemoteClient.getPairedPcName(this)
         dialog.findViewById<TextView>(R.id.tvHudPin)?.text = pin
-        dialog.findViewById<TextView>(R.id.tvHudStatusDetail)?.text = "Negotiating P2P UDP tunnel..."
+        dialog.findViewById<TextView>(R.id.tvHudStatusDetail)?.text = "Connecting to Cloudflare Quick Tunnel..."
 
         connectingHudDialog = dialog
         dialog.show()
@@ -185,12 +212,28 @@ class MainActivity : AppCompatActivity() {
         dialog.findViewById<TextView>(R.id.tvDetailsPcName)?.text = pcName
         dialog.findViewById<TextView>(R.id.tvDetailsPin)?.text = pin
         val tvStatus = dialog.findViewById<TextView>(R.id.tvDetailsStatusBadge)
+        val tvDetailsProtocol = dialog.findViewById<TextView>(R.id.tvDetailsProtocol)
+        val tvDetailsTunnelUrl = dialog.findViewById<TextView>(R.id.tvDetailsTunnelUrl)
+
         if (isConnected) {
-            tvStatus?.text = "● P2P DIRECT ONLINE"
+            tvStatus?.text = "● ONLINE"
             tvStatus?.setTextColor(android.graphics.Color.parseColor("#10B981"))
+            if (PcRemoteClient.isUsingTunnel()) {
+                tvDetailsProtocol?.text = "Cloudflare Quick Tunnel (WSS)"
+                val url = PcRemoteClient.getTunnelUrl()
+                val host = try {
+                    if (url.isNotBlank()) java.net.URI(url).host else null
+                } catch (_: Exception) { null }
+                tvDetailsTunnelUrl?.text = host ?: (if (url.isNotBlank()) url else "*.trycloudflare.com")
+            } else {
+                tvDetailsProtocol?.text = "Pure WebRTC UDP Direct"
+                tvDetailsTunnelUrl?.text = "LAN Direct P2P"
+            }
         } else {
-            tvStatus?.text = "● P2P OFFLINE"
+            tvStatus?.text = "● OFFLINE"
             tvStatus?.setTextColor(android.graphics.Color.parseColor("#94A3B8"))
+            tvDetailsProtocol?.text = "Standby"
+            tvDetailsTunnelUrl?.text = "Not Connected"
         }
 
         dialog.findViewById<View>(R.id.btnDetailsChangePin)?.setOnClickListener {
@@ -272,6 +315,12 @@ class MainActivity : AppCompatActivity() {
             dialog.dismiss()
         }
 
+        val btnPasteTunnelUrl = dialog.findViewById<TextView>(R.id.btnPasteTunnelUrl)
+        btnPasteTunnelUrl?.setOnClickListener {
+            dialog.dismiss()
+            promptDirectTunnelUrl()
+        }
+
         btnConnect?.setOnClickListener {
             val pin = boxes.joinToString("") { it.text.toString().trim() }
             if (pin.length == 6) {
@@ -302,11 +351,48 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun promptDirectTunnelUrl() {
+        val input = EditText(this).apply {
+            hint = "https://*.trycloudflare.com"
+            setTextColor(android.graphics.Color.WHITE)
+            setHintTextColor(android.graphics.Color.parseColor("#94A3B8"))
+            setBackgroundResource(R.drawable.bg_pin_digit_box)
+            setPadding(36, 28, 36, 28)
+            isSingleLine = true
+        }
+
+        val container = android.widget.FrameLayout(this).apply {
+            setPadding(48, 24, 48, 12)
+            addView(input)
+        }
+
+        android.app.AlertDialog.Builder(this)
+            .setTitle("Connect via Cloudflare URL")
+            .setMessage("Paste the public WAN URL from your PC terminal or Web Dashboard:")
+            .setView(container)
+            .setPositiveButton("Connect") { _, _ ->
+                val url = input.text.toString().trim()
+                if (url.startsWith("http://", ignoreCase = true) ||
+                    url.startsWith("https://", ignoreCase = true) ||
+                    url.contains(".trycloudflare.com", ignoreCase = true)) {
+                    showConnectingHud("WAN URL")
+                    PcRemoteClient.setupManagerCallbacks(this)
+                    AnoWebRtcManager.connect(this, url)
+                } else {
+                    Toast.makeText(this, "Please enter a valid Cloudflare URL", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("Back") { _, _ ->
+                promptPin(PcRemoteClient.getPin(this))
+            }
+            .show()
+    }
+
     private fun showSystemInfoDialog() {
         val pin = PcRemoteClient.getPin(this).ifBlank { "Not Configured" }
         android.app.AlertDialog.Builder(this)
             .setTitle("System Info & Telemetry")
-            .setMessage("Ano-Link WebRTC Cross-Device Bridge\n\n• Protocol: Pure WebRTC P2P (UDP)\n• Mode: Direct P2P (LAN & WAN)\n• Background Power: <1% Battery/Hour\n• Paired PIN: $pin")
+            .setMessage("Ano-Link Cross-Device Bridge\n\n• WAN Engine: Cloudflare Quick Tunnel\n• Local Engine: WebRTC P2P (UDP)\n• Standby Power: <1% Battery/Hour\n• Paired PIN: $pin")
             .setPositiveButton("Configure PIN") { _, _ ->
                 showEditPcIpDialog()
             }
@@ -314,29 +400,129 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
+    private fun setupWallpaperSlideshow() {
+        try {
+            wallpaperFiles = assets.list("wallpapers")?.filter {
+                it.endsWith(".jpg", ignoreCase = true) ||
+                it.endsWith(".png", ignoreCase = true) ||
+                it.endsWith(".webp", ignoreCase = true)
+            }?.sorted() ?: emptyList()
+        } catch (_: Exception) {
+            wallpaperFiles = emptyList()
+        }
+
+        if (wallpaperFiles.isNotEmpty()) {
+            val firstFile = wallpaperFiles[0]
+            lifecycleScope.launch(Dispatchers.IO) {
+                val bitmap = decodeSampledBitmap("wallpapers/$firstFile", 1080, 600)
+                withContext(Dispatchers.Main) {
+                    if (bitmap != null && !isFinishing && !isDestroyed) {
+                        ivWallpaperA.setImageBitmap(bitmap)
+                        ivWallpaperA.alpha = 1f
+                        ivWallpaperB.alpha = 0f
+                        activeLayerIsA = true
+                    }
+                }
+            }
+            startSlideshowTimer()
+        }
+    }
+
+    private fun startSlideshowTimer() {
+        slideshowJob?.cancel()
+        slideshowJob = lifecycleScope.launch {
+            while (isActive) {
+                delay(5 * 60 * 1000L) // Rotate every 5 minutes (300,000 ms)
+                if (wallpaperFiles.isEmpty()) continue
+                currentWallpaperIdx = (currentWallpaperIdx + 1) % wallpaperFiles.size
+                val nextFile = wallpaperFiles[currentWallpaperIdx]
+                advanceWallpaperCrossFade(nextFile)
+            }
+        }
+    }
+
+    private fun advanceWallpaperCrossFade(fileName: String) {
+        val targetView = if (activeLayerIsA) ivWallpaperB else ivWallpaperA
+        val currentView = if (activeLayerIsA) ivWallpaperA else ivWallpaperB
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            val bitmap = decodeSampledBitmap("wallpapers/$fileName", 1080, 600)
+            withContext(Dispatchers.Main) {
+                if (bitmap != null && !isFinishing && !isDestroyed) {
+                    targetView.setImageBitmap(bitmap)
+                    targetView.animate().alpha(1f).setDuration(1000).start()
+                    currentView.animate().alpha(0f).setDuration(1000).withEndAction {
+                        activeLayerIsA = !activeLayerIsA
+                    }.start()
+                }
+            }
+        }
+    }
+
+    private fun decodeSampledBitmap(assetPath: String, reqWidth: Int, reqHeight: Int): Bitmap? {
+        return try {
+            val options = BitmapFactory.Options().apply {
+                inJustDecodeBounds = true
+            }
+            assets.open(assetPath).use {
+                BitmapFactory.decodeStream(it, null, options)
+            }
+            options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight)
+            options.inJustDecodeBounds = false
+            options.inPreferredConfig = Bitmap.Config.RGB_565
+            assets.open(assetPath).use {
+                BitmapFactory.decodeStream(it, null, options)
+            }
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private fun calculateInSampleSize(options: BitmapFactory.Options, reqWidth: Int, reqHeight: Int): Int {
+        val (height: Int, width: Int) = options.outHeight to options.outWidth
+        var inSampleSize = 1
+        if (height > reqHeight || width > reqWidth) {
+            val halfHeight: Int = height / 2
+            val halfWidth: Int = width / 2
+            while (halfHeight / inSampleSize >= reqHeight && halfWidth / inSampleSize >= reqWidth) {
+                inSampleSize *= 2
+            }
+        }
+        return inSampleSize.coerceAtLeast(1)
+    }
+
     private fun updatePcCardUi() {
         val isPaired = PcRemoteClient.isPaired(this)
+        val isConnected = PcRemoteClient.isConnected()
+
         if (isPaired) {
             val name = PcRemoteClient.getPairedPcName(this)
             tvPcName.text = name
-            tvTailscaleIp.text = "Pure WebRTC P2P Direct"
+            if (isConnected) {
+                tvViewportStatus.text = "Live"
+                tvViewportStatus.setTextColor(Color.parseColor("#34D399"))
+                dotStatusJewel.setBackgroundResource(R.drawable.bg_dot_emerald)
+            } else {
+                tvViewportStatus.text = "Offline"
+                tvViewportStatus.setTextColor(Color.parseColor("#94A3B8"))
+                tvViewportLatency.text = "--"
+            }
         } else {
             tvPcName.text = "No PC Paired"
-            tvTailscaleIp.text = "Tap to pair with 6-Digit PIN"
-            tvDaemonStatus.text = "OFFLINE"
-            tvDaemonStatus.setTextColor(android.graphics.Color.parseColor("#94A3B8"))
-            llDaemonStatusPill.setBackgroundResource(R.drawable.bg_status_offline)
-            viewStatusDot.setBackgroundResource(R.drawable.dot_status_offline)
-            viewPingLiveDot.visibility = View.GONE
-            tvTriadPing.text = "--"
-            tvTriadPing.setTextColor(android.graphics.Color.parseColor("#94A3B8"))
+            tvViewportStatus.text = "Unpaired"
+            tvViewportStatus.setTextColor(Color.parseColor("#94A3B8"))
+            tvViewportLatency.text = "--"
         }
     }
 
     override fun onResume() {
         super.onResume()
+        AnoWebRtcManager.isAppInForeground = true
 
         updatePcCardUi()
+        if (wallpaperFiles.isNotEmpty() && (slideshowJob == null || slideshowJob?.isActive != true)) {
+            startSlideshowTimer()
+        }
 
         if (!PcRemoteClient.hasConfiguredPc(this)) {
             showEditPcIpDialog(showPromptNotice = true)
@@ -363,28 +549,21 @@ class MainActivity : AppCompatActivity() {
 
             PcAppsRepository.preload(this)
 
-            // Real-time connection status listener (Strictly ONLINE / OFFLINE)
+            // Real-time connection status listener
             PcRemoteClient.setConnectionStateListener { isConnected, rttMs ->
                 runOnUiThread {
                     updatePcCardUi()
                     if (isConnected) {
                         dismissConnectingHud()
-                        tvDaemonStatus.text = "ONLINE"
-                        tvDaemonStatus.setTextColor(android.graphics.Color.parseColor("#10B981"))
-                        llDaemonStatusPill.setBackgroundResource(R.drawable.bg_status_online)
-                        viewStatusDot.setBackgroundResource(R.drawable.dot_status_online)
-                        viewPingLiveDot.visibility = View.VISIBLE
-                        tvTriadPing.text = if (rttMs > 0) "${rttMs}ms" else "<10ms"
-                        tvTriadPing.setTextColor(android.graphics.Color.parseColor("#10B981"))
+                        tvViewportStatus.text = "Live"
+                        tvViewportStatus.setTextColor(Color.parseColor("#34D399"))
+                        dotStatusJewel.setBackgroundResource(R.drawable.bg_dot_emerald)
+                        tvViewportLatency.text = if (rttMs > 0) "${rttMs}ms" else "<10ms"
                         PcAppsRepository.preload(this@MainActivity)
                     } else {
-                        tvDaemonStatus.text = "OFFLINE"
-                        tvDaemonStatus.setTextColor(android.graphics.Color.parseColor("#94A3B8"))
-                        llDaemonStatusPill.setBackgroundResource(R.drawable.bg_status_offline)
-                        viewStatusDot.setBackgroundResource(R.drawable.dot_status_offline)
-                        viewPingLiveDot.visibility = View.GONE
-                        tvTriadPing.text = "--"
-                        tvTriadPing.setTextColor(android.graphics.Color.parseColor("#94A3B8"))
+                        tvViewportStatus.text = "Offline"
+                        tvViewportStatus.setTextColor(Color.parseColor("#94A3B8"))
+                        tvViewportLatency.text = "--"
 
                         val pairedPin = PcRemoteClient.getPin(this@MainActivity)
                         if (pairedPin.isNotBlank()) {
@@ -400,7 +579,10 @@ class MainActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
+        AnoWebRtcManager.isAppInForeground = false
         dismissConnectingHud()
+        slideshowJob?.cancel()
+        PcRemoteClient.stopPingLoop()
         PcRemoteClient.setConnectionStateListener(null)
         PcRemoteClient.onPcNameListener = null
         PcRemoteClient.onStatusListener = null
@@ -415,6 +597,41 @@ class MainActivity : AppCompatActivity() {
 
     private fun startDaemon() {
         val intent = Intent(this, TailConnectService::class.java)
-        startForegroundService(intent)
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(intent)
+            } else {
+                startService(intent)
+            }
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Notice starting daemon: ${e.message}")
+        }
+    }
+
+    private fun checkNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 206)
+            }
+        }
+    }
+
+    private fun checkBatteryOptimizationExemption() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val pm = getSystemService(Context.POWER_SERVICE) as? PowerManager ?: return
+            if (!pm.isIgnoringBatteryOptimizations(packageName)) {
+                val prefs = getSharedPreferences("anolink_sentinel_prefs", Context.MODE_PRIVATE)
+                val hasPrompted = prefs.getBoolean("battery_prompted", false)
+                if (!hasPrompted) {
+                    prefs.edit().putBoolean("battery_prompted", true).apply()
+                    try {
+                        val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                            data = Uri.parse("package:$packageName")
+                        }
+                        startActivity(intent)
+                    } catch (_: Exception) {}
+                }
+            }
+        }
     }
 }

@@ -127,12 +127,20 @@ object PcAppsRepository {
 
         repoScope.launch {
             try {
-                val pcHost = PcRemoteClient.getPcHost(context)
-                val url = URL("http://$pcHost:8080/api/pc/apps")
+                val tunnelUrl = PcRemoteClient.getTunnelUrl().trimEnd('/')
+                if (tunnelUrl.isBlank()) return@launch
+                val httpBase = if (tunnelUrl.startsWith("ws://", true)) tunnelUrl.replace("ws://", "http://", true)
+                               else if (tunnelUrl.startsWith("wss://", true)) tunnelUrl.replace("wss://", "https://", true)
+                               else tunnelUrl
+                val url = URL("$httpBase/api/pc/apps")
                 val conn = url.openConnection() as HttpURLConnection
                 conn.connectTimeout = 3000
                 conn.readTimeout = 5000
                 conn.requestMethod = "GET"
+                val token = PcRemoteClient.getDeviceToken(context)
+                if (token.isNotBlank()) {
+                    conn.setRequestProperty("X-Device-Token", token)
+                }
 
                 if (conn.responseCode == 200) {
                     val rawBody = conn.inputStream.bufferedReader().use { it.readText() }
@@ -143,7 +151,7 @@ object PcAppsRepository {
                     Log.w(TAG, "Preload /api/pc/apps returned HTTP ${conn.responseCode}")
                 }
             } catch (e: Exception) {
-                Log.w(TAG, "Preload fetch failed: ${e.message}")
+                Log.w(TAG, "Preload fetch notice: ${e.message}")
             } finally {
                 isPreloading.set(false)
             }

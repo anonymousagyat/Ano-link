@@ -535,6 +535,10 @@ namespace AnoLink
                     EnumerateStartApps();
                     break;
 
+                case "GET_PROCESSES":
+                    EnumerateProcessesNative();
+                    break;
+
                 case "GET_POWER":
                     SendPowerStatus();
                     break;
@@ -976,6 +980,50 @@ namespace AnoLink
             catch (Exception ex)
             {
                 _workerWriter.WriteLine("{\"type\":\"launch_status\",\"target\":\"" + EscapeJson(target) + "\",\"success\":false,\"error\":\"" + EscapeJson(ex.Message) + "\"}");
+            }
+        }
+
+        static void EnumerateProcessesNative()
+        {
+            try
+            {
+                Process[] procs = Process.GetProcesses();
+                StringBuilder sb = new StringBuilder(16384);
+                sb.Append("{\"type\":\"pc_processes_native\",\"processes\":[");
+                bool first = true;
+                foreach (Process p in procs)
+                {
+                    try
+                    {
+                        if (p.Id <= 4) continue;
+                        string procName = p.ProcessName;
+                        if (string.IsNullOrEmpty(procName)) continue;
+                        long mem = 0;
+                        try { mem = p.WorkingSet64; } catch { }
+                        string title = "";
+                        try { title = p.MainWindowTitle; } catch { }
+
+                        if (!first) sb.Append(",");
+                        first = false;
+
+                        sb.Append("{\"Id\":").Append(p.Id)
+                          .Append(",\"ProcessName\":\"").Append(EscapeJson(procName)).Append("\"")
+                          .Append(",\"MainWindowTitle\":\"").Append(EscapeJson(title)).Append("\"")
+                          .Append(",\"WorkingSet64\":").Append(mem)
+                          .Append("}");
+                    }
+                    catch { }
+                    finally
+                    {
+                        p.Dispose();
+                    }
+                }
+                sb.Append("]}");
+                _workerWriter.WriteLine(sb.ToString());
+            }
+            catch (Exception ex)
+            {
+                _workerWriter.WriteLine("{\"type\":\"pc_processes_native\",\"processes\":[],\"error\":\"" + EscapeJson(ex.Message) + "\"}");
             }
         }
 

@@ -28,6 +28,8 @@ object PcRemoteClient {
     private var onAuthResultListener: ((Boolean, String) -> Unit)? = null
     var onStatusListener: ((String) -> Unit)? = null
     var onPcNameListener: ((String) -> Unit)? = null
+    var onBatteryListener: ((Int, Boolean, Boolean) -> Unit)? = null
+    var onHardwareStatsListener: ((JsonObject) -> Unit)? = null
 
     private var appContext: Context? = null
     private var lastPingSent = 0L
@@ -78,6 +80,8 @@ object PcRemoteClient {
             .getString(KEY_PAIRED_PC_NAME, "Windows PC") ?: "Windows PC"
     }
 
+    fun getPcName(context: Context): String = getPairedPcName(context)
+
     fun isPaired(context: Context): Boolean = getPin(context).isNotBlank()
 
     fun forgetDevice(context: Context) {
@@ -106,34 +110,19 @@ object PcRemoteClient {
     }
 
     fun isConnected(): Boolean = AnoWebRtcManager.isConnected()
+    fun isUsingTunnel(): Boolean = AnoWebRtcManager.isUsingTunnel()
+    fun getTunnelUrl(): String = AnoWebRtcManager.getTunnelUrl()
+
+    fun sendSinglePingOnOpen() {
+        if (isConnected()) {
+            lastPingSent = System.currentTimeMillis()
+            send("ping")
+        }
+    }
 
     fun startPingLoop() {
-        pingJob?.cancel()
-        lastPongReceived = System.currentTimeMillis()
-        var missedProbes = 0
-        pingJob = clientScope.launch {
-            while (isActive && isConnected()) {
-                sendPing()
-                delay(2000L)
-                val elapsed = System.currentTimeMillis() - lastPongReceived
-                if (lastPongReceived > 0 && elapsed > 4500L) {
-                    missedProbes++
-                    Log.d(TAG, "Heartbeat probe delayed: ${elapsed}ms (missed probe $missedProbes/3)")
-                    if (elapsed > 15000L || missedProbes >= 4) {
-                        Log.w(TAG, "Heartbeat watchdog timeout: No pong from PC for >15s. Declaring disconnected.")
-                        stopPingLoop()
-                        currentPingMs = -1L
-                        disconnect()
-                        clientScope.launch {
-                            connectionStateListener?.invoke(false, -1L)
-                        }
-                        break
-                    }
-                } else {
-                    missedProbes = 0
-                }
-            }
-        }
+        // Only ping once on open; do not repetitively loop in background
+        sendSinglePingOnOpen()
     }
 
     fun stopPingLoop() {
@@ -141,28 +130,27 @@ object PcRemoteClient {
         pingJob = null
     }
 
-    private fun setupManagerCallbacks(context: Context) {
+    fun setupManagerCallbacks(context: Context) {
+        appContext = context.applicationContext
         AnoWebRtcManager.onConnected = {
-            Log.i(TAG, "WebRTC P2P DataChannel Connected! Verifying PIN...")
-            startPingLoop()
+            Log.i(TAG, "Connection link established! Listening for PC status...")
+            sendSinglePingOnOpen()
             clientScope.launch {
                 connectionStateListener?.invoke(true, if (currentPingMs > 0) currentPingMs else 15L)
-                sendRaw(gson.toJson(mapOf(
-                    "type" to "pair_request",
-                    "pin" to getPin(context),
-                    "deviceName" to Build.MODEL
-                )))
+                // AnoWebRtcManager already dispatched the authoritative pair_request handshake on onOpen.
                 send("pc_get_taskbar")
             }
+            TailConnectService.instance?.updateForegroundNotification()
         }
 
         AnoWebRtcManager.onDisconnected = {
-            Log.i(TAG, "WebRTC P2P DataChannel Disconnected.")
+            Log.i(TAG, "Cloudflare Quick Tunnel Disconnected.")
             stopPingLoop()
             currentPingMs = -1L
             clientScope.launch {
                 connectionStateListener?.invoke(false, -1L)
             }
+            TailConnectService.instance?.updateForegroundNotification()
         }
 
         AnoWebRtcManager.onControlMessage = { text ->
@@ -186,6 +174,16 @@ object PcRemoteClient {
             clientScope.launch {
                 onStatusListener?.invoke(status)
             }
+            TailConnectService.instance?.updateForegroundNotification(status)
+        }
+    }
+
+    fun startBackgroundSentinel(context: Context) {
+        val pin = getPin(context)
+        if (pin.length == 6) {
+            Log.i(TAG, "Starting passive background sentinel for paired PIN: $pin")
+            setupManagerCallbacks(context)
+            AnoWebRtcManager.startPassiveSentinel(context, pin)
         }
     }
 
@@ -195,10 +193,7 @@ object PcRemoteClient {
         if (pin.isBlank()) return
         setupManagerCallbacks(context)
         if (isConnected()) {
-            if (pingJob == null || pingJob?.isActive != true) {
-                startPingLoop()
-            }
-            sendPing()
+            sendSinglePingOnOpen()
             return
         }
         AnoWebRtcManager.connect(context, pin)
@@ -285,7 +280,22 @@ object PcRemoteClient {
                         activeListener?.onPcScreenFrame(data)
                     }
                 }
-                "window_focused", "power_status", "pc_hardware_stats", "pc_battery_status", "pc_files_response", "pc_file_action_result", "file_download_start", "file_download_chunk", "file_download_complete", "file_download_error" -> {
+                "window_focused", "power_status", "pc_hardware_stats", "pc_battery_status", "pc_processes_list", "start_apps", "launch_status", "pc_kill_result", "pc_files_response", "pc_file_action_result", "file_download_start", "file_download_chunk", "file_download_complete", "file_download_error" -> {
+                    if (type == "pc_battery_status") {
+                        val percent = json.get("percent")?.asInt ?: 100
+                        val isCharging = json.get("isCharging")?.asBoolean ?: false
+                        val hasBattery = json.get("hasBattery")?.asBoolean ?: true
+                        clientScope.launch {
+                            onBatteryListener?.invoke(percent, isCharging, hasBattery)
+                        }
+                    } else if (type == "pc_hardware_stats") {
+                        val data = json.getAsJsonObject("data") ?: json
+                        clientScope.launch {
+                            onHardwareStatsListener?.invoke(data)
+                        }
+                    } else if (type == "start_apps") {
+                        PcAppsRepository.handleRemoteJson(json)
+                    }
                     activeListener?.onPcMessage(type, json)
                 }
                 else -> {

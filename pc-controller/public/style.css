@@ -200,6 +200,55 @@ body {
     to { opacity: 1; }
 }
 
+/* On-Demand Ping & Connect Action Button */
+.btn-connect-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 12.5px;
+    font-weight: 700;
+    font-family: var(--font-sans);
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    color: #FBBF24;
+}
+
+.btn-connect-action:hover:not(:disabled) {
+    background: rgba(245, 158, 11, 0.22);
+    border-color: rgba(245, 158, 11, 0.7);
+    color: #FFFFFF;
+    box-shadow: 0 0 14px rgba(245, 158, 11, 0.35);
+    transform: translateY(-1px);
+}
+
+.btn-connect-action:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.btn-connect-action.connecting {
+    background: rgba(245, 158, 11, 0.08);
+    border-color: rgba(245, 158, 11, 0.3);
+    color: #F59E0B;
+    cursor: wait;
+}
+
+.btn-connect-action.connected {
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    color: #34D399;
+}
+
+.btn-connect-action.connected:hover:not(:disabled) {
+    background: rgba(16, 185, 129, 0.2);
+    border-color: rgba(16, 185, 129, 0.7);
+    color: #FFFFFF;
+    box-shadow: 0 0 14px rgba(16, 185, 129, 0.35);
+}
+
 /* Lucide High-Resolution Vector Icon System */
 .ui-icon {
     display: inline-flex;
@@ -258,6 +307,11 @@ body {
     filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.4));
 }
 
+.silent-card .launch-icon-svg {
+    color: #f59e0b;
+    filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.4));
+}
+
 .video-card .launch-icon-svg {
     color: #c084fc;
     filter: drop-shadow(0 0 10px rgba(192, 132, 252, 0.4));
@@ -275,22 +329,28 @@ body {
     vertical-align: middle;
 }
 
-/* File Explorer Vector Icons */
+/* Windows 11 Fluent File Explorer Icons */
+.win11-file-icon {
+    width: 22px;
+    height: 22px;
+    vertical-align: middle;
+    flex-shrink: 0;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45));
+    transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-block;
+}
+
+.explorer-row:hover .win11-file-icon {
+    transform: scale(1.15);
+}
+
 .file-icon-svg {
-    width: 17px;
-    height: 17px;
+    width: 18px;
+    height: 18px;
     vertical-align: middle;
     flex-shrink: 0;
 }
-.file-icon-svg.folder { color: #facc15; }
-.file-icon-svg.img { color: #38bdf8; }
-.file-icon-svg.vid { color: #ec4899; }
-.file-icon-svg.audio { color: #a855f7; }
-.file-icon-svg.apk { color: #10b981; }
-.file-icon-svg.zip { color: #f97316; }
-.file-icon-svg.doc { color: #60a5fa; }
-.file-icon-svg.code { color: #00f2fe; }
-.file-icon-svg.generic { color: #94a3b8; }
 
 .rotating {
     animation: spin 0.6s linear infinite;
@@ -461,6 +521,10 @@ body {
     background: linear-gradient(90deg, #00F2FE, #38BDF8);
 }
 
+.launch-card.silent-card::before {
+    background: linear-gradient(90deg, #f59e0b, #d97706);
+}
+
 .launch-card.video-card::before {
     background: linear-gradient(90deg, #8b5cf6, #ec4899);
 }
@@ -493,6 +557,12 @@ body {
     background: rgba(37, 99, 235, 0.15);
     color: #60a5fa;
     border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.launch-badge.silent-badge {
+    background: rgba(245, 158, 11, 0.15);
+    color: #fbbf24;
+    border-color: rgba(245, 158, 11, 0.3);
 }
 
 .launch-badge.video-badge {
@@ -530,6 +600,11 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+.launch-icon.silent-icon {
+    background: rgba(245, 158, 11, 0.12);
+    border-color: rgba(245, 158, 11, 0.25);
 }
 
 .launch-icon.video-icon {
@@ -597,6 +672,15 @@ body {
 
 .launch-btn:hover .btn-arrow {
     transform: translate(2px, -2px);
+}
+
+.btn-amber {
+    background: linear-gradient(135deg, #d97706, #b45309);
+    color: white;
+}
+.btn-amber:hover {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    box-shadow: 0 0 16px rgba(245, 158, 11, 0.45);
 }
 
 .btn-accent {
@@ -1253,16 +1337,29 @@ body {
     cursor: pointer;
     border-bottom: 2px solid transparent;
     transition: all 0.15s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
 }
 
-.tab-btn:hover {
+a.tab-btn {
+    text-decoration: none;
+    color: var(--text-muted);
+}
+
+a.tab-btn:visited {
+    color: var(--text-muted);
+}
+
+.tab-btn:hover, a.tab-btn:hover {
     color: var(--text-primary);
 }
 
 .tab-btn.active {
-    color: var(--accent-cyan);
-    border-bottom-color: var(--accent-cyan);
-    background-color: rgba(0, 242, 254, 0.08);
+    color: var(--accent-amber, #F59E0B);
+    border-bottom-color: var(--accent-amber, #F59E0B);
+    background-color: rgba(245, 158, 11, 0.08);
 }
 
 .tab-pane {
@@ -1465,8 +1562,13 @@ body {
 }
 
 .explorer-row .file-icon {
-    font-size: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
     flex-shrink: 0;
+    margin-right: 4px;
 }
 
 .explorer-row .col-date {
@@ -1910,4 +2012,349 @@ body {
     justify-content: flex-end;
     gap: 12px;
     background: rgba(255, 255, 255, 0.01);
+}
+
+/* ==========================================================================
+   Location & Device Finder Tab (Satellite View + Minimal Inspector)
+   ========================================================================== */
+.loc-cockpit {
+    display: flex;
+    height: 600px;
+    min-height: 520px;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+    background: #07090E;
+    position: relative;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6);
+}
+
+.loc-map-viewport {
+    flex: 1;
+    height: 100%;
+    position: relative;
+    background: #05070A;
+    overflow: hidden;
+}
+
+#locSatelliteFrame {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    display: block;
+    filter: contrast(108%) brightness(98%);
+}
+
+.loc-map-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: rgba(12, 16, 23, 0.88);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    z-index: 10;
+}
+
+.loc-map-badge i {
+    color: var(--accent-amber);
+}
+
+.loc-preset-bar {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: flex;
+    gap: 6px;
+    z-index: 10;
+}
+
+.loc-preset-chip {
+    background: rgba(12, 16, 23, 0.85);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.loc-preset-chip:hover {
+    color: #fff;
+    background: rgba(20, 26, 38, 0.95);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.loc-preset-chip.active {
+    color: #fff;
+    border-color: rgba(245, 158, 11, 0.5);
+    background: rgba(245, 158, 11, 0.15);
+}
+
+.loc-map-status-tag {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    background: rgba(12, 16, 23, 0.88);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 11px;
+    font-family: var(--font-mono);
+    color: var(--text-secondary);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.loc-map-status-tag span:first-child {
+    color: var(--accent-green);
+    font-weight: 600;
+}
+
+.loc-side-inspector {
+    width: 340px;
+    height: 100%;
+    background: #0C1017;
+    border-left: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    z-index: 20;
+    overflow-y: auto;
+}
+
+.loc-header-block {
+    padding: 20px 18px 16px 18px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.loc-label-eyebrow {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    display: block;
+    margin-bottom: 4px;
+}
+
+.loc-device-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+    margin: 0 0 6px 0;
+    letter-spacing: -0.3px;
+}
+
+.loc-connection-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11.5px;
+    color: var(--text-secondary);
+}
+
+.loc-pulse-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent-green);
+    box-shadow: 0 0 6px var(--accent-green);
+}
+
+.loc-body-block {
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    flex: 1;
+}
+
+.loc-telemetry-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.loc-info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    font-size: 12px;
+}
+
+.loc-info-label {
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.loc-info-val {
+    color: var(--text-primary);
+    font-weight: 600;
+    text-align: right;
+}
+
+.loc-info-val.loc-code {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+}
+
+.loc-info-val.loc-address {
+    max-width: 180px;
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    line-height: 1.35;
+}
+
+.loc-coords-cluster {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.loc-icon-btn {
+    background: transparent;
+    border: 0;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 2px;
+    display: flex;
+    align-items: center;
+    transition: color 0.15s ease;
+}
+
+.loc-icon-btn:hover {
+    color: #fff;
+}
+
+.loc-actions-block {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.btn-loc-ping {
+    width: 100%;
+    height: 40px;
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    border-radius: var(--radius-sm);
+    color: var(--accent-amber);
+    font-size: 12.5px;
+    font-weight: 600;
+    font-family: var(--font-sans);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.15s ease;
+}
+
+.btn-loc-ping:hover {
+    background: rgba(245, 158, 11, 0.22);
+    border-color: rgba(245, 158, 11, 0.6);
+    color: #fff;
+}
+
+.btn-loc-ping.loading {
+    opacity: 0.7;
+    cursor: not-allowed;
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
+.loc-micro-hint,
+.loc-alarm-subhint {
+    font-size: 10.5px;
+    color: var(--text-muted);
+    text-align: center;
+    display: block;
+    line-height: 1.35;
+}
+
+.loc-alarm-block {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border-color);
+}
+
+.btn-loc-alarm {
+    width: 100%;
+    height: 42px;
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    border-radius: var(--radius-sm);
+    color: #fca5a5;
+    font-size: 12.5px;
+    font-weight: 600;
+    font-family: var(--font-sans);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.15s ease;
+}
+
+.btn-loc-alarm:hover {
+    background: rgba(239, 68, 68, 0.22);
+    border-color: rgba(239, 68, 68, 0.6);
+    color: #fff;
+}
+
+.btn-loc-alarm.active-ringing {
+    background: #ef4444;
+    color: #fff;
+    border-color: #ef4444;
+    animation: alarmPulseLoc 1.2s infinite ease-in-out;
+}
+
+@keyframes alarmPulseLoc {
+    0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
+    70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+.loc-footer-block {
+    margin-top: auto;
+    padding: 14px 18px;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.loc-external-link {
+    font-size: 11.5px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: color 0.15s ease;
+}
+
+.loc-external-link:hover {
+    color: #fff;
 }

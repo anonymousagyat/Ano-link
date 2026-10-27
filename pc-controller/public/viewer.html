@@ -49,7 +49,11 @@
             user-select: none;
         }
 
-        /* In Video & Camera mode: hide simulated hardware overlays so real phone screen is 100% unobstructed */
+        /* In Silent, Video & Camera mode: hide simulated hardware overlays so real phone screen is 100% unobstructed */
+        .mode-silent .speaker-grill,
+        .mode-silent .camera-punchhole,
+        .mode-silent .phone-status-bar,
+        .mode-silent .home-gesture-indicator,
         .mode-video .speaker-grill,
         .mode-video .camera-punchhole,
         .mode-video .phone-status-bar,
@@ -59,6 +63,11 @@
         .mode-camera .phone-status-bar,
         .mode-camera .home-gesture-indicator {
             display: none !important;
+        }
+
+        .mode-silent {
+            border-color: #d97706;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.95), 0 0 40px rgba(245, 158, 11, 0.25);
         }
 
         .mode-video {
@@ -142,6 +151,10 @@
 
         .mode-badge.skeleton {
             color: #60a5fa;
+        }
+
+        .mode-badge.silent {
+            color: #fbbf24;
         }
 
         .mode-badge.video {
@@ -240,6 +253,221 @@
         .dock-text-sender input:focus {
             border-color: var(--accent-blue);
         }
+
+        /* Screen Recording Control (PC Hardware Accelerated) */
+        .dock-recording-section {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            width: 100%;
+        }
+
+        .btn-record-action {
+            width: 100%;
+            padding: 9px 12px;
+            font-size: 12px;
+            font-weight: 700;
+            border-radius: 8px;
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            background: rgba(239, 68, 68, 0.08);
+            color: #fca5a5;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-record-action:hover {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: rgba(239, 68, 68, 0.7);
+            color: #fff;
+        }
+
+        .btn-record-action.recording {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.25), rgba(185, 28, 28, 0.35));
+            border-color: #ef4444;
+            color: #fff;
+            box-shadow: 0 0 16px rgba(239, 68, 68, 0.4);
+        }
+
+        .record-indicator-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ef4444;
+            display: inline-block;
+            transition: transform 0.15s ease;
+        }
+
+        .btn-record-action.recording .record-indicator-dot {
+            animation: recPulse 1.2s infinite ease-in-out;
+            background: #fff;
+        }
+
+        .recording-timer-badge {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 6px;
+            padding: 5px 10px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 700;
+            color: #fca5a5;
+        }
+
+        .rec-dot-pulsing {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ef4444;
+            display: inline-block;
+            box-shadow: 0 0 8px #ef4444;
+            animation: recPulse 1s infinite alternate;
+        }
+
+        @keyframes recPulse {
+            0% { transform: scale(0.85); opacity: 0.6; }
+            100% { transform: scale(1.2); opacity: 1; }
+        }
+
+        /* Floating Viewport Recording HUD Badge */
+        .viewport-rec-badge {
+            position: absolute;
+            top: 14px;
+            left: 14px;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(239, 68, 68, 0.5);
+            border-radius: 20px;
+            padding: 6px 14px;
+            color: #fca5a5;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 700;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
+            cursor: pointer;
+            pointer-events: auto;
+            user-select: none;
+            transition: background 0.15s ease;
+        }
+
+        .viewport-rec-badge:hover {
+            background: rgba(239, 68, 68, 0.25);
+            border-color: #ef4444;
+            color: #fff;
+        }
+
+        /* Toast Notification */
+        .rec-toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 999;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(16, 185, 129, 0.4);
+            border-radius: 14px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(16, 185, 129, 0.15);
+            max-width: 420px;
+            animation: slideInRight 0.3s ease;
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .rec-toast-body strong {
+            display: block;
+            font-size: 12px;
+            color: #fff;
+        }
+
+        .rec-toast-body p {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin: 2px 0 0 0;
+            word-break: break-all;
+        }
+
+        .rec-toast-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: auto;
+        }
+
+        .btn-toast-close {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 18px;
+            cursor: pointer;
+            padding: 2px 6px;
+            line-height: 1;
+        }
+
+        .btn-toast-close:hover {
+            color: #fff;
+        }
+
+        /* Preview Modal */
+        .rec-preview-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.82);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .rec-preview-card {
+            background: rgba(18, 24, 36, 0.96);
+            border: 1px solid var(--border-color);
+            border-radius: 18px;
+            max-width: 520px;
+            width: 100%;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+        }
+
+        .rec-preview-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .rec-preview-header h3 {
+            font-size: 14px;
+            font-weight: 700;
+            color: #fff;
+            margin: 0;
+        }
+
+        .rec-preview-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
     </style>
 </head>
 <body>
@@ -266,6 +494,12 @@
             <canvas id="popoutCanvas" width="1080" height="2400"></canvas>
             <video id="popoutVideo" autoplay playsinline style="display: none;"></video>
             
+            <!-- Floating Viewport Recording HUD Badge -->
+            <div id="viewportRecBadge" class="viewport-rec-badge" style="display: none;" title="Click to Stop Recording">
+                <span class="rec-dot-pulsing"></span>
+                <span id="viewportRecTimer">REC 00:00</span>
+            </div>
+
             <!-- Overlay Message when Stream Paused -->
             <div id="popoutPausedOverlay" class="screen-overlay" style="display: none;">
                 <div class="overlay-card">
@@ -303,6 +537,14 @@
                 </button>
             </div>
 
+            <!-- Quick Mode Switcher -->
+            <div class="dock-mode-switcher" style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+                <button class="btn btn-sm btn-nav" id="btnModeSilent" title="Zero-Prompt Silent Screen (~20 FPS)" style="padding: 7px 4px; font-size: 11px; display: flex; align-items: center; justify-content: center; gap: 4px;"><i data-lucide="zap" class="ui-icon-xs"></i> Silent</button>
+                <button class="btn btn-sm btn-nav" id="btnModeVideo" title="Full 30 FPS Hardware Mirror" style="padding: 7px 4px; font-size: 11px; display: flex; align-items: center; justify-content: center; gap: 4px;"><i data-lucide="monitor" class="ui-icon-xs"></i> 30 FPS</button>
+                <button class="btn btn-sm btn-nav" id="btnModeCamera" title="Front & Rear Cameras" style="padding: 7px 4px; font-size: 11px; display: flex; align-items: center; justify-content: center; gap: 4px;"><i data-lucide="camera" class="ui-icon-xs"></i> Camera</button>
+                <button class="btn btn-sm btn-nav" id="btnModeSkeleton" title="Low-Bandwidth Wireframe" style="padding: 7px 4px; font-size: 11px; display: flex; align-items: center; justify-content: center; gap: 4px;"><i data-lucide="layout" class="ui-icon-xs"></i> Skeleton</button>
+            </div>
+
             <!-- Dedicated Mode Identifier -->
             <div class="mode-banner" id="modeBanner">
                 <span class="mode-badge skeleton" id="modeBadge"><i data-lucide="zap" class="ui-icon-xs"></i> <span>SKELETON REMOTE</span></span>
@@ -314,6 +556,21 @@
                 <span id="streamStatusIcon"><i data-lucide="pause" class="ui-icon-sm"></i></span>
                 <span id="streamStatusText">Stop Stream</span>
             </button>
+
+            <!-- Screen Recording Control (PC Hardware Accelerated) -->
+            <div class="dock-recording-section">
+                <button id="btnToggleRecord" class="btn-record-action">
+                    <span class="record-indicator-dot"></span>
+                    <span id="recordBtnText">Record Screen</span>
+                </button>
+                <div id="recordingTimerBadge" class="recording-timer-badge" style="display: none;">
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span class="rec-dot-pulsing"></span>
+                        <span id="recTimerText">00:00</span>
+                    </div>
+                    <span class="rec-size-text" id="recSizeText">0.0 MB</span>
+                </div>
+            </div>
 
             <!-- Mode Specific Controls: Skeleton Only -->
             <div id="skeletonControlsSection">
@@ -370,6 +627,37 @@
                 <button class="btn btn-primary" id="btnPopoutSendText">Send Text</button>
             </div>
         </aside>
+    </div>
+
+    <!-- Recording Download Toast Notification -->
+    <div id="recToast" class="rec-toast" style="display: none;">
+        <div class="rec-toast-icon"><i data-lucide="check-circle" style="color: #10b981; width: 20px; height: 20px;"></i></div>
+        <div class="rec-toast-body">
+            <strong id="recToastTitle">Recording Saved (MKV)</strong>
+            <p id="recToastDesc">Saved to PC recordings folder.</p>
+        </div>
+        <div class="rec-toast-actions">
+            <button id="btnRecToastOpenFolder" class="btn btn-sm btn-primary" style="font-size: 11px; padding: 4px 8px; display: flex; align-items: center; gap: 4px;"><i data-lucide="folder" class="ui-icon-xs"></i> Open Folder</button>
+            <button id="btnRecToastPreview" class="btn btn-sm btn-outline" style="font-size: 11px; padding: 4px 8px;">Download</button>
+            <button id="btnRecToastClose" class="btn-toast-close" title="Dismiss">&times;</button>
+        </div>
+    </div>
+
+    <!-- Quick Video Preview Modal -->
+    <div id="recPreviewModal" class="rec-preview-modal" style="display: none;">
+        <div class="rec-preview-card">
+            <div class="rec-preview-header">
+                <h3 id="recPreviewTitle">Recorded Video Preview</h3>
+                <button id="btnRecPreviewClose" class="btn-toast-close">&times;</button>
+            </div>
+            <div class="rec-preview-body">
+                <video id="recPreviewVideo" controls playsinline autoplay style="width: 100%; max-height: 65vh; border-radius: 12px; background: #000;"></video>
+            </div>
+            <div class="rec-preview-footer">
+                <span id="recPreviewInfo" style="font-size: 11px; color: var(--text-muted);"></span>
+                <button id="btnRecPreviewDownloadAgain" class="btn btn-primary btn-sm">Download Again</button>
+            </div>
+        </div>
     </div>
 
     <script src="lucide.min.js"></script>

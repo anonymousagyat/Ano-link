@@ -11,10 +11,10 @@ let currentSkeletonTree = null;
 let isStreamRunning = true;
 let activeFps = 30;
 
-// Parse mode directly from URL query param (?mode=skeleton, ?mode=video, or ?mode=camera)
+// Parse mode directly from URL query param (?mode=silent, ?mode=video, ?mode=camera, or ?mode=skeleton)
 const urlParams = new URLSearchParams(window.location.search);
 const rawMode = urlParams.get('mode');
-const activeMode = rawMode === 'video' ? 'video' : (rawMode === 'camera' ? 'camera' : 'skeleton');
+let activeMode = rawMode === 'silent' ? 'silent' : (rawMode === 'video' ? 'video' : (rawMode === 'camera' ? 'camera' : 'skeleton'));
 
 // DOM Elements
 const canvas = document.getElementById('popoutCanvas');
@@ -50,7 +50,29 @@ let isTorchOn = false;
 
 // Setup UI based on Active Mode
 function setupModeUI() {
-    if (activeMode === 'camera') {
+    if (activeMode === 'silent') {
+        document.title = 'Ano-Link - Silent Screen Share';
+        if (modeBadge) {
+            modeBadge.innerHTML = '<i data-lucide="zap" class="ui-icon-xs"></i> <span>SILENT SCREEN</span>';
+            modeBadge.className = 'mode-badge silent';
+        }
+        if (modeSubText) {
+            modeSubText.textContent = 'Zero-Prompt Fluent Mirror (~20 FPS)';
+        }
+        if (viewport) {
+            viewport.classList.add('mode-silent');
+            viewport.classList.remove('mode-video');
+            viewport.classList.remove('mode-camera');
+        }
+        if (videoControlsSection) videoControlsSection.style.display = 'none';
+        if (skeletonControlsSection) skeletonControlsSection.style.display = 'none';
+        if (cameraControlsSection) cameraControlsSection.style.display = 'none';
+        if (videoCanvas) videoCanvas.style.display = 'block';
+        if (canvas) canvas.style.display = 'none';
+        if (streamStatusText) streamStatusText.textContent = 'Stop Silent Stream';
+        if (pausedOverlayTitle) pausedOverlayTitle.textContent = 'Silent Stream Paused';
+        if (pausedOverlayDesc) pausedOverlayDesc.textContent = 'Screen capture suspended to conserve phone battery.';
+    } else if (activeMode === 'camera') {
         document.title = 'Ano-Link - Remote Camera Feed';
         if (modeBadge) {
             modeBadge.innerHTML = '<i data-lucide="camera" class="ui-icon-xs"></i> <span>REMOTE CAMERA</span>';
@@ -62,6 +84,7 @@ function setupModeUI() {
         if (viewport) {
             viewport.classList.add('mode-camera');
             viewport.classList.remove('mode-video');
+            viewport.classList.remove('mode-silent');
         }
         if (videoControlsSection) videoControlsSection.style.display = 'none';
         if (skeletonControlsSection) skeletonControlsSection.style.display = 'none';
@@ -83,6 +106,7 @@ function setupModeUI() {
         if (viewport) {
             viewport.classList.add('mode-video');
             viewport.classList.remove('mode-camera');
+            viewport.classList.remove('mode-silent');
         }
         if (videoControlsSection) videoControlsSection.style.display = 'block';
         if (skeletonControlsSection) skeletonControlsSection.style.display = 'none';
@@ -104,6 +128,7 @@ function setupModeUI() {
         if (viewport) {
             viewport.classList.remove('mode-video');
             viewport.classList.remove('mode-camera');
+            viewport.classList.remove('mode-silent');
         }
         if (videoControlsSection) videoControlsSection.style.display = 'none';
         if (skeletonControlsSection) skeletonControlsSection.style.display = 'block';
@@ -114,10 +139,61 @@ function setupModeUI() {
         if (pausedOverlayTitle) pausedOverlayTitle.textContent = 'Skeleton Remote Paused';
         if (pausedOverlayDesc) pausedOverlayDesc.textContent = 'Paused accessibility UI inspection.';
     }
+
+    // Update active state on dock mode buttons
+    const modeBtns = {
+        silent: document.getElementById('btnModeSilent'),
+        video: document.getElementById('btnModeVideo'),
+        camera: document.getElementById('btnModeCamera'),
+        skeleton: document.getElementById('btnModeSkeleton')
+    };
+    Object.entries(modeBtns).forEach(([m, btn]) => {
+        if (!btn) return;
+        if (m === activeMode) {
+            btn.classList.add('active');
+            btn.style.background = 'rgba(245, 158, 11, 0.25)';
+            btn.style.borderColor = 'rgba(245, 158, 11, 0.6)';
+            btn.style.color = '#fff';
+        } else {
+            btn.classList.remove('active');
+            btn.style.background = '';
+            btn.style.borderColor = '';
+            btn.style.color = '';
+        }
+    });
+
     if (window.lucide && typeof window.lucide.createIcons === 'function') {
         window.lucide.createIcons();
     }
 }
+
+function switchMode(newMode) {
+    if (activeMode === newMode) return;
+    if (typeof isRecording !== 'undefined' && isRecording) {
+        stopRecording();
+    }
+    activeMode = newMode;
+    const url = new URL(window.location.href);
+    url.searchParams.set('mode', newMode);
+    window.history.replaceState({}, '', url.toString());
+    setupModeUI();
+    sendToGateway({ action: 'set_mode', mode: activeMode });
+    if (activeMode === 'skeleton') {
+        sendToGateway({ action: 'get_skeleton_tree' });
+    }
+}
+
+// Bind dock mode buttons
+const btnModeSilent = document.getElementById('btnModeSilent');
+const btnModeVideo = document.getElementById('btnModeVideo');
+const btnModeCamera = document.getElementById('btnModeCamera');
+const btnModeSkeleton = document.getElementById('btnModeSkeleton');
+
+if (btnModeSilent) btnModeSilent.addEventListener('click', () => switchMode('silent'));
+if (btnModeVideo) btnModeVideo.addEventListener('click', () => switchMode('video'));
+if (btnModeCamera) btnModeCamera.addEventListener('click', () => switchMode('camera'));
+if (btnModeSkeleton) btnModeSkeleton.addEventListener('click', () => switchMode('skeleton'));
+
 setupModeUI();
 
 function initWebSocket() {
@@ -136,7 +212,7 @@ function initWebSocket() {
 
     ws.onmessage = (event) => {
         if (event.data instanceof ArrayBuffer) {
-            if (activeMode === 'video' || activeMode === 'camera') {
+            if (activeMode === 'video' || activeMode === 'camera' || activeMode === 'silent') {
                 renderVideoFrame(event.data);
             }
             return;
@@ -147,6 +223,17 @@ function initWebSocket() {
                 const state = msg.state || 'DISCONNECTED';
                 if (popoutStatus) popoutStatus.textContent = state;
                 if (popoutDot) popoutDot.className = `dot ${state.toLowerCase()}`;
+                if (msg.screenWidth) phoneWidth = msg.screenWidth;
+                if (msg.screenHeight) phoneHeight = msg.screenHeight;
+                document.documentElement.style.setProperty('--phone-ratio', `${phoneWidth} / ${phoneHeight}`);
+                if (videoCanvas) {
+                    videoCanvas.width = phoneWidth;
+                    videoCanvas.height = phoneHeight;
+                }
+                if (canvas) {
+                    canvas.width = phoneWidth;
+                    canvas.height = phoneHeight;
+                }
                 if (msg.telemetry && msg.telemetry.battery !== undefined) {
                     const bEl = document.getElementById('popoutStatusBarBattery');
                     if (bEl) {
@@ -159,6 +246,36 @@ function initWebSocket() {
                 }
                 if (msg.skeletonTree && activeMode === 'skeleton') {
                     renderSkeleton(msg.skeletonTree);
+                }
+            } else if (msg.type === 'screen_metrics') {
+                if (msg.screenWidth) phoneWidth = msg.screenWidth;
+                if (msg.screenHeight) phoneHeight = msg.screenHeight;
+                document.documentElement.style.setProperty('--phone-ratio', `${phoneWidth} / ${phoneHeight}`);
+                if (videoCanvas) {
+                    videoCanvas.width = phoneWidth;
+                    videoCanvas.height = phoneHeight;
+                }
+                if (canvas) {
+                    canvas.width = phoneWidth;
+                    canvas.height = phoneHeight;
+                }
+            } else if (msg.type === 'skeleton_tree') {
+                if (msg.screenWidth) phoneWidth = msg.screenWidth;
+                if (msg.screenHeight) phoneHeight = msg.screenHeight;
+                document.documentElement.style.setProperty('--phone-ratio', `${phoneWidth} / ${phoneHeight}`);
+                if (videoCanvas) {
+                    videoCanvas.width = phoneWidth;
+                    videoCanvas.height = phoneHeight;
+                }
+                if (canvas) {
+                    canvas.width = phoneWidth;
+                    canvas.height = phoneHeight;
+                }
+                if (msg.tree) {
+                    currentSkeletonTree = msg.tree;
+                    if (activeMode === 'skeleton') {
+                        renderSkeleton(msg.tree);
+                    }
                 }
             } else if (msg.type === 'telemetry_update') {
                 if (msg.telemetry && msg.telemetry.battery !== undefined) {
@@ -175,6 +292,14 @@ function initWebSocket() {
                 if (msg.screenWidth) phoneWidth = msg.screenWidth;
                 if (msg.screenHeight) phoneHeight = msg.screenHeight;
                 document.documentElement.style.setProperty('--phone-ratio', `${phoneWidth} / ${phoneHeight}`);
+                if (videoCanvas) {
+                    videoCanvas.width = phoneWidth;
+                    videoCanvas.height = phoneHeight;
+                }
+                if (canvas) {
+                    canvas.width = phoneWidth;
+                    canvas.height = phoneHeight;
+                }
                 currentSkeletonTree = msg.tree;
                 if (activeMode === 'skeleton') {
                     if (popoutPausedOverlay && isStreamRunning) {
@@ -200,9 +325,34 @@ function initWebSocket() {
                     updateFpsButtons(activeFps);
                 }
             } else if (msg.type === 'stream_error') {
-                if (pausedOverlayTitle) pausedOverlayTitle.textContent = 'Camera Error';
-                if (pausedOverlayDesc) pausedOverlayDesc.textContent = msg.message || 'Camera unavailable';
+                const title = activeMode === 'camera' ? 'Camera Error' : (activeMode === 'silent' ? 'Silent Stream Notice' : 'Stream Notice');
+                if (pausedOverlayTitle) pausedOverlayTitle.textContent = title;
+                if (pausedOverlayDesc) pausedOverlayDesc.textContent = msg.message || 'Stream unavailable';
                 if (popoutPausedOverlay) popoutPausedOverlay.style.display = 'flex';
+            } else if (msg.type === 'recording_status') {
+                isRecording = !!msg.isRecording;
+                updateRecordingUI(isRecording);
+                if (msg.filename) lastRecordedFilename = msg.filename;
+                if (msg.filePath) lastRecordedFilePath = msg.filePath;
+            } else if (msg.type === 'recording_progress') {
+                isRecording = true;
+                updateRecordingUI(true);
+                const recTimerText = document.getElementById('recTimerText');
+                if (recTimerText) recTimerText.textContent = formatRecordTime(msg.durationSec || 0);
+                const viewportRecTimer = document.getElementById('viewportRecTimer');
+                if (viewportRecTimer) viewportRecTimer.textContent = `REC ${formatRecordTime(msg.durationSec || 0)}`;
+                const recSizeText = document.getElementById('recSizeText');
+                if (recSizeText && msg.sizeMb) recSizeText.textContent = msg.sizeMb;
+            } else if (msg.type === 'recording_finished') {
+                isRecording = false;
+                updateRecordingUI(false);
+                lastRecordedFilename = msg.filename || '';
+                lastRecordedFilePath = msg.filePath || '';
+                showRecordingToast(msg.filename || 'AnoLink_Recording.mkv', msg.sizeMb || '0.0 MB', msg.filePath || '');
+            } else if (msg.type === 'recording_error') {
+                isRecording = false;
+                updateRecordingUI(false);
+                alert('Recording Error: ' + (msg.message || 'Unknown server error'));
             }
         } catch (_) {}
     };
@@ -223,7 +373,7 @@ function sendToGateway(payload) {
 // Dedicated Stream Start / Stop Control (Conserves Phone Battery & CPU)
 function setStreamRunning(running) {
     isStreamRunning = running;
-    const modeName = activeMode === 'camera' ? 'Camera' : (activeMode === 'video' ? 'Video' : 'Skeleton');
+    const modeName = activeMode === 'silent' ? 'Silent Screen' : (activeMode === 'camera' ? 'Camera' : (activeMode === 'video' ? 'Video' : 'Skeleton'));
 
     if (isStreamRunning) {
         if (streamStatusIcon) streamStatusIcon.innerHTML = '<i data-lucide="pause" class="ui-icon-sm"></i>';
@@ -231,7 +381,7 @@ function setStreamRunning(running) {
         if (btnToggleStream) btnToggleStream.classList.remove('paused');
         if (popoutPausedOverlay) popoutPausedOverlay.style.display = 'none';
 
-        if (activeMode === 'video' || activeMode === 'camera') {
+        if (activeMode === 'video' || activeMode === 'camera' || activeMode === 'silent') {
             sendToGateway({ action: 'resume_stream' });
         } else {
             sendToGateway({ action: 'get_skeleton_tree' });
@@ -245,7 +395,7 @@ function setStreamRunning(running) {
         if (btnToggleStream) btnToggleStream.classList.add('paused');
         if (popoutPausedOverlay) popoutPausedOverlay.style.display = 'flex';
 
-        if (activeMode === 'video' || activeMode === 'camera') {
+        if (activeMode === 'video' || activeMode === 'camera' || activeMode === 'silent') {
             sendToGateway({ action: 'pause_stream' });
         } else {
             // Clear canvas when skeleton stream paused
@@ -304,38 +454,80 @@ function updateFpsButtons(fps) {
     });
 }
 
-// Live Video & Camera Frame Streaming Render Engine (Pure Video - 100% Unobstructed)
+// Live Video, Silent & Camera Frame Streaming Render Engine (Zero Lag, vSync Buffered)
 let isDecodingFrame = false;
+let pendingBitmap = null;
+let isRafScheduled = false;
+let nextFrameBuffer = null;
+
+function scheduleVsyncDraw() {
+    if (isRafScheduled) return;
+    isRafScheduled = true;
+    requestAnimationFrame(() => {
+        isRafScheduled = false;
+        if (!pendingBitmap || !videoCtx || !videoCanvas) return;
+        const bitmap = pendingBitmap;
+        pendingBitmap = null;
+
+        if (activeMode === 'camera' || activeMode === 'silent') {
+            if (videoCanvas.width !== bitmap.width || videoCanvas.height !== bitmap.height) {
+                videoCanvas.width = bitmap.width;
+                videoCanvas.height = bitmap.height;
+                document.documentElement.style.setProperty('--phone-ratio', `${bitmap.width} / ${bitmap.height}`);
+            }
+        } else {
+            if (videoCanvas.width !== phoneWidth || videoCanvas.height !== phoneHeight) {
+                videoCanvas.width = phoneWidth;
+                videoCanvas.height = phoneHeight;
+            }
+        }
+        videoCtx.clearRect(0, 0, videoCanvas.width, videoCanvas.height);
+        videoCtx.drawImage(bitmap, 0, 0, videoCanvas.width, videoCanvas.height);
+        bitmap.close();
+    });
+}
+
 function renderVideoFrame(buffer) {
-    if (!isStreamRunning || (activeMode !== 'video' && activeMode !== 'camera') || !videoCtx || !videoCanvas) return;
-    if (isDecodingFrame) return; // Drop frame if browser is still decoding/painting previous frame
+    if (!isStreamRunning || (activeMode !== 'video' && activeMode !== 'camera' && activeMode !== 'silent') || !videoCtx || !videoCanvas) return;
+    if (isDecodingFrame) {
+        nextFrameBuffer = buffer; // Buffer latest frame so it is never dropped
+        return;
+    }
     isDecodingFrame = true;
 
     const blob = new Blob([buffer], { type: 'image/jpeg' });
     if (window.createImageBitmap) {
         createImageBitmap(blob).then((bitmap) => {
-            if (activeMode === 'camera') {
-                if (videoCanvas.width !== bitmap.width || videoCanvas.height !== bitmap.height) {
-                    videoCanvas.width = bitmap.width;
-                    videoCanvas.height = bitmap.height;
-                    document.documentElement.style.setProperty('--phone-ratio', `${bitmap.width} / ${bitmap.height}`);
-                }
-            } else {
-                if (videoCanvas.width !== phoneWidth || videoCanvas.height !== phoneHeight) {
-                    videoCanvas.width = phoneWidth;
-                    videoCanvas.height = phoneHeight;
-                }
-            }
-            videoCtx.drawImage(bitmap, 0, 0, videoCanvas.width, videoCanvas.height);
-            bitmap.close();
             isDecodingFrame = false;
+            if (pendingBitmap) {
+                try { pendingBitmap.close(); } catch (_) {}
+            }
+            pendingBitmap = bitmap;
+            scheduleVsyncDraw();
+
+            if (nextFrameBuffer) {
+                const nextBuf = nextFrameBuffer;
+                nextFrameBuffer = null;
+                renderVideoFrame(nextBuf);
+            }
         }).catch(() => {
             isDecodingFrame = false;
             fallbackImageRender(blob);
+
+            if (nextFrameBuffer) {
+                const nextBuf = nextFrameBuffer;
+                nextFrameBuffer = null;
+                renderVideoFrame(nextBuf);
+            }
         });
     } else {
         isDecodingFrame = false;
         fallbackImageRender(blob);
+        if (nextFrameBuffer) {
+            const nextBuf = nextFrameBuffer;
+            nextFrameBuffer = null;
+            renderVideoFrame(nextBuf);
+        }
     }
 }
 
@@ -343,7 +535,7 @@ function fallbackImageRender(blob) {
     const url = URL.createObjectURL(blob);
     const img = new Image();
     img.onload = () => {
-        if (activeMode === 'camera') {
+        if (activeMode === 'camera' || activeMode === 'silent') {
             if (videoCanvas.width !== img.width || videoCanvas.height !== img.height) {
                 videoCanvas.width = img.width;
                 videoCanvas.height = img.height;
@@ -355,6 +547,7 @@ function fallbackImageRender(blob) {
                 videoCanvas.height = phoneHeight;
             }
         }
+        videoCtx.clearRect(0, 0, videoCanvas.width, videoCanvas.height);
         videoCtx.drawImage(img, 0, 0, videoCanvas.width, videoCanvas.height);
         URL.revokeObjectURL(url);
     };
@@ -445,35 +638,67 @@ function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
 }
 
 // Touch & Mouse Handling for Remote Interaction
-function getPhoneCoordinates(event, element) {
-    const rect = element.getBoundingClientRect();
-    const scaleX = phoneWidth / rect.width;
-    const scaleY = phoneHeight / rect.height;
-    return {
-        x: Math.round((event.clientX - rect.left) * scaleX),
-        y: Math.round((event.clientY - rect.top) * scaleY)
-    };
+function getActiveCanvas() {
+    if (activeMode === 'skeleton') {
+        return canvas;
+    }
+    return videoCanvas || canvas;
 }
+
+function getPhoneCoordinates(event) {
+    const target = getActiveCanvas() || viewport;
+    const rect = target.getBoundingClientRect();
+
+    if (rect.width <= 0 || rect.height <= 0) {
+        return { x: 0, y: 0, nx: 0, ny: 0 };
+    }
+
+    // Normalized coordinates [0.0, 1.0] relative to active canvas bounding box (eliminates 5px border offset)
+    const rawNx = (event.clientX - rect.left) / rect.width;
+    const rawNy = (event.clientY - rect.top) / rect.height;
+    const nx = Math.min(1, Math.max(0, rawNx));
+    const ny = Math.min(1, Math.max(0, rawNy));
+
+    const x = Math.round(nx * phoneWidth);
+    const y = Math.round(ny * phoneHeight);
+
+    return { x, y, nx, ny };
+}
+
+let mouseDownClientX = 0;
+let mouseDownClientY = 0;
+let dragStartCoords = null;
 
 viewport.addEventListener('mousedown', (e) => {
     isMouseDown = true;
-    const coords = getPhoneCoordinates(e, viewport);
-    dragStartX = coords.x;
-    dragStartY = coords.y;
+    mouseDownClientX = e.clientX;
+    mouseDownClientY = e.clientY;
+    dragStartCoords = getPhoneCoordinates(e);
+    dragStartX = dragStartCoords.x;
+    dragStartY = dragStartCoords.y;
     dragStartTime = Date.now();
 });
 
-viewport.addEventListener('mouseup', (e) => {
+window.addEventListener('mouseup', (e) => {
     if (!isMouseDown) return;
     isMouseDown = false;
-    const coords = getPhoneCoordinates(e, viewport);
-    const deltaX = coords.x - dragStartX;
-    const deltaY = coords.y - dragStartY;
-    const dist = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+    const coords = getPhoneCoordinates(e);
+    const clientDeltaX = e.clientX - mouseDownClientX;
+    const clientDeltaY = e.clientY - mouseDownClientY;
+    // Calculate distance in CSS monitor pixels, not phone coordinates!
+    const clientDist = Math.hypot(clientDeltaX, clientDeltaY);
     const duration = Math.max(50, Date.now() - dragStartTime);
 
-    if (dist < 20) {
-        sendToGateway({ action: 'touch_tap', x: dragStartX, y: dragStartY });
+    // Standard touch slop: if mouse moved less than 10 CSS pixels, it is a deliberate TAP!
+    if (clientDist < 10) {
+        sendToGateway({
+            action: 'touch_tap',
+            x: dragStartX,
+            y: dragStartY,
+            nx: dragStartCoords ? dragStartCoords.nx : (dragStartX / phoneWidth),
+            ny: dragStartCoords ? dragStartCoords.ny : (dragStartY / phoneHeight)
+        });
     } else {
         sendToGateway({
             action: 'touch_swipe',
@@ -481,7 +706,11 @@ viewport.addEventListener('mouseup', (e) => {
             startY: dragStartY,
             endX: coords.x,
             endY: coords.y,
-            durationMs: Math.min(500, duration)
+            startNx: dragStartCoords ? dragStartCoords.nx : (dragStartX / phoneWidth),
+            startNy: dragStartCoords ? dragStartCoords.ny : (dragStartY / phoneHeight),
+            endNx: coords.nx,
+            endNy: coords.ny,
+            durationMs: Math.min(1000, Math.max(100, duration))
         });
     }
 });
@@ -570,6 +799,168 @@ function updatePopoutClock() {
 }
 setInterval(updatePopoutClock, 5000);
 updatePopoutClock();
+
+// Screen Recording Control (PC-Side Direct MKV Engine)
+let isRecording = false;
+let lastRecordedFilename = '';
+let lastRecordedFilePath = '';
+
+function formatRecordTime(seconds) {
+    const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+    const s = Math.floor(seconds % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+}
+
+function updateRecordingUI(recording) {
+    const btnToggleRecord = document.getElementById('btnToggleRecord');
+    const recordBtnText = document.getElementById('recordBtnText');
+    const timerBadge = document.getElementById('recordingTimerBadge');
+    const viewportBadge = document.getElementById('viewportRecBadge');
+
+    if (btnToggleRecord) {
+        btnToggleRecord.classList.toggle('recording', recording);
+    }
+    if (recordBtnText) {
+        recordBtnText.textContent = recording ? 'Stop Recording' : 'Record Screen';
+    }
+    if (timerBadge) {
+        timerBadge.style.display = recording ? 'flex' : 'none';
+    }
+    if (viewportBadge) {
+        viewportBadge.style.display = recording ? 'flex' : 'none';
+    }
+    if (window.lucide && typeof window.lucide.createIcons === 'function') {
+        window.lucide.createIcons();
+    }
+}
+
+function startRecording() {
+    sendToGateway({ action: 'start_recording' });
+}
+
+function stopRecording() {
+    sendToGateway({ action: 'stop_recording' });
+}
+
+function showRecordingToast(filename, sizeMb, filePath) {
+    const toast = document.getElementById('recToast');
+    const toastTitle = document.getElementById('recToastTitle');
+    const toastDesc = document.getElementById('recToastDesc');
+    const btnOpenFolder = document.getElementById('btnRecToastOpenFolder');
+    const btnPreview = document.getElementById('btnRecToastPreview');
+    const btnClose = document.getElementById('btnRecToastClose');
+
+    if (toastTitle) toastTitle.textContent = 'Recording Saved (MKV)';
+    if (toastDesc) toastDesc.textContent = `${filename} (${sizeMb}) saved to PC recordings.`;
+
+    if (btnOpenFolder) {
+        btnOpenFolder.onclick = () => {
+            fetch('/api/recordings/open', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filePath })
+            }).catch(() => {});
+        };
+    }
+
+    if (btnPreview) {
+        btnPreview.textContent = 'Download';
+        btnPreview.onclick = () => {
+            const a = document.createElement('a');
+            a.href = `/api/recordings/download/${encodeURIComponent(filename)}`;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        };
+    }
+
+    if (btnClose) {
+        btnClose.onclick = () => {
+            if (toast) toast.style.display = 'none';
+        };
+    }
+
+    if (toast) {
+        toast.style.display = 'flex';
+        if (window.lucide && typeof window.lucide.createIcons === 'function') {
+            window.lucide.createIcons();
+        }
+        setTimeout(() => {
+            if (toast) toast.style.display = 'none';
+        }, 12000);
+    }
+}
+
+function openPreviewModal(blobUrl, filename, sizeMb) {
+    const modal = document.getElementById('recPreviewModal');
+    const video = document.getElementById('recPreviewVideo');
+    const title = document.getElementById('recPreviewTitle');
+    const info = document.getElementById('recPreviewInfo');
+    const btnDownloadAgain = document.getElementById('btnRecPreviewDownloadAgain');
+    const btnClose = document.getElementById('btnRecPreviewClose');
+
+    if (title) title.textContent = filename;
+    if (info) info.textContent = `Size: ${sizeMb}`;
+    if (video) {
+        video.src = blobUrl;
+        video.play().catch(() => {});
+    }
+
+    if (btnDownloadAgain) {
+        btnDownloadAgain.onclick = () => {
+            const a = document.createElement('a');
+            a.href = blobUrl;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        };
+    }
+
+    const closeModal = () => {
+        if (video) {
+            video.pause();
+            video.removeAttribute('src');
+        }
+        if (modal) modal.style.display = 'none';
+    };
+
+    if (btnClose) btnClose.onclick = closeModal;
+    if (modal) {
+        modal.onclick = (e) => {
+            if (e.target === modal) closeModal();
+        };
+        modal.style.display = 'flex';
+    }
+}
+
+// Bind recording buttons
+const btnToggleRecord = document.getElementById('btnToggleRecord');
+if (btnToggleRecord) {
+    btnToggleRecord.addEventListener('click', () => {
+        if (isRecording) {
+            stopRecording();
+        } else {
+            startRecording();
+        }
+    });
+}
+
+const viewportRecBadge = document.getElementById('viewportRecBadge');
+if (viewportRecBadge) {
+    viewportRecBadge.addEventListener('click', () => {
+        if (isRecording) {
+            stopRecording();
+        }
+    });
+}
+
+window.addEventListener('beforeunload', () => {
+    if (isRecording) {
+        stopRecording();
+    }
+});
 
 if (window.lucide && typeof window.lucide.createIcons === 'function') {
     window.lucide.createIcons();

@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ano-Link — Windows File Explorer (Remote Phone)</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --win-bg: #090D16;
+            --win-sidebar: #0F172A;
+            --win-surface: #111827;
+            --win-border: rgba(255, 255, 255, 0.08);
+            --win-hover: rgba(255, 255, 255, 0.05);
+            --win-active: rgba(245, 158, 11, 0.12);
+            --amber-primary: #F59E0B;
+            --amber-hover: #D97706;
+            --lavender-accent: #C4B5FD;
+            --slate-text: #94A3B8;
+            --white: #FFFFFF;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: var(--win-bg);
+            color: var(--white);
+            font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+            user-select: none;
+        }
+
+        .win-explorer-shell {
+            display: flex;
+            flex-direction: column;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        /* 1. Windows 11 Title Bar */
+        .win-titlebar {
+            height: 42px;
+            background: #060911;
+            border-bottom: 1px solid var(--win-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            flex-shrink: 0;
+        }
+
+        .win-title-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .win-app-icon {
+            width: 20px;
+            height: 20px;
+        }
+
+        .win-title-text {
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            color: #FFFFFF;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .win-device-badge {
+            font-size: 11px;
+            background: rgba(245, 158, 11, 0.15);
+            border: 1px solid rgba(245, 158, 11, 0.35);
+            color: var(--amber-primary);
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-weight: 600;
+        }
+
+        .win-title-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .conn-pill {
+            font-size: 11.5px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #34D399;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.25);
+            padding: 3px 10px;
+            border-radius: 6px;
+        }
+
+        .conn-dot {
+            width: 6px;
+            height: 6px;
+            background: #10B981;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #10B981;
+        }
+
+        .btn-dash-back {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--win-border);
+            color: var(--slate-text);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.15s ease;
+        }
+
+        .btn-dash-back:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #FFFFFF;
+        }
+
+        /* 2. Command Bar & Navigation / Address Row */
+        .win-nav-strip {
+            background: var(--win-sidebar);
+            border-bottom: 1px solid var(--win-border);
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .nav-history-buttons {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--slate-text);
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .nav-btn:hover:not(:disabled) {
+            background: var(--win-hover);
+            border-color: var(--win-border);
+            color: var(--white);
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        /* Breadcrumb Address Bar */
+        .address-bar-wrapper {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid var(--win-border);
+            border-radius: 8px;
+            padding: 0 10px;
+            height: 34px;
+            gap: 8px;
+            transition: border-color 0.15s ease;
+        }
+
+        .address-bar-wrapper:focus-within {
+            border-color: var(--amber-primary);
+            box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
+        }
+
+        .address-icon {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+        }
+
+        .address-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #FFFFFF;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12.5px;
+            width: 100%;
+        }
+
+        .btn-address-action {
+            background: transparent;
+            border: none;
+            color: var(--slate-text);
+            cursor: pointer;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+        }
+
+        .btn-address-action:hover {
+            color: #FFFFFF;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        /* Search Filter Input */
+        .search-box-wrapper {
+            width: 280px;
+            display: flex;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid var(--win-border);
+            border-radius: 8px;
+            padding: 0 10px;
+            height: 34px;
+            gap: 8px;
+        }
+
+        .search-box-wrapper:focus-within {
+            border-color: var(--lavender-accent);
+        }
+
+        .search-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #FFFFFF;
+            font-size: 12.5px;
+            width: 100%;
+        }
+
+        /* 3. Main Workspace: Sidebar + Canvas */
+        .win-body {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* Left Navigation Pane (Quick Access) */
+        .win-sidebar-pane {
+            width: 250px;
+            background: #0B1120;
+            border-right: 1px solid var(--win-border);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            overflow-y: auto;
+            padding: 12px 0;
+        }
+
+        .sidebar-section-title {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--slate-text);
+            padding: 8px 18px 4px 18px;
+        }
+
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 18px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #CBD5E1;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            text-decoration: none;
+            border-left: 3px solid transparent;
+        }
+
+        .sidebar-item:hover {
+            background: var(--win-hover);
+            color: #FFFFFF;
+        }
+
+        .sidebar-item.active {
+            background: var(--win-active);
+            color: var(--amber-primary);
+            border-left-color: var(--amber-primary);
+        }
+
+        .sidebar-item-icon {
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+        }
+
+        .sidebar-divider {
+            height: 1px;
+            background: var(--win-border);
+            margin: 12px 18px;
+        }
+
+        /* Storage Gauge in Sidebar */
+        .sidebar-storage-card {
+            margin: auto 14px 8px 14px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--win-border);
+            border-radius: 10px;
+            padding: 12px;
+        }
+
+        .storage-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11.5px;
+            margin-bottom: 6px;
+        }
+
+        .storage-bar-bg {
+            background: #1E293B;
+            border-radius: 999px;
+            height: 6px;
+            overflow: hidden;
+            margin-bottom: 6px;
+        }
+
+        .storage-bar-fill {
+            background: linear-gradient(90deg, #F59E0B, #D97706);
+            height: 100%;
+            width: 65%;
+            transition: width 0.3s ease;
+        }
+
+        .storage-caption {
+            font-size: 11px;
+            color: var(--slate-text);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Center Main Stage (Files Canvas) */
+        .win-canvas-pane {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: var(--win-surface);
+        }
+
+        /* Explorer Table Header */
+        .explorer-thead {
+            display: grid;
+            grid-template-columns: minmax(320px, 3fr) 180px 180px 120px 140px;
+            background: #0B1120;
+            border-bottom: 1px solid var(--win-border);
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--slate-text);
+            padding: 0 16px;
+            height: 38px;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .th-col {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            padding: 6px 8px;
+            border-radius: 4px;
+            transition: background 0.15s ease, color 0.15s ease;
+        }
+
+        .th-col:hover {
+            background: var(--win-hover);
+            color: var(--white);
+        }
+
+        .th-col.active {
+            color: var(--amber-primary);
+        }
+
+        .th-col.no-sort {
+            cursor: default;
+        }
+        .th-col.no-sort:hover {
+            background: transparent;
+            color: var(--slate-text);
+        }
+
+        .sort-caret {
+            font-size: 10px;
+        }
+
+        /* Explorer Rows Container */
+        .explorer-tbody {
+            flex: 1;
+            overflow-y: auto;
+            padding: 4px 0;
+        }
+
+        .explorer-row {
+            display: grid;
+            grid-template-columns: minmax(320px, 3fr) 180px 180px 120px 140px;
+            padding: 6px 16px;
+            align-items: center;
+            font-size: 13px;
+            color: #E2E8F0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+            cursor: pointer;
+            transition: background 0.1s ease;
+        }
+
+        .explorer-row:hover {
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .explorer-row.selected {
+            background: rgba(245, 158, 11, 0.15);
+            border-color: rgba(245, 158, 11, 0.3);
+        }
+
+        .col-name {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            overflow: hidden;
+            padding-right: 12px;
+        }
+
+        .file-icon-wrapper {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .file-name-text {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-weight: 600;
+        }
+
+        .col-date, .col-size {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11.5px;
+            color: var(--slate-text);
+        }
+
+        .col-type {
+            font-size: 12px;
+            color: #CBD5E1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .col-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-action-dl {
+            background: rgba(245, 158, 11, 0.12);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            color: var(--amber-primary);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11.5px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .btn-action-dl:hover {
+            background: var(--amber-primary);
+            color: #000000;
+        }
+
+        /* 4. Windows 11 Status Bar */
+        .win-statusbar {
+            height: 28px;
+            background: #060911;
+            border-top: 1px solid var(--win-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            font-size: 11.5px;
+            color: var(--slate-text);
+            flex-shrink: 0;
+        }
+
+        .status-left, .status-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Empty / Loading State */
+        .empty-canvas-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--slate-text);
+            gap: 12px;
+        }
+
+        .empty-canvas-state img {
+            width: 48px;
+            height: 48px;
+            opacity: 0.6;
+        }
+
+        /* Resumable Download Floating Drawer */
+        .download-drawer {
+            position: fixed;
+            bottom: 38px;
+            right: 20px;
+            width: 340px;
+            background: rgba(17, 24, 39, 0.95);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--win-border);
+            border-radius: 12px;
+            box-shadow: 0 16px 36px rgba(0,0,0,0.7);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 100;
+        }
+
+        .drawer-header {
+            padding: 10px 14px;
+            background: #0B1120;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12.5px;
+            font-weight: 700;
+            border-bottom: 1px solid var(--win-border);
+        }
+
+        .drawer-content {
+            max-height: 220px;
+            overflow-y: auto;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+<div class="win-explorer-shell">
+
+    <!-- 1. Title Bar -->
+    <header class="win-titlebar">
+        <div class="win-title-left">
+            <img src="/icons/win11/folder.svg" class="win-app-icon" alt="">
+            <div class="win-title-text">
+                File Explorer
+                <span class="win-device-badge" id="lblDeviceName">Android Phone</span>
+            </div>
+        </div>
+        <div class="win-title-right">
+            <div class="conn-pill" id="connStatusPill">
+                <span class="conn-dot"></span>
+                <span id="connStatusText">Connected</span>
+            </div>
+            <a href="/" class="btn-dash-back" title="Return to PC Controller Dashboard">
+                <span>Dashboard</span> ↖
+            </a>
+        </div>
+    </header>
+
+    <!-- 2. Command & Address Navigation Strip -->
+    <nav class="win-nav-strip">
+        <div class="nav-history-buttons">
+            <button class="nav-btn" id="btnHistoryBack" title="Back (Alt+Left)" disabled>
+                <i data-lucide="arrow-left" class="ui-icon-xs"></i>
+            </button>
+            <button class="nav-btn" id="btnHistoryForward" title="Forward (Alt+Right)" disabled>
+                <i data-lucide="arrow-right" class="ui-icon-xs"></i>
+            </button>
+            <button class="nav-btn" id="btnNavUp" title="Up to parent folder (Alt+Up)">
+                <i data-lucide="arrow-up" class="ui-icon-xs"></i>
+            </button>
+            <button class="nav-btn" id="btnNavRefresh" title="Refresh folder (F5)">
+                <i data-lucide="refresh-cw" class="ui-icon-xs"></i>
+            </button>
+        </div>
+
+        <!-- Address Bar -->
+        <div class="address-bar-wrapper">
+            <img src="/icons/win11/folder.svg" class="address-icon" id="addressIcon" alt="">
+            <input type="text" id="addressPathInput" class="address-input" value="/storage/emulated/0" spellcheck="false">
+            <button class="btn-address-action" id="btnCopyPath" title="Copy Path">
+                <i data-lucide="copy" class="ui-icon-xs"></i>
+            </button>
+            <button class="btn-address-action" id="btnGoPath" title="Go to path">
+                <i data-lucide="arrow-right" class="ui-icon-xs"></i>
+            </button>
+        </div>
+
+        <!-- Real-Time Search Bar -->
+        <div class="search-box-wrapper">
+            <i data-lucide="search" class="ui-icon-xs" style="color: #94A3B8;"></i>
+            <input type="text" id="searchFilterInput" class="search-input" placeholder="Search current folder...">
+        </div>
+    </nav>
+
+    <!-- 3. Workspace: Left Sidebar + Center Table -->
+    <main class="win-body">
+        
+        <!-- Quick Access Sidebar -->
+        <aside class="win-sidebar-pane">
+            <div class="sidebar-section-title">Quick Access</div>
+
+            <a class="sidebar-item" data-path="/storage/emulated/0/Download">
+                <img src="/icons/win11/zip.svg" class="sidebar-item-icon" alt="">
+                <span>Downloads</span>
+            </a>
+            <a class="sidebar-item" data-path="/storage/emulated/0/DCIM/Camera">
+                <img src="/icons/win11/image.svg" class="sidebar-item-icon" alt="">
+                <span>DCIM / Camera</span>
+            </a>
+            <a class="sidebar-item" data-path="/storage/emulated/0/Pictures">
+                <img src="/icons/win11/image.svg" class="sidebar-item-icon" alt="">
+                <span>Pictures</span>
+            </a>
+            <a class="sidebar-item" data-path="/storage/emulated/0/Documents">
+                <img src="/icons/win11/doc.svg" class="sidebar-item-icon" alt="">
+                <span>Documents</span>
+            </a>
+            <a class="sidebar-item" data-path="/storage/emulated/0/Music">
+                <img src="/icons/win11/audio.svg" class="sidebar-item-icon" alt="">
+                <span>Music</span>
+            </a>
+            <a class="sidebar-item" data-path="/storage/emulated/0/Movies">
+                <img src="/icons/win11/video.svg" class="sidebar-item-icon" alt="">
+                <span>Movies</span>
+            </a>
+
+            <div class="sidebar-divider"></div>
+
+            <div class="sidebar-section-title">Storage Volumes</div>
+            <a class="sidebar-item active" data-path="/storage/emulated/0">
+                <img src="/icons/win11/drive.svg" class="sidebar-item-icon" alt="">
+                <span>Internal Storage</span>
+            </a>
+            <a class="sidebar-item" data-path="/storage/emulated/0/Android">
+                <img src="/icons/win11/apk.svg" class="sidebar-item-icon" alt="">
+                <span>Android Data</span>
+            </a>
+
+            <!-- Storage Capacity Card -->
+            <div class="sidebar-storage-card">
+                <div class="storage-header">
+                    <span>Phone Capacity</span>
+                    <strong id="lblStoragePercent">--%</strong>
+                </div>
+                <div class="storage-bar-bg">
+                    <div class="storage-bar-fill" id="storageBarFill"></div>
+                </div>
+                <div class="storage-caption" id="lblStorageCaption">Loading telemetry...</div>
+            </div>
+        </aside>
+
+        <!-- Center Full-Width Canvas -->
+        <section class="win-canvas-pane">
+            
+            <!-- Table Header with Sort Indicators -->
+            <div class="explorer-thead">
+                <div class="th-col active" data-sort="name">
+                    <span>Name</span>
+                    <span class="sort-caret" id="sortCaretName">▲</span>
+                </div>
+                <div class="th-col" data-sort="modified">
+                    <span>Date modified</span>
+                    <span class="sort-caret" id="sortCaretModified"></span>
+                </div>
+                <div class="th-col" data-sort="type">
+                    <span>Type</span>
+                    <span class="sort-caret" id="sortCaretType"></span>
+                </div>
+                <div class="th-col" data-sort="size">
+                    <span>Size</span>
+                    <span class="sort-caret" id="sortCaretSize"></span>
+                </div>
+                <div class="th-col no-sort">
+                    <span>Action</span>
+                </div>
+            </div>
+
+            <!-- Table Rows Container -->
+            <div class="explorer-tbody" id="explorerTbody">
+                <div class="empty-canvas-state">
+                    <img src="/icons/win11/folder.svg" alt="">
+                    <span>Connecting to phone storage...</span>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 4. Windows Status Bar -->
+    <footer class="win-statusbar">
+        <div class="status-left">
+            <span class="status-item" id="statusItemCount">0 items</span>
+            <span class="status-item" id="statusSelectedCount"></span>
+        </div>
+        <div class="status-right">
+            <span class="status-item" id="statusLatency">⚡ Direct WebSocket Pipe</span>
+            <span class="status-item" id="statusToggleDownloads" style="cursor: pointer;">
+                <i data-lucide="download" class="ui-icon-xs"></i> Transfers (<span id="countTransfers">0</span>)
+            </span>
+        </div>
+    </footer>
+
+    <!-- Floating Resumable Download Manager Drawer -->
+    <div class="download-drawer" id="downloadDrawer">
+        <div class="drawer-header">
+            <span>Transfers & Downloads</span>
+            <button class="btn-address-action" id="btnCloseDrawer">✕</button>
+        </div>
+        <div class="drawer-content" id="drawerDownloadsList">
+            <small style="color: #94A3B8;">No active transfers</small>
+        </div>
+    </div>
+
+</div>
+
+<script src="lucide.min.js"></script>
+<script src="explorer.js"></script>
+</body>
+</html>

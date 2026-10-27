@@ -91,199 +91,207 @@
     </FrameLayout>
 
     <!-- 5 CATEGORY TABS (CPU, MEMORY, DISK, WI-FI, PROCESSES) -->
-    <LinearLayout
-        android:id="@+id/llTabBar"
+    <!-- 5 CATEGORY TABS (CPU, MEMORY, DISK, WI-FI, PROCESSES) -->
+    <HorizontalScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:paddingStart="14dp"
-        android:paddingEnd="14dp"
-        android:layout_marginTop="6dp"
-        android:weightSum="5">
+        android:fillViewport="true"
+        android:scrollbars="none"
+        android:paddingVertical="4dp">
 
-        <!-- Tab 1: CPU -->
         <LinearLayout
-            android:id="@+id/tabCpu"
-            android:layout_width="0dp"
+            android:id="@+id/llTabBar"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:background="@drawable/bg_hardware_tab_active"
-            android:paddingVertical="9dp"
-            android:paddingHorizontal="4dp"
-            android:gravity="center"
-            android:orientation="vertical"
-            android:layout_marginEnd="3dp"
-            android:clickable="true"
-            android:focusable="true">
+            android:orientation="horizontal"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:layout_marginTop="2dp">
 
-            <TextView
-                android:id="@+id/tvTabCpuLabel"
+            <!-- Tab 1: CPU -->
+            <LinearLayout
+                android:id="@+id/tabCpu"
                 android:layout_width="wrap_content"
+                android:minWidth="68dp"
                 android:layout_height="wrap_content"
-                android:text="CPU"
-                android:textSize="11sp"
-                android:textStyle="bold"
-                android:textColor="#FFFFFF" />
+                android:background="@drawable/bg_hardware_tab_active"
+                android:paddingVertical="9dp"
+                android:paddingHorizontal="10dp"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:layout_marginEnd="4dp"
+                android:clickable="true"
+                android:focusable="true">
 
-            <TextView
-                android:id="@+id/tvTabCpuVal"
+                <TextView
+                    android:id="@+id/tvTabCpuLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="CPU"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:textColor="#FFFFFF" />
+
+                <TextView
+                    android:id="@+id/tvTabCpuVal"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="--%"
+                    android:textSize="11.5sp"
+                    android:textStyle="bold"
+                    android:fontFamily="monospace"
+                    android:textColor="#F59E0B"
+                    android:layout_marginTop="2dp" />
+            </LinearLayout>
+
+            <!-- Tab 2: Memory -->
+            <LinearLayout
+                android:id="@+id/tabMemory"
                 android:layout_width="wrap_content"
+                android:minWidth="68dp"
                 android:layout_height="wrap_content"
-                android:text="--%"
-                android:textSize="11.5sp"
-                android:textStyle="bold"
-                android:fontFamily="monospace"
-                android:textColor="#F59E0B"
-                android:layout_marginTop="2dp" />
+                android:background="@drawable/bg_hardware_tab_inactive"
+                android:paddingVertical="9dp"
+                android:paddingHorizontal="10dp"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:layout_marginStart="2dp"
+                android:layout_marginEnd="4dp"
+                android:clickable="true"
+                android:focusable="true">
+
+                <TextView
+                    android:id="@+id/tvTabMemLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Memory"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:textColor="#94A3B8" />
+
+                <TextView
+                    android:id="@+id/tvTabMemVal"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="--%"
+                    android:textSize="11.5sp"
+                    android:textStyle="bold"
+                    android:fontFamily="monospace"
+                    android:textColor="#94A3B8"
+                    android:layout_marginTop="2dp" />
+            </LinearLayout>
+
+            <!-- Tab 3: Disk -->
+            <LinearLayout
+                android:id="@+id/tabDisk"
+                android:layout_width="wrap_content"
+                android:minWidth="68dp"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_hardware_tab_inactive"
+                android:paddingVertical="9dp"
+                android:paddingHorizontal="10dp"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:layout_marginStart="2dp"
+                android:layout_marginEnd="4dp"
+                android:clickable="true"
+                android:focusable="true">
+
+                <TextView
+                    android:id="@+id/tvTabDiskLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Disk"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:textColor="#94A3B8" />
+
+                <TextView
+                    android:id="@+id/tvTabDiskVal"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="--%"
+                    android:textSize="11.5sp"
+                    android:textStyle="bold"
+                    android:fontFamily="monospace"
+                    android:textColor="#94A3B8"
+                    android:layout_marginTop="2dp" />
+            </LinearLayout>
+
+            <!-- Tab 4: Wi-Fi -->
+            <LinearLayout
+                android:id="@+id/tabWifi"
+                android:layout_width="wrap_content"
+                android:minWidth="68dp"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_hardware_tab_inactive"
+                android:paddingVertical="9dp"
+                android:paddingHorizontal="10dp"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:layout_marginStart="2dp"
+                android:layout_marginEnd="4dp"
+                android:clickable="true"
+                android:focusable="true">
+
+                <TextView
+                    android:id="@+id/tvTabWifiLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Wi-Fi"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:textColor="#94A3B8" />
+
+                <TextView
+                    android:id="@+id/tvTabWifiVal"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="ON"
+                    android:textSize="11.5sp"
+                    android:textStyle="bold"
+                    android:fontFamily="monospace"
+                    android:textColor="#94A3B8"
+                    android:layout_marginTop="2dp" />
+            </LinearLayout>
+
+            <!-- Tab 5: Processes (Brand New) -->
+            <LinearLayout
+                android:id="@+id/tabProcesses"
+                android:layout_width="wrap_content"
+                android:minWidth="68dp"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_hardware_tab_inactive"
+                android:paddingVertical="9dp"
+                android:paddingHorizontal="10dp"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:layout_marginStart="2dp"
+                android:clickable="true"
+                android:focusable="true">
+
+                <TextView
+                    android:id="@+id/tvTabProcLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Processes"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:textColor="#94A3B8" />
+
+                <TextView
+                    android:id="@+id/tvTabProcVal"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="--"
+                    android:textSize="11.5sp"
+                    android:textStyle="bold"
+                    android:fontFamily="monospace"
+                    android:textColor="#94A3B8"
+                    android:layout_marginTop="2dp" />
+            </LinearLayout>
         </LinearLayout>
-
-        <!-- Tab 2: Memory -->
-        <LinearLayout
-            android:id="@+id/tabMemory"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:background="@drawable/bg_hardware_tab_inactive"
-            android:paddingVertical="9dp"
-            android:paddingHorizontal="4dp"
-            android:gravity="center"
-            android:orientation="vertical"
-            android:layout_marginStart="2dp"
-            android:layout_marginEnd="2dp"
-            android:clickable="true"
-            android:focusable="true">
-
-            <TextView
-                android:id="@+id/tvTabMemLabel"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Memory"
-                android:textSize="11sp"
-                android:textStyle="bold"
-                android:textColor="#94A3B8" />
-
-            <TextView
-                android:id="@+id/tvTabMemVal"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="--%"
-                android:textSize="11.5sp"
-                android:textStyle="bold"
-                android:fontFamily="monospace"
-                android:textColor="#94A3B8"
-                android:layout_marginTop="2dp" />
-        </LinearLayout>
-
-        <!-- Tab 3: Disk -->
-        <LinearLayout
-            android:id="@+id/tabDisk"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:background="@drawable/bg_hardware_tab_inactive"
-            android:paddingVertical="9dp"
-            android:paddingHorizontal="4dp"
-            android:gravity="center"
-            android:orientation="vertical"
-            android:layout_marginStart="2dp"
-            android:layout_marginEnd="2dp"
-            android:clickable="true"
-            android:focusable="true">
-
-            <TextView
-                android:id="@+id/tvTabDiskLabel"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Disk"
-                android:textSize="11sp"
-                android:textStyle="bold"
-                android:textColor="#94A3B8" />
-
-            <TextView
-                android:id="@+id/tvTabDiskVal"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="--%"
-                android:textSize="11.5sp"
-                android:textStyle="bold"
-                android:fontFamily="monospace"
-                android:textColor="#94A3B8"
-                android:layout_marginTop="2dp" />
-        </LinearLayout>
-
-        <!-- Tab 4: Wi-Fi -->
-        <LinearLayout
-            android:id="@+id/tabWifi"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:background="@drawable/bg_hardware_tab_inactive"
-            android:paddingVertical="9dp"
-            android:paddingHorizontal="4dp"
-            android:gravity="center"
-            android:orientation="vertical"
-            android:layout_marginStart="2dp"
-            android:layout_marginEnd="3dp"
-            android:clickable="true"
-            android:focusable="true">
-
-            <TextView
-                android:id="@+id/tvTabWifiLabel"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Wi-Fi"
-                android:textSize="11sp"
-                android:textStyle="bold"
-                android:textColor="#94A3B8" />
-
-            <TextView
-                android:id="@+id/tvTabWifiVal"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="ON"
-                android:textSize="11.5sp"
-                android:textStyle="bold"
-                android:fontFamily="monospace"
-                android:textColor="#94A3B8"
-                android:layout_marginTop="2dp" />
-        </LinearLayout>
-
-        <!-- Tab 5: Processes (Brand New) -->
-        <LinearLayout
-            android:id="@+id/tabProcesses"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:background="@drawable/bg_hardware_tab_inactive"
-            android:paddingVertical="9dp"
-            android:paddingHorizontal="4dp"
-            android:gravity="center"
-            android:orientation="vertical"
-            android:layout_marginStart="3dp"
-            android:clickable="true"
-            android:focusable="true">
-
-            <TextView
-                android:id="@+id/tvTabProcLabel"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Processes"
-                android:textSize="11sp"
-                android:textStyle="bold"
-                android:textColor="#94A3B8" />
-
-            <TextView
-                android:id="@+id/tvTabProcVal"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="--"
-                android:textSize="11.5sp"
-                android:textStyle="bold"
-                android:fontFamily="monospace"
-                android:textColor="#94A3B8"
-                android:layout_marginTop="2dp" />
-        </LinearLayout>
-    </LinearLayout>
+    </HorizontalScrollView>
 
     <!-- Main Container Frame: Hardware Telemetry View vs Processes View -->
     <FrameLayout

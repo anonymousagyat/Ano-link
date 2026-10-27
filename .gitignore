@@ -26,4 +26,6 @@ app_icons/icons_b64.json
 
 # Local PC controller config
 pc-controller/config.json
+pc-controller/recordings/
+pc-controller/tunnel_url.txt
 

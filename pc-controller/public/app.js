@@ -14,6 +14,8 @@ const disconnectModalBtn = document.getElementById('disconnectModalBtn');
 const modalStatusText = document.getElementById('modalStatusText');
 const statusDot = document.getElementById('statusDot');
 const statusText = document.getElementById('statusText');
+const btnConnectPhone = document.getElementById('btnConnectPhone');
+const btnConnectPhoneText = document.getElementById('btnConnectPhoneText');
 const refreshTelemetryBtn = document.getElementById('refreshTelemetryBtn');
 
 // Telemetry DOM
@@ -28,6 +30,7 @@ const logsConsole = document.getElementById('logsConsole');
 
 // Stream Launch Buttons
 const btnLaunchSkeleton = document.getElementById('btnLaunchSkeleton');
+const btnLaunchSilent = document.getElementById('btnLaunchSilent');
 const btnLaunchVideo = document.getElementById('btnLaunchVideo');
 
 // -------------------------------------------------------------
@@ -85,7 +88,7 @@ function sendToGateway(payload) {
 function handleServerMessage(msg) {
     switch (msg.type) {
         case 'initial_state':
-            updateConnectionUI(msg.state);
+            updateConnectionUI(msg.state, msg.rtt);
             if (msg.phoneConfig) {
                 updateTargetDeviceDisplay(msg.phoneConfig);
             }
@@ -96,10 +99,14 @@ function handleServerMessage(msg) {
             break;
 
         case 'status_change':
-            updateConnectionUI(msg.state);
+            updateConnectionUI(msg.state, msg.rtt);
             if (msg.phoneConfig) {
                 updateTargetDeviceDisplay(msg.phoneConfig);
             }
+            break;
+
+        case 'probe_status':
+            handleProbeStatus(msg);
             break;
 
         case 'telemetry_update':
@@ -141,20 +148,79 @@ function handleServerMessage(msg) {
             log(`Camera Stream Error: ${msg.message}`, 'error');
             break;
 
+        case 'location_update':
+            handleLocationUpdate(msg);
+            break;
+
+        case 'ring_status':
+            handleRingStatus(msg.isRinging);
+            break;
+
         default:
             break;
     }
 }
 
+let currentRtt = -1;
+
+function handleProbeStatus(msg) {
+    if (msg.state === 'PROBING') {
+        if (btnConnectPhone && btnConnectPhoneText) {
+            btnConnectPhone.className = 'btn btn-connect-action connecting';
+            btnConnectPhone.disabled = true;
+            btnConnectPhoneText.textContent = `Probing (${msg.attempt}/${msg.maxAttempts})...`;
+        }
+        if (statusText) statusText.textContent = 'PROBING';
+        if (statusDot) statusDot.className = 'dot connecting';
+    } else if (msg.state === 'STOPPED') {
+        if (!msg.connected) {
+            updateConnectionUI('DISCONNECTED');
+            log('Phone did not respond after 5 probe attempts. Probing stopped.', 'warn');
+            showToast('Probe Ended', 'Phone is not active. Click Connect Phone to retry.');
+        }
+    }
+}
+
 // UI State Updates
-function updateConnectionUI(state) {
+function updateConnectionUI(state, rtt) {
     connectionState = state;
+    if (rtt && typeof rtt === 'number' && rtt > 0) {
+        currentRtt = rtt;
+    }
     if (statusText) statusText.textContent = state;
     if (statusDot) statusDot.className = `dot ${state.toLowerCase()}`;
     if (modalStatusText) modalStatusText.textContent = state;
 
+    const latencyBadge = document.getElementById('latencyBadge');
+    const latencyText = document.getElementById('latencyText');
+
     if (disconnectModalBtn) {
         disconnectModalBtn.style.display = (state === 'CONNECTED') ? 'inline-block' : 'none';
+    }
+
+    if (btnConnectPhone && btnConnectPhoneText) {
+        if (state === 'CONNECTED') {
+            btnConnectPhone.className = 'btn btn-connect-action connected';
+            btnConnectPhone.disabled = false;
+            btnConnectPhoneText.textContent = currentRtt > 0 ? `✓ Connected (${currentRtt}ms)` : '✓ Connected';
+            btnConnectPhone.title = 'Phone is connected. Click to refresh telemetry & ping.';
+            if (latencyBadge && latencyText && currentRtt > 0) {
+                latencyBadge.style.display = 'flex';
+                latencyText.textContent = `${currentRtt} ms`;
+            }
+        } else if (state === 'CONNECTING') {
+            btnConnectPhone.className = 'btn btn-connect-action connecting';
+            btnConnectPhone.disabled = true;
+            btnConnectPhoneText.textContent = 'Probing Phone...';
+            btnConnectPhone.title = 'Probing phone on demand...';
+            if (latencyBadge) latencyBadge.style.display = 'none';
+        } else {
+            btnConnectPhone.className = 'btn btn-connect-action';
+            btnConnectPhone.disabled = false;
+            btnConnectPhoneText.textContent = 'Connect Phone';
+            btnConnectPhone.title = 'Ping & connect paired phone on demand';
+            if (latencyBadge) latencyBadge.style.display = 'none';
+        }
     }
 
     if (state === 'CONNECTED') {
@@ -167,18 +233,25 @@ function updateConnectionUI(state) {
 
 function updateTargetDeviceDisplay(config) {
     if (!config) return;
-    if (config.isWebRtc || config.ip === 'WebRTC P2P Direct') {
-        if (targetDeviceText) targetDeviceText.textContent = 'WebRTC P2P Direct (Auto-Connected)';
-        if (settingsIpInput) settingsIpInput.value = 'WebRTC P2P Direct';
-        if (settingsPortInput) settingsPortInput.value = 'P2P DataChannel';
+    const name = config.deviceName || 'Android Phone';
+    if (config.isTunnel || config.ip === 'Cloudflare Tunnel (WAN)') {
+        if (targetDeviceText) targetDeviceText.textContent = `${name} (Cloudflare WAN)`;
+        if (settingsIpInput) settingsIpInput.value = 'Cloudflare Quick Tunnel';
+        if (settingsPortInput) settingsPortInput.value = 'Port 9090';
+        return;
+    }
+    if (config.isWebRtc || config.ip === 'Cloudflare Tunnel' || config.ip === 'WebRTC P2P Direct') {
+        if (targetDeviceText) targetDeviceText.textContent = `${name} (LAN Fast-Path)`;
+        if (settingsIpInput) settingsIpInput.value = 'Cloudflare Quick Tunnel / LAN';
+        if (settingsPortInput) settingsPortInput.value = 'WebSocket Encrypted';
         return;
     }
     if (config.ip) {
-        if (targetDeviceText) targetDeviceText.textContent = `${config.ip}:${config.port || 8081}`;
+        if (targetDeviceText) targetDeviceText.textContent = `${name} (${config.ip})`;
         if (settingsIpInput) settingsIpInput.value = config.ip;
         if (settingsPortInput) settingsPortInput.value = config.port || 8081;
     } else {
-        if (targetDeviceText) targetDeviceText.textContent = 'Auto-Detecting...';
+        if (targetDeviceText) targetDeviceText.textContent = config.deviceName ? config.deviceName : 'Auto-Detecting...';
     }
 }
 
@@ -233,16 +306,30 @@ function updateTelemetryUI(data, timestamp) {
     }
 }
 
-// WebRTC Pairing Info Loader
+// Cloudflare Tunnel Pairing Info Loader
 async function refreshWebRtcInfo() {
     try {
-        const res = await fetch('/api/webrtc-info');
+        const res = await fetch('/api/cloudflare-info');
         const data = await res.json();
         const pin = data.pairingPin || '------';
         const pinEl = document.getElementById('webrtcPairingPin');
         if (pinEl) pinEl.textContent = pin;
         const barPin = document.getElementById('barPinText');
         if (barPin) barPin.textContent = pin;
+    } catch (_) {}
+
+    try {
+        const wanRes = await fetch('/api/pc/wan_info');
+        const wanData = await wanRes.json();
+        const wanUrlInput = document.getElementById('wanTunnelUrlInput');
+        if (wanUrlInput) {
+            wanUrlInput.value = wanData.tunnelUrl || 'Initializing Cloudflare Tunnel...';
+        }
+        const badge = document.getElementById('wanTunnelStatusBadge');
+        if (badge) {
+            badge.textContent = wanData.tunnelUrl ? 'Ready for WAN' : 'Starting...';
+            badge.style.color = wanData.tunnelUrl ? '#10B981' : '#F59E0B';
+        }
     } catch (_) {}
 }
 
@@ -264,12 +351,25 @@ if (copyPinBtn) {
     });
 }
 
+const copyWanTunnelBtn = document.getElementById('copyWanTunnelBtn');
+if (copyWanTunnelBtn) {
+    copyWanTunnelBtn.addEventListener('click', () => {
+        const input = document.getElementById('wanTunnelUrlInput');
+        if (input && input.value && input.value.startsWith('http')) {
+            navigator.clipboard.writeText(input.value.trim());
+            copyWanTunnelBtn.textContent = 'Copied!';
+            setTimeout(() => { copyWanTunnelBtn.textContent = 'Copy URL'; }, 2000);
+            showToast('WAN URL Copied', 'Cloudflare Quick Tunnel URL copied to clipboard');
+        }
+    });
+}
+
 const resetPinBtn = document.getElementById('resetPinBtn');
 if (resetPinBtn) {
     resetPinBtn.addEventListener('click', async () => {
         if (!confirm('Reset pairing PIN and security token? (Existing paired devices will need to enter the new PIN once)')) return;
         try {
-            const res = await fetch('/api/webrtc-reset-token', { method: 'POST' });
+            const res = await fetch('/api/tunnel-reset-token', { method: 'POST' });
             const data = await res.json();
             if (data.success) {
                 refreshWebRtcInfo();
@@ -322,6 +422,32 @@ if (disconnectModalBtn) {
     });
 }
 
+// On-Demand Ping & Connect Phone Button
+if (btnConnectPhone) {
+    btnConnectPhone.addEventListener('click', () => {
+        if (connectionState === 'CONNECTING') return;
+
+        if (connectionState === 'CONNECTED') {
+            log('Phone is already connected! Requesting telemetry refresh & probe ping...', 'info');
+            showToast('Phone Live', 'Requesting latest telemetry & ping...');
+            sendToGateway({ action: 'refresh_telemetry' });
+            sendToGateway({ action: 'wake_phone' });
+            return;
+        }
+
+        updateConnectionUI('CONNECTING');
+        if (btnConnectPhoneText) btnConnectPhoneText.textContent = 'Probing (1/5)...';
+        log('⚡ Dispatching on-demand probe burst to phone (max 5 attempts)...', 'info');
+        showToast('Probing Phone', 'Pinging phone up to 5 times. Will stop automatically.');
+
+        // Send through local WebSocket gateway
+        sendToGateway({ action: 'wake_phone' });
+
+        // Also hit REST endpoint
+        fetch('/api/wake_phone', { method: 'POST' }).catch(() => {});
+    });
+}
+
 // Refresh Telemetry Button (Instant On-Demand)
 if (refreshTelemetryBtn) {
     refreshTelemetryBtn.addEventListener('click', () => {
@@ -337,6 +463,13 @@ if (btnLaunchSkeleton) {
     btnLaunchSkeleton.addEventListener('click', () => {
         window.open('/viewer.html?mode=skeleton', '_blank');
         log('Opened Skeleton Remote View in dedicated tab', 'info');
+    });
+}
+
+if (btnLaunchSilent) {
+    btnLaunchSilent.addEventListener('click', () => {
+        window.open('/viewer.html?mode=silent', '_blank');
+        log('Opened Silent Screen Share in dedicated tab', 'info');
     });
 }
 
@@ -358,13 +491,20 @@ if (btnLaunchCamera) {
 // Tab Switching
 document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
+        const tabId = btn.getAttribute('data-tab');
+        if (!tabId || tabId === 'tab-files' || btn.getAttribute('href') === '/explorer.html' || btn.classList.contains('tab-link-external')) {
+            return;
+        }
+
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
 
         btn.classList.add('active');
-        const tabId = btn.getAttribute('data-tab');
         const pane = document.getElementById(tabId);
         if (pane) pane.classList.add('active');
+        if (tabId === 'tab-location' && window.lucide && typeof window.lucide.createIcons === 'function') {
+            window.lucide.createIcons();
+        }
     });
 });
 
@@ -753,25 +893,34 @@ function getFileType(file) {
     const ext = getFileExtension(file.name);
     const typeMap = {
         'apk': 'Android App Package',
+        'aab': 'Android App Bundle',
+        'xapk': 'Android App Package',
         'jpg': 'JPEG Image',
         'jpeg': 'JPEG Image',
         'png': 'PNG Image',
         'webp': 'WEBP Image',
         'gif': 'GIF Image',
         'svg': 'SVG Vector',
+        'bmp': 'BMP Image',
         'mp4': 'MP4 Video',
         'mkv': 'MKV Video',
         'avi': 'AVI Video',
         'mov': 'QuickTime Video',
+        'webm': 'WebM Video',
+        'flv': 'FLV Video',
         'mp3': 'MP3 Audio',
         'm4a': 'M4A Audio',
         'wav': 'WAV Audio',
         'flac': 'FLAC Audio',
+        'aac': 'AAC Audio',
+        'ogg': 'OGG Audio',
         'pdf': 'PDF Document',
         'doc': 'Word Document',
         'docx': 'Word Document',
+        'rtf': 'Rich Text Document',
         'xls': 'Excel Spreadsheet',
         'xlsx': 'Excel Spreadsheet',
+        'csv': 'CSV Spreadsheet',
         'ppt': 'PowerPoint Slide',
         'pptx': 'PowerPoint Slide',
         'zip': 'Compressed (ZIP)',
@@ -779,27 +928,77 @@ function getFileType(file) {
         '7z': '7-Zip Archive',
         'tar': 'TAR Archive',
         'gz': 'GZip Archive',
+        'bz2': 'BZip Archive',
+        'xz': 'XZ Archive',
+        'iso': 'Disc Image File',
+        'img': 'Disc Image File',
+        'vhd': 'Virtual Hard Disk',
+        'exe': 'Executable Application',
+        'msi': 'Windows Installer Package',
+        'bat': 'Windows Batch File',
+        'cmd': 'Windows Command Script',
+        'ps1': 'PowerShell Script',
         'txt': 'Text Document',
         'log': 'Log File',
+        'ini': 'Configuration Settings',
+        'cfg': 'Configuration File',
+        'conf': 'Configuration File',
         'json': 'JSON File',
         'xml': 'XML Document',
-        'html': 'HTML Page',
+        'html': 'HTML Document',
+        'css': 'Cascading Style Sheet',
+        'js': 'JavaScript File',
+        'ts': 'TypeScript File',
+        'py': 'Python Script',
+        'java': 'Java Source File',
+        'kt': 'Kotlin Source File',
+        'c': 'C Source File',
+        'cpp': 'C++ Source File',
+        'cs': 'C# Source File',
         'sh': 'Shell Script'
     };
     return typeMap[ext] || (ext ? `${ext.toUpperCase()} File` : 'File');
 }
 
 function getFileIcon(file) {
-    if (file.is_dir) return '<i data-lucide="folder" class="file-icon-svg folder"></i>';
+    if (file.is_dir) {
+        if (file.name === '..' || file.name === '../' || file.name.includes('[Parent Directory]')) {
+            return '<img src="/icons/win11/folder_up.svg" class="win11-file-icon folder" alt="" draggable="false">';
+        }
+        return '<img src="/icons/win11/folder.svg" class="win11-file-icon folder" alt="" draggable="false">';
+    }
     const ext = getFileExtension(file.name);
-    if (['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg'].includes(ext)) return '<i data-lucide="image" class="file-icon-svg img"></i>';
-    if (['mp4', 'mkv', 'avi', 'mov'].includes(ext)) return '<i data-lucide="film" class="file-icon-svg vid"></i>';
-    if (['mp3', 'm4a', 'wav', 'flac'].includes(ext)) return '<i data-lucide="music" class="file-icon-svg audio"></i>';
-    if (ext === 'apk') return '<i data-lucide="smartphone" class="file-icon-svg apk"></i>';
-    if (['zip', 'rar', '7z', 'tar', 'gz'].includes(ext)) return '<i data-lucide="archive" class="file-icon-svg zip"></i>';
-    if (['pdf', 'doc', 'docx'].includes(ext)) return '<i data-lucide="file-text" class="file-icon-svg doc"></i>';
-    if (['txt', 'log', 'json', 'xml', 'sh', 'js', 'html', 'css'].includes(ext)) return '<i data-lucide="code" class="file-icon-svg code"></i>';
-    return '<i data-lucide="file" class="file-icon-svg generic"></i>';
+    let icon = 'generic';
+
+    if (['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg', 'bmp'].includes(ext)) {
+        icon = 'image';
+    } else if (['mp4', 'mkv', 'avi', 'mov', 'webm', 'flv'].includes(ext)) {
+        icon = 'video';
+    } else if (['mp3', 'm4a', 'wav', 'flac', 'aac', 'ogg'].includes(ext)) {
+        icon = 'audio';
+    } else if (['apk', 'aab', 'xapk'].includes(ext)) {
+        icon = 'apk';
+    } else if (['zip', 'rar', '7z', 'tar', 'gz', 'bz2', 'xz'].includes(ext)) {
+        icon = 'zip';
+    } else if (ext === 'pdf') {
+        icon = 'pdf';
+    } else if (['doc', 'docx', 'rtf'].includes(ext)) {
+        icon = 'doc';
+    } else if (['xls', 'xlsx', 'csv'].includes(ext)) {
+        icon = 'xls';
+    } else if (['ppt', 'pptx'].includes(ext)) {
+        icon = 'ppt';
+    } else if (['exe', 'msi', 'bat', 'cmd', 'ps1'].includes(ext)) {
+        icon = 'exe';
+    } else if (['iso', 'img', 'vhd'].includes(ext)) {
+        icon = 'iso';
+    } else if (['txt', 'log', 'ini', 'cfg', 'conf'].includes(ext)) {
+        icon = 'txt';
+    } else if (['js', 'ts', 'py', 'java', 'kt', 'c', 'cpp', 'cs', 'html', 'css', 'json', 'xml', 'sh'].includes(ext)) {
+        icon = 'code';
+    }
+
+    return `<img src="/icons/win11/${icon}.svg" class="win11-file-icon ${icon}" alt="" draggable="false">`;
 }
 
 function formatModifiedDate(timestamp) {
@@ -1199,6 +1398,183 @@ function log(message, type = 'info') {
     logsConsole.scrollTop = logsConsole.scrollHeight;
 }
 
+// ==========================================================================
+// Location & Find Device Manager (Satellite Aerial Tracker & Emergency Alarm)
+// ==========================================================================
+let currentLocLat = 28.613939;
+let currentLocLng = 77.209021;
+let currentLocAddress = 'Connaught Place, New Delhi';
+let lastLocPingSeconds = 0;
+let isEmergencyRinging = false;
+
+function initLocationTracker() {
+    const btnPing = document.getElementById('btnSinglePingGps');
+    const btnAlarm = document.getElementById('btnEmergencyAlarm');
+    const btnCopy = document.getElementById('btnCopyLocCoords');
+
+    if (btnPing) {
+        btnPing.addEventListener('click', triggerSingleGpsPing);
+    }
+
+    if (btnAlarm) {
+        btnAlarm.addEventListener('click', toggleEmergencyRinger);
+    }
+
+    if (btnCopy) {
+        btnCopy.addEventListener('click', copyLocationCoordinates);
+    }
+
+    // Preset Location chips for testing
+    document.querySelectorAll('.loc-preset-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+            document.querySelectorAll('.loc-preset-chip').forEach(c => c.classList.remove('active'));
+            chip.classList.add('active');
+            const lat = parseFloat(chip.dataset.lat);
+            const lng = parseFloat(chip.dataset.lng);
+            const place = chip.dataset.place;
+            updateLocationDisplay(lat, lng, 4.2, 216, 'preset', place);
+            showToast('Satellite Focused', `Centered map on ${place.split(',')[0]}`);
+        });
+    });
+
+    // "Last Ping" live seconds counter
+    setInterval(() => {
+        lastLocPingSeconds++;
+        const el = document.getElementById('locValLastPing');
+        if (!el) return;
+        if (lastLocPingSeconds < 5) {
+            el.textContent = 'Just now';
+            el.style.color = 'var(--accent-green)';
+        } else if (lastLocPingSeconds < 60) {
+            el.textContent = `${lastLocPingSeconds}s ago`;
+            el.style.color = 'var(--text-secondary)';
+        } else {
+            const mins = Math.floor(lastLocPingSeconds / 60);
+            el.textContent = `${mins}m ago`;
+            el.style.color = 'var(--text-secondary)';
+        }
+    }, 1000);
+}
+
+function triggerSingleGpsPing() {
+    const btn = document.getElementById('btnSinglePingGps');
+    const label = document.getElementById('labelSinglePing');
+    if (btn) btn.classList.add('loading');
+    if (label) label.textContent = 'Pinging GPS Satellites...';
+
+    sendToGateway({ action: 'get_location' });
+    log('Sent single GPS location query to phone', 'info');
+
+    // UI watchdog timeout (if phone is offline)
+    setTimeout(() => {
+        if (btn) btn.classList.remove('loading');
+        if (label) label.textContent = 'Single Ping (Fetch Location)';
+    }, 10000);
+}
+
+function handleLocationUpdate(data) {
+    const btn = document.getElementById('btnSinglePingGps');
+    const label = document.getElementById('labelSinglePing');
+    if (btn) btn.classList.remove('loading');
+    if (label) label.textContent = 'Single Ping (Fetch Location)';
+
+    if (!data.success) {
+        showToast('Location Notice', data.error || 'Could not resolve device location');
+        log(`Location error from device: ${data.error}`, 'warn');
+        return;
+    }
+
+    const lat = data.latitude;
+    const lng = data.longitude;
+    const accuracy = data.accuracy || 4.2;
+    const altitude = data.altitude || 0;
+    const provider = data.provider || 'gps';
+
+    updateLocationDisplay(lat, lng, accuracy, altitude, provider);
+    showToast('Location Updated', `Device pinpointed: ${lat.toFixed(5)}, ${lng.toFixed(5)} (±${Math.round(accuracy)}m)`);
+    log(`Device GPS fixed: ${lat.toFixed(6)}, ${lng.toFixed(6)} (±${accuracy.toFixed(1)}m)`, 'success');
+}
+
+function updateLocationDisplay(lat, lng, accuracy, altitude, provider, placeName) {
+    currentLocLat = lat;
+    currentLocLng = lng;
+    lastLocPingSeconds = 0;
+
+    const frame = document.getElementById('locSatelliteFrame');
+    if (frame) {
+        frame.src = `https://maps.google.com/maps?q=${lat},${lng}&t=k&z=17&ie=UTF8&iwloc=&output=embed`;
+    }
+
+    const coordsEl = document.getElementById('locValCoords');
+    if (coordsEl) coordsEl.textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+
+    const accEl = document.getElementById('locValAccuracy');
+    if (accEl) accEl.textContent = `±${accuracy.toFixed(1)} meters`;
+
+    const fixEl = document.getElementById('locFixPrecision');
+    if (fixEl) fixEl.textContent = `±${accuracy.toFixed(1)}m`;
+
+    const altEl = document.getElementById('locValAltitude');
+    if (altEl) altEl.textContent = `${Math.round(altitude)} m MSL`;
+
+    const lastPingEl = document.getElementById('locValLastPing');
+    if (lastPingEl) {
+        lastPingEl.textContent = 'Just now';
+        lastPingEl.style.color = 'var(--accent-green)';
+    }
+
+    if (placeName) {
+        currentLocAddress = placeName;
+        const addrEl = document.getElementById('locValAddress');
+        if (addrEl) addrEl.textContent = placeName;
+    }
+
+    const gmaps = document.getElementById('linkLocGoogle');
+    if (gmaps) gmaps.href = `https://maps.google.com/?q=${lat},${lng}`;
+
+    const osm = document.getElementById('linkLocOsm');
+    if (osm) osm.href = `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=17/${lat}/${lng}`;
+}
+
+function toggleEmergencyRinger() {
+    isEmergencyRinging = !isEmergencyRinging;
+    if (isEmergencyRinging) {
+        sendToGateway({ action: 'ring_phone' });
+        handleRingStatus(true);
+        showToast('Emergency Alarm Sent', 'Phone will sound at 100% volume bypassing Silent & DND');
+        log('Triggered 100% volume emergency alarm on phone', 'warn');
+    } else {
+        sendToGateway({ action: 'stop_ring_phone' });
+        handleRingStatus(false);
+        showToast('Alarm Stopped', 'Emergency alarm halted and volume restored');
+        log('Halted emergency alarm on phone', 'info');
+    }
+}
+
+function handleRingStatus(ringing) {
+    isEmergencyRinging = ringing;
+    const btn = document.getElementById('btnEmergencyAlarm');
+    const label = document.getElementById('labelEmergencyAlarm');
+    if (!btn || !label) return;
+
+    if (ringing) {
+        btn.classList.add('active-ringing');
+        label.textContent = 'Stop Ringing Device';
+    } else {
+        btn.classList.remove('active-ringing');
+        label.textContent = 'Ring Phone at 100% Volume';
+    }
+}
+
+function copyLocationCoordinates() {
+    const text = `${currentLocLat.toFixed(6)}, ${currentLocLng.toFixed(6)}`;
+    navigator.clipboard.writeText(text).then(() => {
+        showToast('Copied', `Coordinates copied: ${text}`);
+    }).catch(() => {
+        showToast('Coordinates', text);
+    });
+}
+
 // Initialize on load
 if (window.lucide && typeof window.lucide.createIcons === 'function') {
     window.lucide.createIcons();
@@ -1206,3 +1582,4 @@ if (window.lucide && typeof window.lucide.createIcons === 'function') {
 updateSortUI();
 initWebSocket();
 refreshWebRtcInfo();
+initLocationTracker();

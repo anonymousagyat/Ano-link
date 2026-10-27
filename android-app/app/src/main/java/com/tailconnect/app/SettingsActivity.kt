@@ -38,6 +38,8 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var btnChangePin: Button
     private lateinit var btnForgetPc: Button
     private lateinit var tvTestResult: TextView
+    private lateinit var tvSettingsPort: TextView
+    private lateinit var tvSettingsTunnelUrl: TextView
 
     // PC To Phone Control Permission Items & Status Icons
     private lateinit var itemAccessibility: View
@@ -104,6 +106,8 @@ class SettingsActivity : AppCompatActivity() {
         btnChangePin = findViewById(R.id.btnChangePin)
         btnForgetPc = findViewById(R.id.btnForgetPc)
         tvTestResult = findViewById(R.id.tvTestResult)
+        tvSettingsPort = findViewById(R.id.tvSettingsPort)
+        tvSettingsTunnelUrl = findViewById(R.id.tvSettingsTunnelUrl)
 
         btnChangePin.setOnClickListener {
             showPinDialog()
@@ -168,6 +172,16 @@ class SettingsActivity : AppCompatActivity() {
         if (isPaired) {
             tvSettingsPcName.text = pcName
             tvSettingsPin.text = pin
+            tvSettingsPort.text = "9090"
+            val tunnelUrl = PcRemoteClient.getTunnelUrl()
+            if (tunnelUrl.isNotBlank()) {
+                tvSettingsTunnelUrl.text = tunnelUrl
+            } else if (isConnected) {
+                tvSettingsTunnelUrl.text = "Direct P2P Link"
+            } else {
+                tvSettingsTunnelUrl.text = "Not connected"
+            }
+
             if (isConnected) {
                 tvSettingsStatus.text = "ONLINE (P2P Direct)"
                 tvSettingsStatus.setTextColor(Color.parseColor("#10B981"))
@@ -182,6 +196,8 @@ class SettingsActivity : AppCompatActivity() {
         } else {
             tvSettingsPcName.text = "No PC Paired"
             tvSettingsPin.text = "------"
+            tvSettingsPort.text = "9090"
+            tvSettingsTunnelUrl.text = "Not paired"
             tvSettingsStatus.text = "NOT PAIRED"
             tvSettingsStatus.setTextColor(Color.parseColor("#F43F5E"))
             tvWebRtcBadge.text = "DISCONNECTED"

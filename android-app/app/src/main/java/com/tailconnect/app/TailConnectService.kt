@@ -10,6 +10,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
+import android.net.wifi.WifiManager
 import android.provider.Telephony
 import android.util.Log
 import androidx.core.app.NotificationCompat
@@ -64,10 +65,13 @@ class TailConnectService : Service() {
             pcRemoteListener = listener
         }
 
-        fun isPcConnected(): Boolean = activeWsSession != null || PcRemoteClient.isConnected()
+        fun isPcConnected(): Boolean = activeWsSession != null || PcRemoteClient.isConnected() || AnoWebRtcManager.isConnected()
 
         fun sendToPc(payload: Map<String, Any>) {
             val jsonStr = gson.toJson(payload)
+            if (AnoWebRtcManager.isConnected()) {
+                AnoWebRtcManager.sendControl(jsonStr)
+            }
             if (PcRemoteClient.isConnected()) {
                 PcRemoteClient.sendRaw(jsonStr)
             }
@@ -81,7 +85,7 @@ class TailConnectService : Service() {
             }
         }
 
-        fun isSkeletonModeActive(): Boolean = (isSessionActive || PcRemoteClient.isConnected()) && !isStreamPaused && currentMode == "skeleton"
+        fun isSkeletonModeActive(): Boolean = (isSessionActive || PcRemoteClient.isConnected() || AnoWebRtcManager.isConnected()) && !isStreamPaused && currentMode == "skeleton"
 
         fun broadcastSkeletonTree(tree: NodeDto, width: Int, height: Int) {
             val map = mapOf(
@@ -91,6 +95,9 @@ class TailConnectService : Service() {
                 "screenHeight" to height
             )
             val jsonStr = gson.toJson(map)
+            if (AnoWebRtcManager.isConnected()) {
+                AnoWebRtcManager.sendControl(jsonStr)
+            }
             if (PcRemoteClient.isConnected()) {
                 PcRemoteClient.sendRaw(jsonStr)
             }
@@ -105,11 +112,24 @@ class TailConnectService : Service() {
             }
         }
 
+        fun sendScreenMetrics() {
+            val service = RemoteAccessibilityService.instance
+            val metrics = service?.getRealScreenMetrics() ?: run {
+                val dm = android.content.res.Resources.getSystem().displayMetrics
+                Pair(dm.widthPixels, dm.heightPixels)
+            }
+            sendToPc(mapOf(
+                "type" to "screen_metrics",
+                "screenWidth" to metrics.first,
+                "screenHeight" to metrics.second
+            ))
+        }
+
         fun broadcastVideoFrame(bytes: ByteArray) {
             if (isStreamPaused) return
 
-            // Stream binary frame over WebRTC DataChannel (Pure P2P)
-            if (PcRemoteClient.isConnected()) {
+            // Stream binary frame over WebRTC / WebSocket Tunnel
+            if (AnoWebRtcManager.isConnected()) {
                 AnoWebRtcManager.sendBinary(bytes)
             }
 
@@ -146,6 +166,9 @@ class TailConnectService : Service() {
                 "timestamp" to System.currentTimeMillis()
             )
             val jsonStr = gson.toJson(map)
+            if (AnoWebRtcManager.isConnected()) {
+                AnoWebRtcManager.sendControl(jsonStr)
+            }
             if (PcRemoteClient.isConnected()) {
                 PcRemoteClient.sendRaw(jsonStr)
             }
@@ -177,23 +200,83 @@ class TailConnectService : Service() {
     private val serviceScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     private var serverEngine: ApplicationEngine? = null
     private var wakeLock: PowerManager.WakeLock? = null
+    private var sentinelWakeLock: PowerManager.WakeLock? = null
+    private var multicastLock: WifiManager.MulticastLock? = null
+
+    fun acquireSentinelLocks() {
+        try {
+            if (sentinelWakeLock == null) {
+                val powerManager = getSystemService(Context.POWER_SERVICE) as? PowerManager
+                sentinelWakeLock = powerManager?.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "AnoLink::SentinelWakeLock")?.apply {
+                    setReferenceCounted(false)
+                }
+            }
+            if (sentinelWakeLock?.isHeld != true) {
+                sentinelWakeLock?.acquire()
+                Log.d(TAG, "🛡️ Acquired Sentinel WakeLock for background responsiveness")
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Notice acquiring sentinel wake lock: ${e.message}")
+        }
+
+        try {
+            if (multicastLock == null) {
+                val wifiManager = applicationContext.getSystemService(Context.WIFI_SERVICE) as? WifiManager
+                multicastLock = wifiManager?.createMulticastLock("AnoLink::LanMulticastLock")?.apply {
+                    setReferenceCounted(false)
+                }
+            }
+            if (multicastLock?.isHeld != true) {
+                multicastLock?.acquire()
+                Log.d(TAG, "📡 Acquired Wi-Fi MulticastLock for LAN UDP reception")
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Notice acquiring multicast lock: ${e.message}")
+        }
+    }
+
+    fun releaseSentinelLocks() {
+        try {
+            if (sentinelWakeLock?.isHeld == true) {
+                sentinelWakeLock?.release()
+                Log.d(TAG, "Released Sentinel WakeLock")
+            }
+        } catch (_: Exception) {}
+        try {
+            if (multicastLock?.isHeld == true) {
+                multicastLock?.release()
+                Log.d(TAG, "Released Wi-Fi MulticastLock")
+            }
+        } catch (_: Exception) {}
+    }
 
     override fun onCreate() {
         super.onCreate()
         instance = this
-        acquireWakeLock()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            startForeground(
-                NOTIFICATION_ID,
-                createNotification("Active: WebRTC P2P Bridge"),
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
-            )
-        } else {
-            startForeground(NOTIFICATION_ID, createNotification("Active: WebRTC P2P Bridge"))
+        acquireSentinelLocks()
+        try {
+            val isPaired = PcRemoteClient.getPin(this).length == 6
+            val initialStatus = if (isPaired) "🌙 Standby (Waiting for PC)" else "Ano-Link Service Active"
+            val notification = createNotification(initialStatus)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                startForeground(
+                    NOTIFICATION_ID,
+                    notification,
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
+                )
+            } else {
+                startForeground(NOTIFICATION_ID, notification)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Notice on startForeground: ${e.message}")
         }
         startKtorServer()
         startTelemetryTicker()
-        Log.i(TAG, "TailConnectService initialized.")
+
+        // Launch ultra-low-power passive background sentinel if paired
+        PcRemoteClient.startBackgroundSentinel(this)
+
+        Log.i(TAG, "TailConnectService initialized with Passive Sentinel.")
     }
 
     private fun updateForegroundServiceType(withCamera: Boolean = false, withMic: Boolean = false) {
@@ -224,7 +307,20 @@ class TailConnectService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        acquireSentinelLocks()
+        if (!AnoWebRtcManager.isConnected() && PcRemoteClient.getPin(this).length == 6) {
+            PcRemoteClient.startBackgroundSentinel(this)
+        }
         return START_STICKY
+    }
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        super.onTaskRemoved(rootIntent)
+        Log.i(TAG, "Task swiped from Recents. Maintaining TailConnectService sentinel active.")
+        acquireSentinelLocks()
+        if (!AnoWebRtcManager.isConnected() && PcRemoteClient.getPin(this).length == 6) {
+            PcRemoteClient.startBackgroundSentinel(this)
+        }
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -235,15 +331,52 @@ class TailConnectService : Service() {
         PcRemoteClient.notifyAppClosing()
         serviceScope.cancel()
         serverEngine?.stop(1000, 2000)
-        wakeLock?.let { if (it.isHeld) it.release() }
+        releaseActiveWakeLock()
+        releaseSentinelLocks()
         Log.i(TAG, "TailConnectService destroyed.")
     }
 
-    private fun acquireWakeLock() {
-        val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
-        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "AnoLink::DaemonWakeLock").apply {
-            setReferenceCounted(false)
-            acquire(24 * 60 * 60 * 1000L) // 24 hours
+    fun acquireActiveWakeLock(timeoutMs: Long = 10 * 60 * 1000L) {
+        try {
+            if (wakeLock == null) {
+                val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
+                wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "AnoLink::ActiveStreamWakeLock").apply {
+                    setReferenceCounted(false)
+                }
+            }
+            wakeLock?.let {
+                if (!it.isHeld) {
+                    it.acquire(timeoutMs)
+                    Log.d(TAG, "Acquired active CPU WakeLock for ${timeoutMs}ms")
+                }
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Notice acquiring wake lock: ${e.message}")
+        }
+    }
+
+    fun releaseActiveWakeLock() {
+        try {
+            wakeLock?.let {
+                if (it.isHeld) {
+                    it.release()
+                    Log.d(TAG, "Released active CPU WakeLock (standby)")
+                }
+            }
+        } catch (_: Exception) {}
+    }
+
+    fun updateForegroundNotification(customStatus: String? = null) {
+        try {
+            val manager = getSystemService(NotificationManager::class.java) ?: return
+            val status = customStatus ?: when {
+                AnoWebRtcManager.isConnected() -> "🟢 Connected to ${PcRemoteClient.getPcName(this).ifBlank { "Windows PC" }}"
+                PcRemoteClient.getPin(this).length == 6 -> "🌙 Standby (Waiting for PC)"
+                else -> "Ano-Link Service Active"
+            }
+            manager.notify(NOTIFICATION_ID, createNotification(status))
+        } catch (e: Exception) {
+            Log.w(TAG, "Notice updating notification: ${e.message}")
         }
     }
 
@@ -253,7 +386,7 @@ class TailConnectService : Service() {
             "Ano-Link Service",
             NotificationManager.IMPORTANCE_LOW
         ).apply {
-            description = "Maintains connection to paired PC over Tailscale"
+            description = "Maintains connection to paired PC over WebRTC & Cloudflare Tunnel"
         }
         val manager = getSystemService(NotificationManager::class.java)
         manager.createNotificationChannel(channel)
@@ -261,7 +394,7 @@ class TailConnectService : Service() {
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Ano-Link Hub Active")
             .setContentText(statusText)
-            .setSmallIcon(android.R.drawable.stat_sys_data_bluetooth)
+            .setSmallIcon(R.drawable.ic_ano_logo)
             .setOngoing(true)
             .build()
     }
@@ -271,6 +404,9 @@ class TailConnectService : Service() {
     // -------------------------------------------------------------
     private fun sendResponse(payload: Map<String, Any>, session: DefaultWebSocketServerSession? = activeWsSession) {
         val jsonStr = gson.toJson(payload)
+        if (AnoWebRtcManager.isConnected()) {
+            AnoWebRtcManager.sendControl(jsonStr)
+        }
         if (PcRemoteClient.isConnected()) {
             PcRemoteClient.sendRaw(jsonStr)
         }
@@ -296,7 +432,7 @@ class TailConnectService : Service() {
         }
     }
 
-    private fun pushTelemetry(session: DefaultWebSocketServerSession? = activeWsSession) {
+    fun pushTelemetry(session: DefaultWebSocketServerSession? = activeWsSession) {
         val telemetry = TelemetryManager.collect(this@TailConnectService)
         val payload = mapOf(
             "type" to "telemetry",
@@ -314,8 +450,8 @@ class TailConnectService : Service() {
             try {
                 serverEngine = embeddedServer(CIO, port = PORT, host = "0.0.0.0") {
                     install(WebSockets) {
-                        pingPeriod = Duration.ofSeconds(15)
-                        timeout = Duration.ofSeconds(30)
+                        pingPeriod = null
+                        timeout = Duration.ofDays(365)
                         maxFrameSize = Long.MAX_VALUE
                         masking = false
                     }
@@ -360,12 +496,14 @@ class TailConnectService : Service() {
                             }
 
                             Log.i(TAG, "PC Controller connected via WebSocket!")
+                            acquireActiveWakeLock(15000L)
                             activeWsSession = this
                             isSessionActive = true
 
                             // Send immediate initial telemetry, initial skeleton tree, and previous SMS history
                             pushTelemetry()
                             sendInitialSkeletonTree()
+                            sendScreenMetrics()
                             val initialSms = querySmsHistory(50)
                             if (initialSms.isNotEmpty()) {
                                 send(Frame.Text(gson.toJson(mapOf(
@@ -456,6 +594,11 @@ class TailConnectService : Service() {
             pcRemoteListener?.onPcScreenFrame(data)
             return
         }
+        if (action == "ping") {
+            val ts = json.get("timestamp")?.asLong ?: System.currentTimeMillis()
+            sendResponse(mapOf("type" to "pong", "timestamp" to ts), session)
+            return
+        }
         if (action == "window_focused" || action == "power_status" || action == "pong") {
             pcRemoteListener?.onPcMessage(action, json)
             return
@@ -476,11 +619,37 @@ class TailConnectService : Service() {
                 isStreamPaused = false
                 Log.i(TAG, "Mode updated to: $currentMode")
                 if (currentMode == "skeleton") {
+                    RemoteAccessibilityService.instance?.stopSilentScreenStreaming()
                     ScreenCaptureService.stop(this@TailConnectService)
                     CameraStreamManager.stopCamera()
                     updateForegroundServiceType(withCamera = false, withMic = AudioIntercomManager.isMicStreaming)
                     sendInitialSkeletonTree(session)
+                } else if (currentMode == "silent" || currentMode == "silent_screen") {
+                    ScreenCaptureService.stop(this@TailConnectService)
+                    CameraStreamManager.stopCamera()
+                    updateForegroundServiceType(withCamera = false, withMic = AudioIntercomManager.isMicStreaming)
+                    val access = RemoteAccessibilityService.instance
+                    if (access != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                        val started = access.startSilentScreenStreaming(10)
+                        if (!started) {
+                            sendResponse(mapOf(
+                                "type" to "stream_error",
+                                "message" to "Silent screen streaming could not be started"
+                            ), session)
+                        }
+                    } else {
+                        val msg = if (access == null) {
+                            "Accessibility Service not running. Please enable Ano-Link Accessibility in Android Settings."
+                        } else {
+                            "Silent screen capture requires Android 11+ (API 30+)."
+                        }
+                        sendResponse(mapOf(
+                            "type" to "stream_error",
+                            "message" to msg
+                        ), session)
+                    }
                 } else if (currentMode == "video") {
+                    RemoteAccessibilityService.instance?.stopSilentScreenStreaming()
                     CameraStreamManager.stopCamera()
                     updateForegroundServiceType(withCamera = false, withMic = AudioIntercomManager.isMicStreaming)
                     sendInitialSkeletonTree(session)
@@ -488,6 +657,7 @@ class TailConnectService : Service() {
                         ScreenCaptureActivity.start(this@TailConnectService)
                     }
                 } else if (currentMode == "camera") {
+                    RemoteAccessibilityService.instance?.stopSilentScreenStreaming()
                     ScreenCaptureService.stop(this@TailConnectService)
                     updateForegroundServiceType(withCamera = true, withMic = AudioIntercomManager.isMicStreaming)
                     if (!CameraStreamManager.isStreaming && !isStreamPaused) {
@@ -507,6 +677,7 @@ class TailConnectService : Service() {
 
             "pause_stream", "stop_stream" -> {
                 isStreamPaused = true
+                RemoteAccessibilityService.instance?.stopSilentScreenStreaming()
                 ScreenCaptureService.stop(this@TailConnectService)
                 CameraStreamManager.stopCamera()
                 updateForegroundServiceType(withCamera = false, withMic = AudioIntercomManager.isMicStreaming)
@@ -516,7 +687,9 @@ class TailConnectService : Service() {
             "resume_stream", "start_stream" -> {
                 isStreamPaused = false
                 Log.i(TAG, "Streaming resumed by PC controller.")
-                if (currentMode == "video") {
+                if (currentMode == "silent" || currentMode == "silent_screen") {
+                    RemoteAccessibilityService.instance?.startSilentScreenStreaming(10)
+                } else if (currentMode == "video") {
                     if (!ScreenCaptureService.isStreaming) {
                         ScreenCaptureActivity.start(this@TailConnectService)
                     }
@@ -538,18 +711,37 @@ class TailConnectService : Service() {
             }
 
             "touch_tap" -> {
-                val x = json.get("x")?.asFloat ?: return
-                val y = json.get("y")?.asFloat ?: return
-                RemoteAccessibilityService.instance?.injectTap(x, y)
+                val nx = json.get("nx")?.asFloat
+                val ny = json.get("ny")?.asFloat
+                if (nx != null && ny != null) {
+                    RemoteAccessibilityService.instance?.injectNormalizedTap(nx, ny)
+                } else {
+                    val x = json.get("x")?.asFloat ?: return
+                    val y = json.get("y")?.asFloat ?: return
+                    RemoteAccessibilityService.instance?.injectTap(x, y)
+                }
             }
 
             "touch_swipe" -> {
-                val startX = json.get("startX")?.asFloat ?: return
-                val startY = json.get("startY")?.asFloat ?: return
-                val endX = json.get("endX")?.asFloat ?: return
-                val endY = json.get("endY")?.asFloat ?: return
+                val startNx = json.get("startNx")?.asFloat
+                val startNy = json.get("startNy")?.asFloat
+                val endNx = json.get("endNx")?.asFloat
+                val endNy = json.get("endNy")?.asFloat
                 val durationMs = json.get("durationMs")?.asLong ?: 250L
-                RemoteAccessibilityService.instance?.injectSwipe(startX, startY, endX, endY, durationMs)
+
+                if (startNx != null && startNy != null && endNx != null && endNy != null) {
+                    RemoteAccessibilityService.instance?.injectNormalizedSwipe(startNx, startNy, endNx, endNy, durationMs)
+                } else {
+                    val startX = json.get("startX")?.asFloat ?: return
+                    val startY = json.get("startY")?.asFloat ?: return
+                    val endX = json.get("endX")?.asFloat ?: return
+                    val endY = json.get("endY")?.asFloat ?: return
+                    RemoteAccessibilityService.instance?.injectSwipe(startX, startY, endX, endY, durationMs)
+                }
+            }
+
+            "get_screen_metrics" -> {
+                sendScreenMetrics()
             }
 
             "key_nav" -> {
@@ -692,6 +884,43 @@ class TailConnectService : Service() {
 
             "play_chime" -> {
                 AudioIntercomManager.playAttentionChime()
+            }
+
+            "get_location" -> {
+                DeviceLocatorManager.fetchSinglePing(this@TailConnectService) { result ->
+                    val resp = mapOf(
+                        "type" to "location_update",
+                        "success" to result.success,
+                        "latitude" to result.latitude,
+                        "longitude" to result.longitude,
+                        "accuracy" to result.accuracy,
+                        "altitude" to result.altitude,
+                        "speed" to result.speed,
+                        "bearing" to result.bearing,
+                        "provider" to result.provider,
+                        "timestamp" to result.timestamp,
+                        "error" to (result.error ?: "")
+                    )
+                    sendResponse(resp, session)
+                }
+            }
+
+            "ring_phone" -> {
+                DeviceRingerManager.startRinging(this@TailConnectService) {
+                    sendResponse(mapOf(
+                        "type" to "ring_status",
+                        "isRinging" to true
+                    ), session)
+                }
+            }
+
+            "stop_ring_phone" -> {
+                DeviceRingerManager.stopRinging(this@TailConnectService) {
+                    sendResponse(mapOf(
+                        "type" to "ring_status",
+                        "isRinging" to false
+                    ), session)
+                }
             }
 
             "session_close" -> {

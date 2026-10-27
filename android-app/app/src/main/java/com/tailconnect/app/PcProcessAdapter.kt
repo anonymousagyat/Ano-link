@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView
 
 class PcProcessAdapter(
     private var processList: MutableList<PcProcessItem>,
+    private val onItemClick: ((item: PcProcessItem, cardView: View, position: Int) -> Unit)? = null,
     private val onEndTaskClick: (item: PcProcessItem, cardView: View, position: Int) -> Unit
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
@@ -107,6 +108,15 @@ class PcProcessAdapter(
                 holder.ivIcon.setImageBitmap(bmp)
             } else {
                 holder.ivIcon.setImageResource(getVectorFallback(iconKey))
+            }
+
+            // Tap or Long-Press Card to open Process Inspector
+            holder.rootCard.setOnClickListener {
+                onItemClick?.invoke(item, holder.rootCard, holder.adapterPosition)
+            }
+            holder.rootCard.setOnLongClickListener {
+                onItemClick?.invoke(item, holder.rootCard, holder.adapterPosition)
+                true
             }
 
             // Instant One-Tap End Task

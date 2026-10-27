@@ -103,253 +103,200 @@
 
         <!-- ===================================================== -->
         <!-- ===================================================== -->
-        <!-- CONNECTED PC CARD (DECORATED WORKSTATION INFO BOX)    -->
+        <!-- PC VIEWPORT DISPLAY CARD (5-MIN OLED SLIDESHOW)       -->
         <!-- ===================================================== -->
-        <LinearLayout
-            android:id="@+id/llPcStatusCard"
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardPcViewport"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:background="@drawable/bg_card_workstation"
-            android:padding="20dp"
+            android:layout_height="224dp"
             android:layout_marginBottom="24dp"
+            app:cardCornerRadius="22dp"
+            app:cardElevation="6dp"
+            app:cardBackgroundColor="#0A0F1D"
             android:clickable="true"
-            android:focusable="true">
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground">
 
-            <!-- Card Head: PC Info + Single-Line Status Pill (Pinned Top-Right) -->
-            <LinearLayout
+            <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:layout_marginBottom="18dp">
+                android:layout_height="match_parent">
 
-                <!-- PC Cyber Badge Icon -->
+                <!-- 1. Wallpaper Cross-Fade Layers -->
                 <ImageView
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:background="@drawable/bg_pc_icon_badge"
-                    android:src="@drawable/ic_pc_workstation"
-                    android:padding="8dp"
-                    android:contentDescription="Connected PC" />
+                    android:id="@+id/ivWallpaperA"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop"
+                    android:contentDescription="OLED Wallpaper Canvas" />
 
-                <!-- PC Name & Clean Subtitle -->
-                <LinearLayout
-                    android:layout_width="0dp"
+                <ImageView
+                    android:id="@+id/ivWallpaperB"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop"
+                    android:alpha="0"
+                    android:contentDescription="OLED Wallpaper Canvas Preload" />
+
+                <!-- 2. Cinematic Vignette (Subtle Dark Gradient for 100% legibility) -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/bg_viewport_vignette" />
+
+                <!-- 3. TOP HUD: Sleek Frosted Glass Status Capsule + Latency -->
+                <RelativeLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical"
-                    android:layout_marginStart="14dp"
-                    android:layout_marginEnd="8dp">
+                    android:padding="14dp">
 
-                    <TextView
-                        android:id="@+id/tvPcName"
+                    <!-- Luminous Status Capsule: [ (•) Live / ☁ Cloudflare ] -->
+                    <LinearLayout
+                        android:id="@+id/llViewportStatusCapsule"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Windows PC"
-                        android:textSize="17sp"
-                        android:textStyle="bold"
-                        android:fontFamily="@font/syne_extrabold"
-                        android:letterSpacing="-0.01"
-                        android:singleLine="true"
-                        android:ellipsize="end"
-                        android:textColor="#FFFFFF" />
+                        android:layout_alignParentStart="true"
+                        android:background="@drawable/bg_hud_capsule_glass"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingHorizontal="10dp"
+                        android:paddingVertical="5dp">
 
-                    <!-- Subtitle: Pure WebRTC P2P Direct (No 30 FPS text) -->
-                    <TextView
-                        android:id="@+id/tvTailscaleIp"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Pure WebRTC P2P Direct"
-                        android:textSize="11.5sp"
-                        android:fontFamily="sans-serif-medium"
-                        android:letterSpacing="0.02"
-                        android:layout_marginTop="2dp"
-                        android:textColor="#D8B4FE" />
-                </LinearLayout>
+                        <!-- Pulsing Neon Emerald Jewel -->
+                        <View
+                            android:id="@+id/dotStatusJewel"
+                            android:layout_width="7dp"
+                            android:layout_height="7dp"
+                            android:background="@drawable/bg_dot_emerald" />
 
-                <!-- Live Status Capsule (Strictly Single-Line ONLINE / OFFLINE) -->
-                <LinearLayout
-                    android:id="@+id/llDaemonStatusPill"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/bg_status_online"
-                    android:paddingHorizontal="11dp"
-                    android:paddingVertical="5dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
+                        <!-- Minimal Status Label -->
+                        <TextView
+                            android:id="@+id/tvViewportStatus"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="6dp"
+                            android:fontFamily="sans-serif-medium"
+                            android:text="Live"
+                            android:textColor="#34D399"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
 
-                    <View
-                        android:id="@+id/viewStatusDot"
-                        android:layout_width="6.5dp"
-                        android:layout_height="6.5dp"
-                        android:background="@drawable/dot_status_online"
-                        android:layout_marginEnd="6dp" />
+                        <TextView
+                            android:id="@+id/tvViewportDivider"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginHorizontal="6dp"
+                            android:text="/"
+                            android:textColor="#64748B"
+                            android:textSize="11sp" />
 
-                    <TextView
-                        android:id="@+id/tvDaemonStatus"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="ONLINE"
-                        android:textSize="10.5sp"
-                        android:textStyle="bold"
-                        android:fontFamily="monospace"
-                        android:letterSpacing="0.06"
-                        android:textColor="#10B981" />
-                </LinearLayout>
-            </LinearLayout>
+                        <!-- Cloudflare Cloud Icon + Label -->
+                        <ImageView
+                            android:id="@+id/ivViewportCloudIcon"
+                            android:layout_width="13dp"
+                            android:layout_height="13dp"
+                            android:src="@drawable/ic_cloudflare_cloud"
+                            app:tint="#C4B5FD"
+                            android:contentDescription="Cloudflare" />
 
-            <!-- Decorated Telemetry Grid (3 Dedicated Micro-Cards) -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:baselineAligned="false">
+                        <TextView
+                            android:id="@+id/tvViewportTunnelBadge"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="4dp"
+                            android:fontFamily="sans-serif-medium"
+                            android:text="Cloudflare"
+                            android:textColor="#C4B5FD"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
 
-                <!-- Micro-Card 1: Latency (Live Ping) -->
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginEnd="6dp"
-                    android:orientation="vertical"
-                    android:background="@drawable/bg_telemetry_microcard"
-                    android:paddingVertical="10dp"
-                    android:paddingHorizontal="6dp"
-                    android:gravity="center">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="LATENCY"
-                        android:textSize="8.5sp"
-                        android:textStyle="bold"
-                        android:fontFamily="monospace"
-                        android:letterSpacing="0.08"
-                        android:textColor="#64748B" />
-
+                    <!-- Latency Micro-Pill -->
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
+                        android:layout_alignParentEnd="true"
+                        android:background="@drawable/bg_hud_capsule_glass"
                         android:gravity="center_vertical"
-                        android:layout_marginTop="3dp">
+                        android:orientation="horizontal"
+                        android:paddingHorizontal="8dp"
+                        android:paddingVertical="5dp">
 
                         <View
-                            android:id="@+id/viewPingLiveDot"
-                            android:layout_width="5.5dp"
-                            android:layout_height="5.5dp"
-                            android:background="@drawable/dot_status_online"
-                            android:layout_marginEnd="5dp" />
+                            android:layout_width="5dp"
+                            android:layout_height="5dp"
+                            android:background="@drawable/bg_dot_emerald" />
 
                         <TextView
-                            android:id="@+id/tvTriadPing"
+                            android:id="@+id/tvViewportLatency"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="-- ms"
-                            android:textSize="13sp"
-                            android:textStyle="bold"
+                            android:layout_marginStart="5dp"
                             android:fontFamily="monospace"
-                            android:textColor="#10B981" />
+                            android:text="16ms"
+                            android:textColor="#34D399"
+                            android:textSize="10.5sp"
+                            android:textStyle="bold" />
                     </LinearLayout>
-                </LinearLayout>
+                </RelativeLayout>
 
-                <!-- Micro-Card 2: Protocol -->
+                <!-- 4. BOTTOM HUD: Workstation Identity + Tap Hint -->
                 <LinearLayout
-                    android:layout_width="0dp"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginEnd="6dp"
+                    android:layout_gravity="bottom"
                     android:orientation="vertical"
-                    android:background="@drawable/bg_telemetry_microcard"
-                    android:paddingVertical="10dp"
-                    android:paddingHorizontal="6dp"
-                    android:gravity="center">
+                    android:paddingHorizontal="16dp"
+                    android:paddingBottom="14dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <View
+                            android:layout_width="6dp"
+                            android:layout_height="6dp"
+                            android:background="@drawable/bg_badge_dot_purple"
+                            android:layout_marginEnd="6dp" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:fontFamily="monospace"
+                            android:letterSpacing="0.08"
+                            android:text="PRIMARY WORKSTATION"
+                            android:textColor="#C4B5FD"
+                            android:textSize="9.5sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif-medium"
+                            android:text="Tap to open Remote Screen ➔"
+                            android:textColor="#94A3B8"
+                            android:textSize="9.5sp" />
+                    </LinearLayout>
 
                     <TextView
-                        android:layout_width="wrap_content"
+                        android:id="@+id/tvPcName"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="PROTOCOL"
-                        android:textSize="8.5sp"
-                        android:textStyle="bold"
-                        android:fontFamily="monospace"
-                        android:letterSpacing="0.08"
-                        android:textColor="#64748B" />
-
-                    <TextView
-                        android:id="@+id/tvTriadProtocol"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="UDP DIRECT"
-                        android:textSize="12sp"
-                        android:textStyle="bold"
-                        android:fontFamily="monospace"
-                        android:textColor="#D8B4FE"
-                        android:layout_marginTop="3dp" />
-                </LinearLayout>
-
-                <!-- Micro-Card 3: Security -->
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical"
-                    android:background="@drawable/bg_telemetry_microcard"
-                    android:paddingVertical="10dp"
-                    android:paddingHorizontal="6dp"
-                    android:gravity="center">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="SECURITY"
-                        android:textSize="8.5sp"
-                        android:textStyle="bold"
-                        android:fontFamily="monospace"
-                        android:letterSpacing="0.08"
-                        android:textColor="#64748B" />
-
-                    <TextView
-                        android:id="@+id/tvTriadMode"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="DTLS / SRTP"
-                        android:textSize="12sp"
-                        android:textStyle="bold"
-                        android:fontFamily="monospace"
+                        android:layout_marginTop="2dp"
+                        android:fontFamily="@font/syne_extrabold"
+                        android:letterSpacing="0.01"
+                        android:maxLines="1"
+                        android:singleLine="true"
+                        android:text="No PC Connected"
                         android:textColor="#FFFFFF"
-                        android:layout_marginTop="3dp" />
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
                 </LinearLayout>
-            </LinearLayout>
 
-            <!-- Card Footer: Quick-Tap Action Hint -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:layout_marginTop="14dp"
-                android:paddingTop="12dp">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Zero Port Forwarding • Encrypted UDP"
-                    android:textSize="10.5sp"
-                    android:fontFamily="sans-serif-medium"
-                    android:textColor="#64748B" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Settings ➔"
-                    android:textSize="11sp"
-                    android:textStyle="bold"
-                    android:fontFamily="sans-serif-medium"
-                    android:textColor="#D8B4FE" />
-            </LinearLayout>
-        </LinearLayout>
+            </FrameLayout>
+        </androidx.cardview.widget.CardView>
 
         <!-- ===================================================== -->
         <!-- HUB FEATURES: PHONE CONTROLLING PC MODULES            -->
@@ -375,7 +322,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="5 ACTIVE"
+                android:text="4 ACTIVE"
                 android:textSize="11sp"
                 android:textStyle="bold"
                 android:fontFamily="monospace"
@@ -681,4 +628,3 @@
 
     </LinearLayout>
 </ScrollView>
-

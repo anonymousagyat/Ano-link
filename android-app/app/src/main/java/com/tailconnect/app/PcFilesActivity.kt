@@ -80,7 +80,9 @@ class PcFilesActivity : AppCompatActivity(), PcRemoteEventListener {
         val isDrive: Boolean = false,
         val size: Long = 0,
         val mtime: Long = 0,
-        val ext: String = ""
+        val ext: String = "",
+        val freeBytes: Long = 0L,
+        val totalBytes: Long = 0L
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -284,6 +286,8 @@ class PcFilesActivity : AppCompatActivity(), PcRemoteEventListener {
             if (itemsArr != null) {
                 for (el in itemsArr) {
                     val obj = el.asJsonObject
+                    val freeBytes = obj.get("freeBytes")?.asLong ?: 0L
+                    val totalBytes = obj.get("totalBytes")?.asLong ?: (obj.get("size")?.asLong ?: 0L)
                     newItems.add(
                         PcFileItem(
                             name = obj.get("name")?.asString ?: "Unknown",
@@ -292,7 +296,9 @@ class PcFilesActivity : AppCompatActivity(), PcRemoteEventListener {
                             isDrive = obj.get("isDrive")?.asBoolean ?: false,
                             size = obj.get("size")?.asLong ?: 0L,
                             mtime = obj.get("mtime")?.asLong ?: 0L,
-                            ext = obj.get("ext")?.asString ?: ""
+                            ext = obj.get("ext")?.asString ?: "",
+                            freeBytes = freeBytes,
+                            totalBytes = totalBytes
                         )
                     )
                 }
@@ -337,14 +343,17 @@ class PcFilesActivity : AppCompatActivity(), PcRemoteEventListener {
 
     private fun renderBreadcrumbs(pathStr: String) {
         llBreadcrumbs.removeAllViews()
+        val density = resources.displayMetrics.density
 
-        // Root crumb
+        // Root crumb (DRIVES)
+        val isAtRoot = pathStr.isBlank()
         val tvRoot = TextView(this).apply {
             text = "DRIVES"
-            textSize = 12f
+            textSize = 11.5f
             typeface = Typeface.DEFAULT_BOLD
-            setTextColor(if (pathStr.isEmpty()) Color.parseColor("#C084FC") else Color.parseColor("#94A3B8"))
-            setPadding(8, 4, 8, 4)
+            setTextColor(if (isAtRoot) Color.parseColor("#C4B5FD") else Color.parseColor("#94A3B8"))
+            setBackgroundResource(if (isAtRoot) R.drawable.bg_breadcrumb_chip_active else R.drawable.bg_breadcrumb_chip)
+            setPadding((10 * density).toInt(), (5 * density).toInt(), (10 * density).toInt(), (5 * density).toInt())
             setOnClickListener {
                 loadDirectory("")
             }
@@ -365,21 +374,25 @@ class PcFilesActivity : AppCompatActivity(), PcRemoteEventListener {
                 accPath = "$accPath$part\\"
             }
             val crumbPath = accPath
+            val isCurrent = (i == parts.size - 1)
 
-            // Separator
+            // Sleek Separator
             val tvSep = TextView(this).apply {
-                text = " ➔ "
-                textSize = 10f
-                setTextColor(Color.parseColor("#475569"))
+                text = " › "
+                textSize = 13f
+                typeface = Typeface.DEFAULT_BOLD
+                setTextColor(Color.parseColor("#64748B"))
+                setPadding((3 * density).toInt(), 0, (3 * density).toInt(), 0)
             }
             llBreadcrumbs.addView(tvSep)
 
             val tvCrumb = TextView(this).apply {
                 text = part
-                textSize = 12f
+                textSize = 11.5f
                 typeface = Typeface.DEFAULT_BOLD
-                setTextColor(if (i == parts.size - 1) Color.parseColor("#C084FC") else Color.parseColor("#94A3B8"))
-                setPadding(6, 4, 6, 4)
+                setTextColor(if (isCurrent) Color.parseColor("#C4B5FD") else Color.parseColor("#94A3B8"))
+                setBackgroundResource(if (isCurrent) R.drawable.bg_breadcrumb_chip_active else R.drawable.bg_breadcrumb_chip)
+                setPadding((10 * density).toInt(), (5 * density).toInt(), (10 * density).toInt(), (5 * density).toInt())
                 setOnClickListener {
                     loadDirectory(crumbPath)
                 }
@@ -715,12 +728,28 @@ class PcFilesActivity : AppCompatActivity(), PcRemoteEventListener {
             val tvDriveName = view.findViewById<TextView>(R.id.tvDriveName)
             val tvDriveSubtitle = view.findViewById<TextView>(R.id.tvDriveSubtitle)
             val tvDriveBadge = view.findViewById<TextView>(R.id.tvDriveBadge)
+            val pbDriveCapacity = view.findViewById<ProgressBar>(R.id.pbDriveCapacity)
+            val tvDriveCapacity = view.findViewById<TextView>(R.id.tvDriveCapacity)
 
             val cleanName = item.name.replace("Local Disk", "").replace("(", "").replace(")", "").trim()
             val displayTitle = if (cleanName.isNotEmpty()) "Drive $cleanName" else item.name
             tvDriveName.text = displayTitle
             tvDriveSubtitle.text = if (item.path.isNotEmpty()) item.path else "PC System Volume"
             tvDriveBadge.text = "ONLINE"
+
+            if (item.totalBytes > 0) {
+                val usedBytes = (item.totalBytes - item.freeBytes).coerceAtLeast(0)
+                val percent = ((usedBytes * 100) / item.totalBytes).toInt().coerceIn(0, 100)
+                pbDriveCapacity?.progress = percent
+                val freeGb = item.freeBytes / (1024.0 * 1024 * 1024)
+                val totalGb = item.totalBytes / (1024.0 * 1024 * 1024)
+                tvDriveCapacity?.text = String.format(Locale.US, "%.0f GB free of %.0f GB", freeGb, totalGb)
+                pbDriveCapacity?.visibility = View.VISIBLE
+                tvDriveCapacity?.visibility = View.VISIBLE
+            } else {
+                pbDriveCapacity?.visibility = View.GONE
+                tvDriveCapacity?.visibility = View.GONE
+            }
 
             return view
         }

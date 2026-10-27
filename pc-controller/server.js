@@ -9,22 +9,12 @@ const child_process = require('child_process');
 const readline = require('readline');
 const os = require('os');
 const crypto = require('crypto');
+const dgram = require('dgram');
 const dns = require('dns');
 try { dns.setDefaultResultOrder('ipv4first'); } catch (_) {}
 
-// Native WebRTC P2P Engine
-let nodeDataChannel = null;
-try {
-    nodeDataChannel = require('node-datachannel');
-    nodeDataChannel.initLogger('Debug', (level, msg) => {
-        if (level === 'Error' || level === 'Warning') {
-            console.log(`[WebRTC C++ ${level}] ${msg}`);
-        }
-    });
-    console.log('[WebRTC] Native node-datachannel P2P engine initialized successfully!');
-} catch (err) {
-    console.warn('[WebRTC] node-datachannel not available:', err.message);
-}
+// Pure Cloudflare Quick Tunnel WebSocket Architecture (Ano-Link Cloudflare)
+console.log('[AnoLink Cloudflare] Initializing Cloudflare Quick Tunnel WebSocket Engine...');
 
 const app = express();
 app.use(cors());
@@ -39,6 +29,17 @@ const bridgeExePath = path.join(__dirname, 'tools', 'AnoLinkWinBridge.exe');
 let winBridge = null;
 let screenStreamTimer = null;
 let taskbarSyncTimer = null;
+
+// Dedicated PC-Side Screen Recording Engine (Direct MKV)
+const { MkvWriter } = require('./mkv-writer');
+const recordingsDir = path.join(__dirname, 'recordings');
+if (!fs.existsSync(recordingsDir)) {
+    try { fs.mkdirSync(recordingsDir, { recursive: true }); } catch (_) {}
+}
+let activeMkvWriter = null;
+let recordingProgressTimer = null;
+let recordingStartTime = 0;
+let lastRecordedFileStats = null;
 
 // WebSocket server for the local browser frontend
 const wssBrowser = new WebSocket.Server({ noServer: true });
@@ -113,8 +114,12 @@ let currentMode = 'skeleton'; // 'skeleton' or 'video'
 let streamQuality = { fps: 30, bitrateKbps: 2000, idleThrottling: true };
 let currentSkeletonTree = null;
 let smsHistoryCache = [];
+let phoneScreenWidth = 1080;
+let phoneScreenHeight = 2400;
 let isExclusiveControlActive = false;
 let lastRemoteStreamActivity = Date.now();
+let lastSkeletonErrorMsg = null;
+let lastSkeletonErrorLogTime = 0;
 
 // 5-Minute Inactivity Safety Watchdog
 setInterval(() => {
@@ -131,14 +136,44 @@ setInterval(() => {
     }
 }, 15000);
 
-// WebRTC P2P Peer & DataChannel Management
-// Pure WebRTC P2P Peer & DataChannel Management
-let activeWebRtcPeer = null;
-let activeControlDc = null;
-let activeVideoDc = null;
-
+// =====================================================
+// Cloudflare Quick Tunnel Matchmaker & Signal Broker
+// =====================================================
 const SIGNAL_HOST = 'super-river-3234.parthmisar777.workers.dev';
+const FIREBASE_DB_HOST = phoneConfig.firebaseDbHost || 'ano-link-relay-default-rtdb.asia-southeast1.firebasedatabase.app';
 let signalPollTimer = null;
+let tunnelHeartbeatTimer = null;
+let isPollInProgress = false;
+
+function publishToFirebase(packet) {
+    try {
+        const payload = JSON.stringify(packet);
+        const req = https.request({
+            hostname: FIREBASE_DB_HOST,
+            port: 443,
+            path: `/pins/${phoneConfig.pairingPin}.json`,
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Content-Length': Buffer.byteLength(payload)
+            }
+        }, (res) => {
+            if (res.statusCode >= 200 && res.statusCode < 300) {
+                console.log(`[Firebase Relay] ✅ Successfully mapped WAN tunnel URL for PIN ${phoneConfig.pairingPin}`);
+            } else {
+                console.warn(`[Firebase Relay] Notice: HTTP ${res.statusCode} while publishing tunnel`);
+            }
+            res.resume();
+        });
+        req.on('error', (err) => {
+            console.error('[Firebase Relay] Notice on publishing:', err.message);
+        });
+        req.write(payload);
+        req.end();
+    } catch (err) {
+        console.error('[Firebase Relay] Exception:', err.message);
+    }
+}
 
 function postSignalMessage(targetRole, data) {
     try {
@@ -153,83 +188,185 @@ function postSignalMessage(targetRole, data) {
                 'Content-Length': Buffer.byteLength(payload)
             }
         }, (res) => {
-            console.log(`[WebRTC] Dispatched '${data.type}' to ${targetRole} via Cloudflare Worker (HTTP ${res.statusCode})`);
             res.resume();
         });
         req.on('error', (err) => {
-            console.error(`[WebRTC] Failed to dispatch '${data.type}':`, err.message);
+            console.error(`[Signal Broker] Notice on dispatch '${data.type}':`, err.message);
         });
         req.write(payload);
         req.end();
     } catch (err) {
-        console.error('[WebRTC] postSignalMessage exception:', err.message);
+        console.error('[Signal Broker] postSignalMessage error:', err.message);
     }
 }
 
-const POLL_STANDBY_MS = 2500;  // Eco standby (idle waiting for phone)
-const POLL_BURST_MS   = 400;   // High-speed handshake burst
-let currentPollInterval = POLL_STANDBY_MS;
-let burstModeTimeout = null;
-let isPollingPaused = false;
-let isPollInProgress = false;
+let lastPublishedTime = 0;
+let lastPublishedUrl = null;
 
-function setSignalingMode(mode) {
-    if (mode === 'PAUSED') {
-        if (!isPollingPaused) {
-            console.log('[WebRTC] 💤 Connected — Lowering signaling polling to 3500ms liveness check.');
-        }
-        isPollingPaused = false;
-        currentPollInterval = 3500;
-        if (burstModeTimeout) {
-            clearTimeout(burstModeTimeout);
-            burstModeTimeout = null;
-        }
-        scheduleNextPoll(3500);
-        return;
+function publishTunnelToBroker(force = false) {
+    if (!activeTunnelUrl) return;
+    const now = Date.now();
+    const minInterval = force ? 5000 : 25000;
+    if (activeTunnelUrl === lastPublishedUrl && (now - lastPublishedTime < minInterval)) {
+        return; // Throttled to conserve broker quota and avoid duplicate writes
     }
+    lastPublishedTime = now;
+    lastPublishedUrl = activeTunnelUrl;
 
-    if (mode === 'BURST') {
-        isPollingPaused = false;
-        currentPollInterval = POLL_BURST_MS;
-        console.log('[WebRTC] ⚡ Signaling BURST mode active (400ms interval for fast SDP exchange).');
-        if (burstModeTimeout) clearTimeout(burstModeTimeout);
-        burstModeTimeout = setTimeout(() => {
-            if (!isPollingPaused && currentPollInterval === POLL_BURST_MS) {
-                console.log('[WebRTC] Handshake window concluded. Reverting signaling to STANDBY.');
-                setSignalingMode('STANDBY');
+    const packet = {
+        type: 'tunnel_ready',
+        url: activeTunnelUrl,
+        pairingPin: phoneConfig.pairingPin,
+        deviceToken: phoneConfig.deviceToken,
+        pcName: os.hostname(),
+        fps: 30,
+        updatedAt: now
+    };
+    publishToFirebase(packet);
+    postSignalMessage('phone', packet);
+}
+
+// =====================================================
+// On-Demand Finite Probe & Ping Engine
+// PC only pings when explicitly clicked. Max 5 probes (1s apart).
+// Stops immediately once phone responds or times out.
+// =====================================================
+let activeProbeTimer = null;
+let activeProbeCount = 0;
+const MAX_PROBES = 5;
+let lastPhoneRttMs = -1;
+let udpBeaconSocket = null;
+
+function initUdpSocket() {
+    if (udpBeaconSocket) return;
+    try {
+        udpBeaconSocket = dgram.createSocket({ type: 'udp4', reuseAddr: true });
+        udpBeaconSocket.bind(() => {
+            try { udpBeaconSocket.setBroadcast(true); } catch (_) {}
+        });
+        udpBeaconSocket.on('error', (err) => {
+            console.error('[UDP Beacon] Socket error:', err.message);
+        });
+        console.log(`[UDP Beacon] Ready on port 9092 for on-demand fast-path beacons (PIN: ${phoneConfig.pairingPin})`);
+    } catch (e) {
+        console.error('[UDP Beacon] Init error:', e.message);
+    }
+}
+
+function dispatchLanUdpBeacon() {
+    initUdpSocket();
+    if (!udpBeaconSocket) return;
+    try {
+        const msg = Buffer.from(`ANOLINK_HELLO:${phoneConfig.pairingPin}`);
+        udpBeaconSocket.send(msg, 0, msg.length, 9092, '255.255.255.255', () => {});
+
+        const cleanPhoneIp = (phoneConfig.lanIp || phoneConfig.ip || '').replace(/^.*:/, '').trim();
+        if (/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(cleanPhoneIp)) {
+            udpBeaconSocket.send(msg, 0, msg.length, 9092, cleanPhoneIp, () => {});
+        }
+
+        const ifaces = os.networkInterfaces();
+        for (const name of Object.keys(ifaces)) {
+            for (const net of ifaces[name]) {
+                if (net.family === 'IPv4' && !net.internal) {
+                    try {
+                        const parts = net.address.split('.').map(Number);
+                        const mask = (net.netmask || '255.255.255.0').split('.').map(Number);
+                        const bcast = parts.map((p, i) => (p & mask[i]) | (~mask[i] & 255)).join('.');
+                        udpBeaconSocket.send(msg, 0, msg.length, 9092, bcast, () => {});
+                    } catch (_) {}
+                }
             }
-        }, 15000);
-        scheduleNextPoll(0);
-        return;
+        }
+    } catch (_) {}
+}
+
+function triggerOnDemandProbe() {
+    if (activeProbeTimer) {
+        clearInterval(activeProbeTimer);
+        activeProbeTimer = null;
+    }
+    activeProbeCount = 0;
+
+    console.log(`[AnoLink] ⚡ Starting on-demand probe for Phone (Max ${MAX_PROBES} attempts)...`);
+    broadcastToBrowsers({
+        type: 'probe_status',
+        state: 'PROBING',
+        attempt: 1,
+        maxAttempts: MAX_PROBES
+    });
+
+    // If socket is already open, probe it immediately!
+    if (activePhoneWs && activePhoneWs.readyState === WebSocket.OPEN) {
+        try {
+            activePhoneWs.send(JSON.stringify({ type: 'ping', timestamp: Date.now(), probe: 1 }));
+        } catch (_) {}
+    } else {
+        publishTunnelToBroker(true);
+        dispatchLanUdpBeacon();
     }
 
-    if (mode === 'STANDBY') {
-        if (isPollingPaused || currentPollInterval !== POLL_STANDBY_MS) {
-            console.log(`[WebRTC] 🍃 Signaling STANDBY mode active (${POLL_STANDBY_MS}ms interval). Ready for Phone.`);
+    activeProbeTimer = setInterval(() => {
+        activeProbeCount++;
+        if (activeProbeCount >= MAX_PROBES) {
+            clearInterval(activeProbeTimer);
+            activeProbeTimer = null;
+            console.log('[AnoLink] ⚠️ Phone did not respond after 5 probe attempts. Probing stopped.');
+            const isConnected = !!(activePhoneWs && activePhoneWs.readyState === WebSocket.OPEN);
+            broadcastToBrowsers({
+                type: 'probe_status',
+                state: 'STOPPED',
+                connected: isConnected
+            });
+            if (!isConnected) {
+                connectionState = 'DISCONNECTED';
+                broadcastToBrowsers({ type: 'status_change', state: 'DISCONNECTED' });
+            }
+            return;
         }
-        isPollingPaused = false;
-        currentPollInterval = POLL_STANDBY_MS;
-        if (burstModeTimeout) {
-            clearTimeout(burstModeTimeout);
-            burstModeTimeout = null;
+
+        console.log(`[AnoLink] ⚡ On-demand probe attempt ${activeProbeCount + 1}/${MAX_PROBES}...`);
+        broadcastToBrowsers({
+            type: 'probe_status',
+            state: 'PROBING',
+            attempt: activeProbeCount + 1,
+            maxAttempts: MAX_PROBES
+        });
+
+        if (activePhoneWs && activePhoneWs.readyState === WebSocket.OPEN) {
+            try {
+                activePhoneWs.send(JSON.stringify({ type: 'ping', timestamp: Date.now(), probe: activeProbeCount + 1 }));
+            } catch (_) {}
+        } else {
+            publishTunnelToBroker(false);
+            dispatchLanUdpBeacon();
         }
-        scheduleNextPoll(POLL_STANDBY_MS);
-        return;
+    }, 1000);
+}
+
+function triggerWakePhoneBeacons() {
+    triggerOnDemandProbe();
+}
+
+function startUdpBeacon() {
+    initUdpSocket();
+}
+
+function stopUdpBeacon() {
+    if (activeProbeTimer) {
+        clearInterval(activeProbeTimer);
+        activeProbeTimer = null;
+    }
+    if (udpBeaconSocket) {
+        try { udpBeaconSocket.close(); } catch (_) {}
+        udpBeaconSocket = null;
     }
 }
 
-function scheduleNextPoll(delayMs) {
-    if (isPollingPaused) return;
-    if (signalPollTimer) {
-        clearTimeout(signalPollTimer);
-        signalPollTimer = null;
-    }
-    const ms = delayMs !== undefined ? delayMs : currentPollInterval;
-    signalPollTimer = setTimeout(pollSignalWorker, ms);
-}
+let lastProcessedSignalText = null;
 
 function pollSignalWorker() {
-    if (isPollingPaused || isPollInProgress) return;
+    if (isPollInProgress) return;
     isPollInProgress = true;
 
     const pollPath = `/sig/${phoneConfig.pairingPin}/pc`;
@@ -246,31 +383,74 @@ function pollSignalWorker() {
             isPollInProgress = false;
             const trimmed = buffer.trim();
             if (trimmed && trimmed !== 'null') {
-                try {
-                    const msg = JSON.parse(trimmed);
-                    if (msg && msg.type) {
-                        handleSignalMessage(msg, 'phone');
-                    }
-                } catch (parseErr) {}
+                if (trimmed !== lastProcessedSignalText) {
+                    lastProcessedSignalText = trimmed;
+                    try {
+                        const msg = JSON.parse(trimmed);
+                        if (msg && msg.type) {
+                            handleSignalMessage(msg);
+                        }
+                    } catch (parseErr) {}
+                }
             }
-            if (!isPollingPaused) {
-                scheduleNextPoll();
-            }
+            scheduleNextPoll();
         });
     });
 
     req.on('timeout', () => {
         try { req.destroy(); } catch (_) {}
         isPollInProgress = false;
-        if (!isPollingPaused) scheduleNextPoll();
+        scheduleNextPoll();
     });
 
     req.on('error', () => {
         isPollInProgress = false;
-        if (!isPollingPaused) scheduleNextPoll();
+        scheduleNextPoll();
     });
 
     req.end();
+}
+
+function scheduleNextPoll() {
+    if (signalPollTimer) {
+        clearTimeout(signalPollTimer);
+        signalPollTimer = null;
+    }
+    if (connectionState === 'CONNECTED') {
+        // Suspend background HTTPS matchmaker polling while phone is actively connected
+        return;
+    }
+    signalPollTimer = setTimeout(pollSignalWorker, 1500);
+}
+
+function handleSignalMessage(msg) {
+    if (!msg || !msg.type) return;
+
+    if (msg.type === 'init' || msg.type === 'get_tunnel' || msg.type === 'phone_opened' || msg.type === 'phone_wake') {
+        console.log(`[Cloudflare Tunnel] ⚡ Phone requested tunnel URL (${msg.type}) for PIN: ${phoneConfig.pairingPin}`);
+        if (activeTunnelUrl) {
+            publishTunnelToBroker(true);
+        } else {
+            console.log('[Cloudflare Tunnel] Tunnel process is initializing, will dispatch upon URL detection.');
+        }
+        return;
+    }
+
+    if (msg.type === 'session_close' || msg.type === 'app_closing') {
+        console.log('[AnoLink] 📱 Phone session closed signal received.');
+        if (activePhoneWs) {
+            try { activePhoneWs.close(); } catch (_) {}
+            activePhoneWs = null;
+        }
+        connectionState = 'DISCONNECTED';
+        stopPcScreenStreaming(true);
+        broadcastToBrowsers({
+            type: 'status_change',
+            state: connectionState,
+            phoneConfig
+        });
+        return;
+    }
 }
 
 function initSignaling() {
@@ -278,11 +458,11 @@ function initSignaling() {
         clearTimeout(signalPollTimer);
         signalPollTimer = null;
     }
-    isPollingPaused = false;
 
-    console.log(`[WebRTC] Matchmaker listening on PIN: ${phoneConfig.pairingPin} via Cloudflare Worker...`);
+    console.log(`[AnoLink] Matchmaker listening on PIN: ${phoneConfig.pairingPin} via Firebase RTDB Relay & Worker...`);
+    console.log(`[Firebase Relay] 🌐 Active matchmaker endpoint: https://${FIREBASE_DB_HOST}/pins/${phoneConfig.pairingPin}.json`);
 
-    // Verify Cloudflare Worker connection on startup
+    // Verify Cloudflare Worker broker health
     const healthReq = https.request({
         hostname: SIGNAL_HOST,
         port: 443,
@@ -293,351 +473,201 @@ function initSignaling() {
         let buf = '';
         res.on('data', c => buf += c);
         res.on('end', () => {
-            console.log(`[WebRTC] ✅ Cloudflare Worker Broker connected! (HTTP ${res.statusCode}: ${buf.trim()})`);
+            console.log(`[AnoLink] ✅ Cloudflare Worker Broker connected! (HTTP ${res.statusCode}: ${buf.trim()})`);
         });
     });
     healthReq.on('error', (err) => {
-        console.error(`[WebRTC] ❌ Cloudflare Worker connection warning: ${err.message}`);
+        console.error(`[AnoLink] ⚠️ Cloudflare Worker connection warning: ${err.message}`);
     });
     healthReq.end();
 
-    setSignalingMode('STANDBY');
+    // Publish once immediately if tunnel is already up
+    if (connectionState !== 'CONNECTED' && activeTunnelUrl) {
+        publishTunnelToBroker(true);
+    }
+
+    // Active standby heartbeat publishing every 30 seconds to ensure broker stays fresh
+    if (tunnelHeartbeatTimer) clearInterval(tunnelHeartbeatTimer);
+    tunnelHeartbeatTimer = setInterval(() => {
+        if (connectionState !== 'CONNECTED' && activeTunnelUrl) {
+            publishTunnelToBroker();
+        }
+    }, 30000); // 30 seconds
+
+    scheduleNextPoll();
 }
 
-let lastOfferTime = 0;
-let lastOfferSentTime = 0;
-let lastOfferSdp = null;
-let localCandidates = [];
-let hasRemoteAnswer = false;
-let pendingRemoteCandidates = [];
+// REST API for Public WAN Pairing Info & QR Code
+app.get('/api/pc/wan_info', (req, res) => {
+    res.json({
+        success: true,
+        tunnelUrl: activeTunnelUrl,
+        pin: phoneConfig.pairingPin,
+        pcName: os.hostname(),
+        connected: connectionState === 'CONNECTED',
+        connectUri: activeTunnelUrl ? `ano://connect?url=${encodeURIComponent(activeTunnelUrl)}&pin=${phoneConfig.pairingPin}` : null
+    });
+});
 
-function handleSignalMessage(msg, phoneTopic) {
-    if (!msg || !msg.type) return;
+// Middleware: Verify Device Authentication for remote REST requests
+function requireDeviceAuth(req, res, next) {
+    const remoteIp = req.socket.remoteAddress;
+    // Allow local development / loopback
+    if (remoteIp === '127.0.0.1' || remoteIp === '::1' || remoteIp === '::ffff:127.0.0.1') {
+        return next();
+    }
+    const token = req.headers['x-device-token'] || req.query.token || (req.body && req.body.token);
+    if (token && phoneConfig.deviceToken && token.trim() === phoneConfig.deviceToken.trim()) {
+        return next();
+    }
+    return res.status(401).json({ error: 'Unauthorized: Valid device token required' });
+}
 
-    if (msg.type === 'init') {
-        setSignalingMode('BURST');
+// REST API to query current PC tunnel state directly (Scrub sensitive tokens from public requests)
+app.get('/api/pc/tunnel', (req, res) => {
+    const remoteIp = req.socket.remoteAddress;
+    const isLocal = (remoteIp === '127.0.0.1' || remoteIp === '::1' || remoteIp === '::ffff:127.0.0.1');
+    const token = req.headers['x-device-token'] || req.query.token;
+    const isTokenMatch = (token && phoneConfig.deviceToken && token.trim() === phoneConfig.deviceToken.trim());
 
-        // If Cloudflare Quick Tunnel is active, dispatch URL to phone immediately!
-        if (activeTunnelUrl) {
-            console.log(`[Cloudflare Tunnel] ⚡ Phone requested connection. Dispatching active WAN Tunnel URL: ${activeTunnelUrl}`);
-            postSignalMessage('phone', {
-                type: 'tunnel_ready',
-                url: activeTunnelUrl,
-                pairingPin: phoneConfig.pairingPin,
-                deviceToken: phoneConfig.deviceToken
+    res.json({
+        success: true,
+        url: activeTunnelUrl,
+        pin: (isLocal || isTokenMatch) ? phoneConfig.pairingPin : '******',
+        deviceToken: (isLocal || isTokenMatch) ? phoneConfig.deviceToken : undefined,
+        pcName: os.hostname(),
+        connected: connectionState === 'CONNECTED'
+    });
+});
+
+// Endpoint to manually or automatically trigger a wake beacon to paired phone
+app.all(['/api/wake_phone', '/api/pc/wake'], (req, res) => {
+    triggerWakePhoneBeacons();
+    res.json({
+        success: true,
+        message: 'Wake beacons dispatched to phone via UDP burst and WAN push',
+        pin: phoneConfig.pairingPin,
+        tunnelUrl: activeTunnelUrl
+    });
+});
+
+// Fast lightweight LAN ping endpoint for phone on-open probe
+app.get(['/api/phone/ping', '/api/ping'], (req, res) => {
+    res.json({
+        success: true,
+        pcName: os.hostname(),
+        pin: phoneConfig.pairingPin,
+        tunnelUrl: activeTunnelUrl,
+        connected: connectionState === 'CONNECTED'
+    });
+});
+
+// =====================================================
+// PC-Side Direct MKV Screen Recording Engine
+// =====================================================
+function startServerRecording() {
+    if (activeMkvWriter) {
+        console.log('[Recording] Recording already active.');
+        return;
+    }
+    const width = phoneScreenWidth || 540;
+    const height = phoneScreenHeight || 1200;
+    const now = new Date();
+    const pad = (n) => n.toString().padStart(2, '0');
+    const dateStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
+    const filename = `AnoLink_Silent_Record_${dateStr}.mkv`;
+    const filePath = path.join(recordingsDir, filename);
+
+    try {
+        activeMkvWriter = new MkvWriter(filePath, width, height);
+        recordingStartTime = Date.now();
+        console.log(`[Recording] 🔴 Started PC-side Direct MKV recording to: ${filePath} (${width}x${height})`);
+
+        broadcastToBrowsers({
+            type: 'recording_status',
+            isRecording: true,
+            filename,
+            filePath
+        });
+
+        if (recordingProgressTimer) clearInterval(recordingProgressTimer);
+        recordingProgressTimer = setInterval(() => {
+            if (!activeMkvWriter) return;
+            const stats = activeMkvWriter.getStats();
+            broadcastToBrowsers({
+                type: 'recording_progress',
+                isRecording: true,
+                durationSec: stats.durationSec,
+                sizeMb: stats.sizeMb,
+                framesCount: stats.framesCount
             });
-        }
-
-        const now = Date.now();
-        // Debounce spam (< 800ms)
-        if (now - lastOfferSentTime < 800) {
-            return;
-        }
-        lastOfferSentTime = now;
-
-        console.log(`[AnoLink] ⚡ Connection request from Phone (${msg.device || 'Android'}). Starting fresh P2P handshake...`);
-        createWebRtcOffer(phoneTopic);
-        return;
-    }
-
-    if (msg.type === 'session_close' || msg.type === 'app_closing') {
-        console.log('[AnoLink] 📱 Phone session closed. Resetting connection state immediately.');
-        connectionState = 'DISCONNECTED';
-        activeControlDc = null;
-        activeVideoDc = null;
-        stopPcScreenStreaming(true);
-        if (activeWebRtcPeer) {
-            try { activeWebRtcPeer.close(); } catch (_) {}
-            activeWebRtcPeer = null;
-        }
-        setSignalingMode('STANDBY');
-        return;
-    }
-
-    if (msg.type === 'answer') {
-        if (!activeWebRtcPeer || !msg.sdp) return;
-
-        // If answer was already applied and signaling state is stable, absorb candidates
-        if (hasRemoteAnswer) {
-            if (Array.isArray(msg.candidates)) {
-                for (const c of msg.candidates) {
-                    try {
-                        const candStr = (c.candidate || '').replace(/^a=/, '');
-                        if (candStr) {
-                            activeWebRtcPeer.addRemoteCandidate(candStr, c.mid || '0');
-                        }
-                    } catch (_) {}
-                }
-            }
-            return;
-        }
-
-        console.log('[AnoLink] 🤝 Received SDP Answer from Phone! Establishing direct P2P connection...');
-        try {
-            hasRemoteAnswer = true;
-            activeWebRtcPeer.setRemoteDescription(msg.sdp, 'answer');
-            // Add any bundled candidates received with the answer
-            if (Array.isArray(msg.candidates)) {
-                for (const c of msg.candidates) {
-                    try {
-                        const candStr = (c.candidate || '').replace(/^a=/, '');
-                        if (candStr) {
-                            activeWebRtcPeer.addRemoteCandidate(candStr, c.mid || '0');
-                        }
-                    } catch (_) {}
-                }
-            }
-            // Flush all buffered candidates
-            for (const c of pendingRemoteCandidates) {
-                try {
-                    const candStr = (c.candidate || '').replace(/^a=/, '');
-                    if (candStr) {
-                        activeWebRtcPeer.addRemoteCandidate(candStr, c.mid || '0');
-                    }
-                } catch (_) {}
-            }
-            pendingRemoteCandidates = [];
-        } catch (e) {
-            console.error('[AnoLink] Error setting remote Answer:', e.message);
-        }
-        return;
-    }
-
-    if (msg.type === 'candidate') {
-        if (activeWebRtcPeer && msg.candidate) {
-            const candStr = (msg.candidate || '').replace(/^a=/, '');
-            if (hasRemoteAnswer) {
-                try {
-                    activeWebRtcPeer.addRemoteCandidate(candStr, msg.mid || '0');
-                } catch (_) {}
-            } else {
-                pendingRemoteCandidates.push({ ...msg, candidate: candStr });
-            }
-        }
-        return;
-    }
-}
-
-function createWebRtcOffer(phoneTopic) {
-    if (!nodeDataChannel) {
-        console.error('[AnoLink] node-datachannel engine not available!');
-        return;
-    }
-
-    if (activeWebRtcPeer) {
-        const oldPeer = activeWebRtcPeer;
-        activeWebRtcPeer = null;
-        try { oldPeer.close(); } catch (_) {}
-        activeControlDc = null;
-        activeVideoDc = null;
-    }
-
-    lastOfferTime = Date.now();
-    lastOfferSdp = null;
-    localCandidates = [];
-    hasRemoteAnswer = false;
-    pendingRemoteCandidates = [];
-
-    const peer = new nodeDataChannel.PeerConnection('AnoLink-PC', {
-        iceServers: [
-            'stun:stun.l.google.com:19302',
-            'stun:stun1.l.google.com:19302',
-            'stun:stun2.l.google.com:19302',
-            'stun:stun.cloudflare.com:3478'
-        ]
-    });
-
-    let dispatchTimer = null;
-    let hasDispatched = false;
-
-    function dispatchBundledOffer() {
-        if (hasDispatched) return;
-        hasDispatched = true;
-        if (dispatchTimer) clearTimeout(dispatchTimer);
-        if (peer !== activeWebRtcPeer || hasRemoteAnswer || !lastOfferSdp) return;
-
-        // Embed all valid candidates directly into the Offer SDP
-        let fullSdp = lastOfferSdp;
-        // Filter out non-routable virtual adapter IPs (WSL2 / Hyper-V 172.x)
-        const validCandidates = localCandidates.filter(c => {
-            const cand = c.candidate || '';
-            return !cand.includes(' 172.28.') && !cand.includes(' 172.24.') && !cand.includes(' 172.17.') && !cand.includes(' 169.254.');
-        });
-
-        for (const c of validCandidates) {
-            const candLine = c.candidate.startsWith('a=') ? c.candidate : `a=${c.candidate}`;
-            if (!fullSdp.includes(candLine.trim())) {
-                fullSdp += candLine.trim() + '\r\n';
-            }
-        }
-
-        const cleanCandidates = validCandidates.map(c => ({
-            candidate: c.candidate.replace(/^a=/, ''),
-            mid: c.mid || '0'
-        }));
-
-        console.log(`[AnoLink] 📡 Dispatched WebRTC Offer (${fullSdp.length} bytes, ${validCandidates.length} WAN/LAN candidates)`);
-        postSignalMessage(phoneTopic, {
-            type: 'offer',
-            sdp: fullSdp,
-            candidates: cleanCandidates
-        });
-    }
-
-    peer.onLocalDescription((sdp, type) => {
-        lastOfferSdp = sdp;
-        // Wait 1400ms for public STUN and TURN candidates to fully resolve and gather
-        dispatchTimer = setTimeout(dispatchBundledOffer, 1400);
-    });
-
-    peer.onLocalCandidate((candidate, mid) => {
-        localCandidates.push({ candidate, mid });
-        // If TURN relay candidate arrives early, dispatch after brief buffer
-        if (candidate.includes('relay') && lastOfferSdp && !hasDispatched) {
-            if (dispatchTimer) clearTimeout(dispatchTimer);
-            dispatchTimer = setTimeout(dispatchBundledOffer, 250);
-        }
-    });
-
-    if (typeof peer.onError === 'function') {
-        peer.onError((err) => {
-            console.warn('[WebRTC] Peer Connection notice:', err);
-        });
-    }
-
-    peer.onStateChange((state) => {
-        if (peer !== activeWebRtcPeer) return;
-
-        if (state === 'connected') {
-            connectionState = 'CONNECTED';
-            setSignalingMode('PAUSED');
-            console.log('[AnoLink] 🟢 Direct WebRTC P2P DataChannel Connected (UDP)!');
-        } else if (state === 'disconnected' || state === 'failed') {
-            connectionState = 'DISCONNECTED';
-            activeControlDc = null;
-            activeVideoDc = null;
-            stopPcScreenStreaming(true);
-            setSignalingMode('STANDBY');
-        }
+        }, 1000);
+    } catch (err) {
+        console.error('[Recording] Failed to start MKV recording:', err.message);
         broadcastToBrowsers({
-            type: 'status_change',
-            state: connectionState,
-            phoneConfig
-        });
-    });
-
-    // Create control DataChannel (reliable, ordered)
-    const controlDc = peer.createDataChannel('ano-control');
-    bindControlDataChannel(controlDc);
-
-    // Create video DataChannel (unreliable, unordered for 30 FPS video frames)
-    const videoDc = peer.createDataChannel('ano-video', {
-        unordered: true,
-        maxRetransmits: 0
-    });
-    bindVideoDataChannel(videoDc);
-
-    activeWebRtcPeer = peer;
-}
-
-function bindControlDataChannel(dc) {
-    activeControlDc = dc;
-
-    if (typeof dc.onError === 'function') {
-        dc.onError((err) => {
-            console.warn('[WebRTC] Control DataChannel notice:', err);
+            type: 'recording_error',
+            message: err.message
         });
     }
+}
 
-    dc.onOpen(() => {
-        console.log('[WebRTC] P2P Control DataChannel OPEN! Full duplex encrypted control active.');
-        connectionState = 'CONNECTED';
-        setSignalingMode('PAUSED');
+function stopServerRecording() {
+    if (!activeMkvWriter) return;
+    if (recordingProgressTimer) {
+        clearInterval(recordingProgressTimer);
+        recordingProgressTimer = null;
+    }
+
+    const writer = activeMkvWriter;
+    activeMkvWriter = null;
+
+    writer.finalize().then((stats) => {
+        lastRecordedFileStats = stats;
+        console.log(`[Recording] ⏹️ Stopped recording: ${stats.filename} (${stats.sizeMb}, ${stats.frameCount} frames, ${stats.durationSec}s)`);
         broadcastToBrowsers({
-            type: 'status_change',
-            state: connectionState,
-            phoneConfig
+            type: 'recording_finished',
+            isRecording: false,
+            filename: stats.filename,
+            filePath: stats.filePath,
+            sizeMb: stats.sizeMb,
+            durationSec: stats.durationSec,
+            frameCount: stats.frameCount
         });
-
-        try {
-            dc.sendMessage(JSON.stringify({
-                type: 'pc_battery_status',
-                percent: batteryInfoCache.percent,
-                isCharging: batteryInfoCache.isCharging,
-                hasBattery: batteryInfoCache.hasBattery
-            }));
-            if (winBridge && winBridge.stdin && winBridge.stdin.writable) {
-                winBridge.stdin.write('GET_WINDOWS\n');
-                winBridge.stdin.write('GET_POWER\n');
-            }
-        } catch (_) {}
+    }).catch((err) => {
+        console.error('[Recording] Error finalizing MKV recording:', err.message);
+        broadcastToBrowsers({
+            type: 'recording_finished',
+            isRecording: false,
+            error: err.message
+        });
     });
+}
 
-    dc.onMessage((data) => {
-        try {
-            const str = data.toString().trim();
-            const msg = str.startsWith('{') ? JSON.parse(str) : { action: str };
-            if (msg.action && typeof msg.action === 'string' && msg.action.trim().startsWith('{')) {
-                try {
-                    const nested = JSON.parse(msg.action);
-                    Object.assign(msg, nested);
-                } catch (_) {}
-            }
-
-            if (msg.type === 'pair_request') {
-                const pin = (msg.pin || '').toString().replace(/\D/g, '');
-                const expectedPin = phoneConfig.pairingPin.replace(/\D/g, '');
-                if (pin === expectedPin) {
-                    console.log(`[WebRTC] Successfully verified 1-Time Pairing PIN (${pin}) from phone!`);
-                    dc.sendMessage(JSON.stringify({
-                        type: 'pair_response',
-                        success: true,
-                        deviceToken: phoneConfig.deviceToken,
-                        pcName: os.hostname(),
-                        fps: 30
-                    }));
-                } else {
-                    dc.sendMessage(JSON.stringify({
-                        type: 'pair_response',
-                        success: false,
-                        message: 'Invalid 6-digit PIN'
-                    }));
-                }
-                return;
-            }
-
-            handlePhoneMessage(msg);
-        } catch (err) {
-            console.error('[WebRTC] Error parsing Control message:', err);
+// REST Endpoints for Recordings Management
+app.post('/api/recordings/open', (req, res) => {
+    const targetFile = (req.body && req.body.filePath) || (lastRecordedFileStats && lastRecordedFileStats.filePath);
+    try {
+        if (targetFile && fs.existsSync(targetFile)) {
+            child_process.exec(`explorer.exe /select,"${path.resolve(targetFile)}"`);
+        } else {
+            child_process.exec(`explorer.exe "${path.resolve(recordingsDir)}"`);
         }
-    });
-
-    dc.onClosed(() => {
-        console.log('[WebRTC] Control DataChannel closed.');
-        if (activeControlDc === dc) activeControlDc = null;
-        setSignalingMode('STANDBY');
-    });
-}
-
-function bindVideoDataChannel(dc) {
-    activeVideoDc = dc;
-
-    if (typeof dc.onError === 'function') {
-        dc.onError((err) => {
-            console.warn('[WebRTC] Video DataChannel notice:', err);
-        });
+        res.json({ success: true });
+    } catch (err) {
+        console.error('[Recording] Error opening folder:', err.message);
+        res.status(500).json({ error: err.message });
     }
+});
 
-    dc.onOpen(() => {
-        console.log('[WebRTC] P2P Video DataChannel OPEN! 30 FPS hardware stream ready.');
-    });
-    dc.onMessage((data) => {
-        broadcastBinaryToBrowsers(data);
-    });
-    dc.onClosed(() => {
-        if (activeVideoDc === dc) activeVideoDc = null;
-    });
-}
+app.get('/api/recordings/download/:filename', (req, res) => {
+    const filename = path.basename(req.params.filename);
+    const targetPath = path.join(recordingsDir, filename);
+    if (fs.existsSync(targetPath)) {
+        res.download(targetPath, filename);
+    } else {
+        res.status(404).send('Recording file not found');
+    }
+});
 
 // Upgrade handling for WebSockets: Browser Dashboard (/ws-browser) & Phone Remote Tunnel (/ws-phone)
 server.on('upgrade', (request, socket, head) => {
@@ -655,37 +685,40 @@ server.on('upgrade', (request, socket, head) => {
     }
 });
 
-// Phone Remote Connection Handling via Cloudflare Quick Tunnel
-wssPhone.on('connection', (ws) => {
-    console.log('[Cloudflare Tunnel] 📱 Android Phone connected via WAN WebSocket Tunnel!');
-    if (activePhoneWs && activePhoneWs !== ws) {
-        try { activePhoneWs.close(); } catch (_) {}
-    }
-    activePhoneWs = ws;
-    connectionState = 'CONNECTED';
-    setSignalingMode('PAUSED');
+// Phone Remote Connection Handling via Cloudflare Quick Tunnel or LAN Fast-Path
+wssPhone.on('connection', (ws, request) => {
+    const rawIp = (request && request.socket && request.socket.remoteAddress) || (ws._socket && ws._socket.remoteAddress) || '';
+    const cleanIp = rawIp.replace(/^.*:/, '');
+    const headers = (request && request.headers) || {};
+    const hasCfHeader = !!(headers['cf-connecting-ip'] || headers['cf-ray'] || headers['cf-visitor'] || headers['x-forwarded-for']);
+    const isLoopback = cleanIp === '127.0.0.1' || cleanIp === 'localhost' || cleanIp === '::1';
+    const isPrivateLanIp = /^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.)/.test(cleanIp);
+    const isLan = !hasCfHeader && !isLoopback && isPrivateLanIp;
+    console.log(`[AnoLink] 📱 Inbound phone socket from ${isLan ? 'Local LAN Fast-Path (' + cleanIp + ')' : 'Cloudflare WAN Tunnel'}...`);
+    ws.isAuthenticated = false;
+    ws.isLan = isLan;
+    ws.cleanIp = cleanIp;
 
-    broadcastToBrowsers({
-        type: 'status_change',
-        state: connectionState,
-        phoneConfig
-    });
-
-    try {
-        ws.send(JSON.stringify({
-            type: 'pc_battery_status',
-            percent: batteryInfoCache.percent,
-            isCharging: batteryInfoCache.isCharging,
-            hasBattery: batteryInfoCache.hasBattery
-        }));
-        if (winBridge && winBridge.stdin && winBridge.stdin.writable) {
-            winBridge.stdin.write('GET_WINDOWS\n');
-            winBridge.stdin.write('GET_POWER\n');
+    // Security Gate: 10-second authentication timeout
+    const authTimeout = setTimeout(() => {
+        if (!ws.isAuthenticated && ws.readyState === WebSocket.OPEN) {
+            console.warn('[Security] ⚠️ Phone socket failed to authenticate within 10s. Closing connection.');
+            try { ws.close(4001, 'Authentication Timeout'); } catch (_) {}
         }
-    } catch (_) {}
+    }, 10000);
 
     ws.on('message', (data, isBinary) => {
-        if (isBinary) return;
+        if (isBinary) {
+            if (activeMkvWriter) {
+                try {
+                    activeMkvWriter.addFrame(data);
+                } catch (recErr) {
+                    console.error('[Recording] Frame append error:', recErr.message);
+                }
+            }
+            broadcastBinaryToBrowsers(data);
+            return;
+        }
         try {
             const str = data.toString().trim();
             const msg = str.startsWith('{') ? JSON.parse(str) : { action: str };
@@ -698,9 +731,55 @@ wssPhone.on('connection', (ws) => {
 
             if (msg.type === 'pair_request') {
                 const pin = (msg.pin || '').toString().replace(/\D/g, '');
+                const token = (msg.deviceToken || msg.token || '').toString().trim();
                 const expectedPin = phoneConfig.pairingPin.replace(/\D/g, '');
-                if (pin === expectedPin) {
-                    console.log(`[Cloudflare Tunnel] ✅ Successfully verified PIN (${pin}) from Phone!`);
+                const expectedToken = (phoneConfig.deviceToken || '').trim();
+
+                const isPinValid = (pin && pin === expectedPin);
+                const isTokenValid = (token && expectedToken && token === expectedToken);
+
+                if (isPinValid || isTokenValid) {
+                    ws.isAuthenticated = true;
+                    clearTimeout(authTimeout);
+                    console.log(`[Cloudflare Tunnel] ✅ Successfully authenticated Phone via ${isTokenValid ? 'Device Token' : 'PIN (' + pin + ')'}!`);
+                    if (msg.deviceName) {
+                        phoneConfig.deviceName = msg.deviceName;
+                    }
+                    if (msg.lanIp && typeof msg.lanIp === 'string') {
+                        const cleanLanIp = msg.lanIp.replace(/^.*:/, '').trim();
+                        if (/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(cleanLanIp)) {
+                            phoneConfig.lanIp = cleanLanIp;
+                            if (ws.isLan) {
+                                phoneConfig.ip = cleanLanIp;
+                            }
+                            saveConfig();
+                        }
+                    } else if (ws.isLan) {
+                        phoneConfig.ip = ws.cleanIp;
+                        saveConfig();
+                    }
+
+                    // Stop any active PC probe cycle immediately
+                    if (activeProbeTimer) {
+                        clearInterval(activeProbeTimer);
+                        activeProbeTimer = null;
+                        activeProbeCount = 0;
+                    }
+
+                    // Gracefully replace previous active socket if a new authenticated session arrives
+                    if (activePhoneWs && activePhoneWs !== ws) {
+                        console.log('[Cloudflare Tunnel] Gracefully replacing previous session with newly authenticated socket.');
+                        try { activePhoneWs.close(1000, 'Replaced by new authenticated session'); } catch (_) {}
+                    }
+                    activePhoneWs = ws;
+                    connectionState = 'CONNECTED';
+
+                    broadcastToBrowsers({
+                        type: 'status_change',
+                        state: 'CONNECTED',
+                        rtt: lastPhoneRttMs > 0 ? lastPhoneRttMs : 15,
+                        phoneConfig: { ...phoneConfig, ip: ws.isLan ? ws.cleanIp : (phoneConfig.lanIp || 'Cloudflare Tunnel (WAN)'), isTunnel: !ws.isLan }
+                    });
                     ws.send(JSON.stringify({
                         type: 'pair_response',
                         success: true,
@@ -708,13 +787,64 @@ wssPhone.on('connection', (ws) => {
                         pcName: os.hostname(),
                         fps: 30
                     }));
+
+                    try {
+                        ws.send(JSON.stringify({
+                            type: 'pc_battery_status',
+                            percent: batteryInfoCache.percent,
+                            isCharging: batteryInfoCache.isCharging,
+                            hasBattery: batteryInfoCache.hasBattery
+                        }));
+                        if (winBridge && winBridge.stdin && winBridge.stdin.writable) {
+                            winBridge.stdin.write('GET_WINDOWS\n');
+                            winBridge.stdin.write('GET_POWER\n');
+                        }
+                    } catch (_) {}
                 } else {
+                    console.warn(`[Security] ⚠️ Authentication failed from Phone. Invalid PIN or token.`);
                     ws.send(JSON.stringify({
                         type: 'pair_response',
                         success: false,
-                        message: 'Invalid 6-digit PIN'
+                        message: 'Invalid 6-digit PIN or Device Token'
                     }));
                 }
+                return;
+            }
+
+            // Security gate: Disallow all remote control commands unless authenticated!
+            if (!ws.isAuthenticated) {
+                if (msg.action === 'ping' || msg.type === 'ping') {
+                    try { ws.send(JSON.stringify({ type: 'pong', timestamp: Date.now() })); } catch (_) {}
+                    return;
+                }
+                console.warn(`[Security] ⚠️ Blocked unauthenticated command '${msg.action || msg.type}' from phone socket.`);
+                return;
+            }
+
+            if (msg.action === 'ping' || msg.type === 'ping') {
+                try { ws.send(JSON.stringify({ type: 'pong', timestamp: msg.timestamp || Date.now() })); } catch (_) {}
+                return;
+            }
+
+            if (msg.action === 'pong' || msg.type === 'pong') {
+                const now = Date.now();
+                const sentTime = msg.timestamp ? parseInt(msg.timestamp, 10) : now;
+                const rtt = Math.max(1, now - sentTime);
+                lastPhoneRttMs = rtt;
+
+                if (activeProbeTimer) {
+                    clearInterval(activeProbeTimer);
+                    activeProbeTimer = null;
+                    activeProbeCount = 0;
+                }
+                connectionState = 'CONNECTED';
+                console.log(`[AnoLink] ✅ Phone responded to probe with PONG (RTT: ${rtt}ms)! Probing finished.`);
+                broadcastToBrowsers({
+                    type: 'status_change',
+                    state: 'CONNECTED',
+                    rtt,
+                    phoneConfig: { ...phoneConfig, ip: ws.isLan ? ws.cleanIp : (phoneConfig.lanIp || 'Cloudflare Tunnel (WAN)'), isTunnel: !ws.isLan }
+                });
                 return;
             }
 
@@ -724,22 +854,26 @@ wssPhone.on('connection', (ws) => {
         }
     });
 
-    ws.on('close', () => {
-        console.log('[Cloudflare Tunnel] 📱 Phone WAN Tunnel disconnected.');
+    ws.on('close', (code, reason) => {
+        clearTimeout(authTimeout);
         if (activePhoneWs === ws) {
+            console.log(`[Cloudflare Tunnel] 📱 Phone WAN Tunnel disconnected (${code}: ${reason || 'Normal'}).`);
             activePhoneWs = null;
             connectionState = 'DISCONNECTED';
             stopPcScreenStreaming(true);
-            setSignalingMode('STANDBY');
+            scheduleNextPoll();
             broadcastToBrowsers({
                 type: 'status_change',
                 state: connectionState,
                 phoneConfig
             });
+        } else {
+            console.log(`[Cloudflare Tunnel] 📱 Superseded/inactive phone socket closed (${code}). Active session preserved.`);
         }
     });
 
     ws.on('error', (err) => {
+        clearTimeout(authTimeout);
         console.warn('[Cloudflare Tunnel] Phone socket notice:', err.message);
     });
 });
@@ -761,11 +895,6 @@ function broadcastToPhoneRemote(message) {
     if (activePhoneWs && activePhoneWs.readyState === WebSocket.OPEN) {
         try {
             activePhoneWs.send(payload);
-        } catch (_) {}
-    }
-    if (activeControlDc && activeControlDc.isOpen && activeControlDc.isOpen()) {
-        try {
-            activeControlDc.sendMessage(payload);
         } catch (_) {}
     }
 }
@@ -810,6 +939,8 @@ function initWinBridge() {
     }
 }
 
+const pendingProcessCallbacks = [];
+
 function handleBridgeMessage(msg) {
     if (msg.type === 'pc_screen_frame') {
         const frameBuf = Buffer.from(msg.data, 'base64');
@@ -820,22 +951,25 @@ function handleBridgeMessage(msg) {
                 }
             } catch (_) {}
         }
-        if (activeVideoDc && activeVideoDc.isOpen && activeVideoDc.isOpen()) {
-            try {
-                const bufAmt = activeVideoDc.bufferedAmount ? activeVideoDc.bufferedAmount() : 0;
-                if (bufAmt < 512 * 1024) {
-                    activeVideoDc.sendMessageBinary(frameBuf);
-                }
-            } catch (_) {}
-        } else if (activeControlDc && activeControlDc.isOpen && activeControlDc.isOpen()) {
-            try {
-                const bufAmt = activeControlDc.bufferedAmount ? activeControlDc.bufferedAmount() : 0;
-                if (bufAmt < 256 * 1024) {
-                    activeControlDc.sendMessageBinary(frameBuf);
-                }
-            } catch (_) {}
-        }
         broadcastBinaryToBrowsers(frameBuf);
+        return;
+    }
+
+    if (msg.type === 'pc_processes_native') {
+        const icons = loadAppIconsCache();
+        const aggregated = aggregateProcessList(msg.processes || [], icons);
+        processCountCache = (msg.processes || []).length;
+        if (pendingProcessCallbacks.length > 0) {
+            const cbs = pendingProcessCallbacks.splice(0);
+            cbs.forEach(cb => {
+                try { cb(aggregated); } catch (_) {}
+            });
+        } else {
+            broadcastToPhoneRemote({
+                type: 'pc_processes_list',
+                processes: aggregated
+            });
+        }
         return;
     }
 
@@ -874,9 +1008,10 @@ function startPcScreenStreaming(fps, w, h) {
 }
 
 function stopPcScreenStreaming(force = false) {
-    const hasActiveDataChannel = activeControlDc && activeControlDc.isOpen && activeControlDc.isOpen();
-    if (!force && hasActiveDataChannel) {
-        // Do not stop stream if WebRTC DataChannel is currently connected unless force=true
+    if (!isPcStreamingActive) return;
+    const hasActiveWs = activePhoneWs && activePhoneWs.readyState === WebSocket.OPEN;
+    if (!force && hasActiveWs) {
+        // Do not stop stream if Phone WebSocket is currently active unless force=true
         return;
     }
     console.log('[PC] Stopping PC desktop screen streaming.');
@@ -897,27 +1032,32 @@ function connectToPhone() {
         autoReconnectTimer = null;
     }
 
-    if (!phoneConfig.ip) {
+    if (!phoneConfig.ip || typeof phoneConfig.ip !== 'string' || phoneConfig.ip.trim() === '') {
         return;
     }
 
-    if (connectionState === 'CONNECTED' || connectionState === 'CONNECTING') {
+    if (connectionState === 'CONNECTED' || connectionState === 'CONNECTING' || activePhoneWs) {
+        return;
+    }
+
+    const cleanPhoneIp = phoneConfig.ip.replace(/^.*:/, '').trim();
+    if (!/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(cleanPhoneIp)) {
         return;
     }
 
     isExplicitlyDisconnected = false;
     connectionState = 'CONNECTING';
     broadcastToBrowsers({ type: 'status_change', state: connectionState });
-    console.log(`[PC] Initiating connection to Phone at ws://${phoneConfig.ip}:${phoneConfig.port}/ws...`);
+    console.log(`[PC] Probing Phone daemon at ws://${cleanPhoneIp}:${phoneConfig.port}/ws...`);
 
     try {
-        const phoneWsUrl = `ws://${phoneConfig.ip}:${phoneConfig.port}/ws?token=${phoneConfig.token}`;
+        const phoneWsUrl = `ws://${cleanPhoneIp}:${phoneConfig.port}/ws?token=${phoneConfig.token}`;
         phoneSocket = new WebSocket(phoneWsUrl, {
-            handshakeTimeout: 5000
+            handshakeTimeout: 3500
         });
 
         phoneSocket.on('open', () => {
-            console.log('[PC] Successfully connected to Phone daemon!');
+            console.log('[PC] Successfully connected to Phone daemon over LAN!');
             connectionState = 'CONNECTED';
             broadcastToBrowsers({ type: 'status_change', state: connectionState, phoneConfig });
 
@@ -959,17 +1099,19 @@ function connectToPhone() {
         });
 
         phoneSocket.on('close', (code, reason) => {
-            console.log(`[PC] Connection to Phone closed (${code} - ${reason})`);
+            if (connectionState === 'CONNECTING') {
+                console.log(`[PC] Direct dial to Phone closed (${code}${reason ? ' - ' + reason : ''}). Standing by for phone inbound connection...`);
+            }
             cleanupPhoneConnection();
         });
 
         phoneSocket.on('error', (err) => {
-            console.error(`[PC] Phone socket error:`, err.message);
+            console.warn(`[PC] Direct dial notice (${err.message}). Standing by for inbound connection...`);
             cleanupPhoneConnection();
         });
 
     } catch (error) {
-        console.error('[PC] Failed to dial Phone daemon:', error.message);
+        console.warn('[PC] Direct dial probe notice:', error.message);
         cleanupPhoneConnection();
     }
 }
@@ -990,6 +1132,9 @@ function disconnectFromPhone() {
 }
 
 function cleanupPhoneConnection() {
+    if (activeMkvWriter) {
+        stopServerRecording();
+    }
     if (taskbarSyncTimer) {
         clearInterval(taskbarSyncTimer);
         taskbarSyncTimer = null;
@@ -997,17 +1142,15 @@ function cleanupPhoneConnection() {
     stopPcScreenStreaming();
 
     phoneSocket = null;
-    connectionState = 'DISCONNECTED';
-    broadcastToBrowsers({ type: 'status_change', state: connectionState });
 
-    // Automatically retry connecting only if not explicitly disconnected and phoneConfig.ip is set
-    if (!isExplicitlyDisconnected && !autoReconnectTimer && phoneConfig.ip) {
-        autoReconnectTimer = setTimeout(() => {
-            autoReconnectTimer = null;
-            if (connectionState === 'DISCONNECTED' && !isExplicitlyDisconnected && phoneConfig.ip) {
-                connectToPhone();
-            }
-        }, 3000);
+    if (autoReconnectTimer) {
+        clearTimeout(autoReconnectTimer);
+        autoReconnectTimer = null;
+    }
+
+    if (!activePhoneWs || activePhoneWs.readyState !== WebSocket.OPEN) {
+        connectionState = 'DISCONNECTED';
+        broadcastToBrowsers({ type: 'status_change', state: connectionState });
     }
 }
 
@@ -1103,8 +1246,11 @@ function handlePhoneMessage(msg) {
         return;
     }
     if (action === 'pc_focus_window') {
-        if (winBridge && winBridge.stdin && winBridge.stdin.writable) {
+        if (msg.hwnd && winBridge && winBridge.stdin && winBridge.stdin.writable) {
             winBridge.stdin.write(`FOCUS_WINDOW ${msg.hwnd}\n`);
+        } else if (msg.pid) {
+            const pid = parseInt(msg.pid, 10);
+            child_process.exec(`powershell -NoProfile -Command "(New-Object -ComObject WScript.Shell).AppActivate(${pid})"`, () => {});
         }
         return;
     }
@@ -1119,6 +1265,8 @@ function handlePhoneMessage(msg) {
         console.log(`[PC] Launching application on PC: ${target}`);
         if (winBridge && winBridge.stdin && winBridge.stdin.writable) {
             winBridge.stdin.write(`LAUNCH_APP ${target}\n`);
+        } else if (target) {
+            child_process.exec(`start "" "${target}"`, { windowsHide: false });
         }
         return;
     }
@@ -1251,16 +1399,18 @@ function handlePhoneMessage(msg) {
         return;
     }
     if (action === 'app_closing' || action === 'session_close') {
-        console.log('[AnoLink] 📱 Phone app closed. Resetting connection state immediately.');
-        connectionState = 'DISCONNECTED';
-        activeControlDc = null;
-        activeVideoDc = null;
-        stopPcScreenStreaming(true);
-        if (activeWebRtcPeer) {
-            try { activeWebRtcPeer.close(); } catch (_) {}
-            activeWebRtcPeer = null;
+        console.log('[AnoLink] 📱 Phone app closed. Resetting connection state.');
+        if (activePhoneWs) {
+            try { activePhoneWs.close(); } catch (_) {}
+            activePhoneWs = null;
         }
-        setSignalingMode('STANDBY');
+        connectionState = 'DISCONNECTED';
+        stopPcScreenStreaming(true);
+        broadcastToBrowsers({
+            type: 'status_change',
+            state: connectionState,
+            phoneConfig
+        });
         return;
     }
     if (action === 'ping') {
@@ -1277,7 +1427,9 @@ function handlePhoneMessage(msg) {
         return;
     }
     if (action === 'exclusive_mode') {
-        isExclusiveControlActive = !!msg.active;
+        const nextState = !!msg.active;
+        if (isExclusiveControlActive === nextState) return;
+        isExclusiveControlActive = nextState;
         console.log(`[PC] Exclusive Control Mode toggled by phone: ${isExclusiveControlActive}`);
         if (isExclusiveControlActive) {
             sendToPhone({ action: 'pause_stream' });
@@ -1303,18 +1455,34 @@ function handlePhoneMessage(msg) {
             });
             break;
 
+        case 'screen_metrics':
+            if (msg.screenWidth) phoneScreenWidth = msg.screenWidth;
+            if (msg.screenHeight) phoneScreenHeight = msg.screenHeight;
+            broadcastToBrowsers({
+                type: 'screen_metrics',
+                screenWidth: phoneScreenWidth,
+                screenHeight: phoneScreenHeight
+            });
+            break;
+
         case 'skeleton_tree':
             currentSkeletonTree = msg.tree;
+            if (msg.screenWidth) phoneScreenWidth = msg.screenWidth;
+            if (msg.screenHeight) phoneScreenHeight = msg.screenHeight;
             broadcastToBrowsers({
                 type: 'skeleton_update',
                 tree: msg.tree,
-                screenWidth: msg.screenWidth,
-                screenHeight: msg.screenHeight
+                screenWidth: phoneScreenWidth,
+                screenHeight: phoneScreenHeight
             });
             break;
 
         case 'skeleton_error':
-            console.log('[PC] Skeleton Error from Phone:', msg.message);
+            if (lastSkeletonErrorMsg !== msg.message || Date.now() - lastSkeletonErrorLogTime > 30000) {
+                lastSkeletonErrorMsg = msg.message;
+                lastSkeletonErrorLogTime = Date.now();
+                console.log('[PC] Skeleton Notice from Phone:', msg.message);
+            }
             broadcastToBrowsers({
                 type: 'skeleton_error',
                 message: msg.message
@@ -1368,34 +1536,43 @@ function handlePhoneMessage(msg) {
     }
 }
 
+let lastSmsQueryTime = 0;
+
 // Browser connection handling
 wssBrowser.on('connection', (ws) => {
     console.log('[PC] Browser connected to local Web Controller');
     
-    // Auto-detect if direct WebRTC P2P DataChannel is active
-    const isWebRtcConnected = !!(activeControlDc && activeControlDc.isOpen && activeControlDc.isOpen());
-    const effectiveState = isWebRtcConnected ? 'CONNECTED' : connectionState;
-    const effectivePhoneConfig = isWebRtcConnected
-        ? { ...phoneConfig, ip: 'WebRTC P2P Direct', isWebRtc: true }
+    // Detect if phone remote is active via Cloudflare Tunnel or LAN
+    const isPhoneConnected = !!(activePhoneWs && activePhoneWs.readyState === WebSocket.OPEN);
+    const effectiveState = isPhoneConnected ? 'CONNECTED' : (activeProbeTimer ? 'CONNECTING' : 'DISCONNECTED');
+    const effectivePhoneConfig = isPhoneConnected
+        ? { ...phoneConfig, ip: phoneConfig.lanIp || 'Cloudflare Tunnel (WAN)', isTunnel: true }
         : phoneConfig;
 
     // Send initial state snapshot
     ws.send(JSON.stringify({
         type: 'initial_state',
         state: effectiveState,
+        rtt: lastPhoneRttMs,
         phoneConfig: effectivePhoneConfig,
         telemetry: telemetryCache,
         lastTelemetryTime,
         mode: currentMode,
         quality: streamQuality,
         skeletonTree: currentSkeletonTree,
-        smsHistory: smsHistoryCache
+        smsHistory: smsHistoryCache,
+        screenWidth: phoneScreenWidth,
+        screenHeight: phoneScreenHeight
     }));
 
-    if (isWebRtcConnected) {
+    if (isPhoneConnected) {
         requestTelemetry();
-        sendToPhone({ action: 'get_sms' });
+        if (Date.now() - lastSmsQueryTime > 20000) {
+            lastSmsQueryTime = Date.now();
+            sendToPhone({ action: 'get_sms' });
+        }
         sendToPhone({ action: 'get_skeleton_tree' });
+        sendToPhone({ action: 'get_screen_metrics' });
     }
 
     ws.on('message', (raw) => {
@@ -1427,8 +1604,28 @@ function handleBrowserMessage(msg) {
             disconnectFromPhone();
             break;
 
+        case 'wake_phone':
+            triggerWakePhoneBeacons();
+            break;
+
         case 'refresh_telemetry':
             requestTelemetry();
+            break;
+
+        case 'start_recording':
+            startServerRecording();
+            break;
+
+        case 'stop_recording':
+            stopServerRecording();
+            break;
+
+        case 'get_recording_status':
+            broadcastToBrowsers({
+                type: 'recording_status',
+                isRecording: !!activeMkvWriter,
+                ...(activeMkvWriter ? activeMkvWriter.getStats() : {})
+            });
             break;
 
         case 'set_mode':
@@ -1471,6 +1668,9 @@ function handleBrowserMessage(msg) {
         case 'speaker_audio':
         case 'set_speaker_volume':
         case 'play_chime':
+        case 'get_location':
+        case 'ring_phone':
+        case 'stop_ring_phone':
             if (isExclusiveControlActive) {
                 console.log('[PC] Phone action blocked: Exclusive Mode active on Phone.');
                 broadcastToBrowsers({
@@ -1516,19 +1716,19 @@ app.post('/api/config', (req, res) => {
     }
 });
 
-// WebRTC & Persistent Token Info
-app.get('/api/webrtc-info', (req, res) => {
+// Quick Tunnel & Pairing Token Info (Supports Cloudflare, Tunnel, and legacy WebRTC paths)
+app.get(['/api/cloudflare-info', '/api/tunnel-info', '/api/webrtc-info'], (req, res) => {
     res.json({
         pairingPin: phoneConfig.pairingPin,
         deviceToken: phoneConfig.deviceToken,
         fps: 30,
         pcName: os.hostname(),
-        isWebRtcReady: !!nodeDataChannel,
-        isWebRtcConnected: !!(activeWebRtcPeer && activeControlDc && activeControlDc.isOpen && activeControlDc.isOpen())
+        tunnelUrl: activeTunnelUrl,
+        isConnected: !!(activePhoneWs && activePhoneWs.readyState === WebSocket.OPEN)
     });
 });
 
-app.post('/api/webrtc-reset-token', (req, res) => {
+app.post(['/api/tunnel-reset-token', '/api/cloudflare-reset-token', '/api/webrtc-reset-token'], (req, res) => {
     phoneConfig.deviceToken = 'ano_tok_' + crypto.randomBytes(16).toString('hex');
     phoneConfig.pairingPin = Math.floor(100000 + Math.random() * 900000).toString();
     saveConfig();
@@ -1545,12 +1745,27 @@ app.post('/api/webrtc-reset-token', (req, res) => {
     });
 });
 
+// Quick APK download endpoint for easy installation on phone
+app.get(['/download/app.apk', '/app-debug.apk'], (req, res) => {
+    const apkPath = path.resolve(__dirname, '..', 'android-app', 'app', 'build', 'outputs', 'apk', 'debug', 'app-debug.apk');
+    if (fs.existsSync(apkPath)) {
+        res.download(apkPath, 'ano-link-debug.apk');
+    } else {
+        res.status(404).send('APK not found. Please build first.');
+    }
+});
+
 // Proxy file download from phone to browser with range support
 app.get('/api/download', (req, res) => {
     const filePath = req.query.path;
     const fileName = req.query.name || path.basename(filePath) || 'download';
     if (!filePath) {
         return res.status(400).send('Missing path parameter');
+    }
+
+    const isWan = !phoneConfig.ip || phoneConfig.ip === 'Cloudflare Tunnel (WAN)' || phoneConfig.ip === '127.0.0.1' || !/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(phoneConfig.ip);
+    if (isWan) {
+        return res.status(501).send('Phone file download via Web Dashboard requires local Wi-Fi LAN connection. (Phone is currently connected via Cloudflare WAN Tunnel)');
     }
 
     const phoneUrl = `http://${phoneConfig.ip}:${phoneConfig.port}/api/files/download?path=${encodeURIComponent(filePath)}`;
@@ -1583,12 +1798,24 @@ function getWindowsDrives() {
         const drivePath = `${letter}:\\`;
         try {
             if (fs.existsSync(drivePath)) {
+                let totalBytes = 0;
+                let freeBytes = 0;
+                try {
+                    if (typeof fs.statfsSync === 'function') {
+                        const stat = fs.statfsSync(drivePath);
+                        totalBytes = stat.blocks * stat.bsize;
+                        freeBytes = stat.bfree * stat.bsize;
+                    }
+                } catch (_) {}
+
                 drives.push({
                     name: `Local Disk (${letter}:)`,
                     path: drivePath,
                     isDirectory: true,
                     isDrive: true,
-                    size: 0,
+                    size: totalBytes,
+                    freeBytes: freeBytes,
+                    totalBytes: totalBytes,
                     mtime: Date.now(),
                     ext: ''
                 });
@@ -1599,7 +1826,7 @@ function getWindowsDrives() {
 }
 
 // ZArchiver-Style PC File Explorer Endpoint
-app.get('/api/pc/files', (req, res) => {
+app.get('/api/pc/files', requireDeviceAuth, (req, res) => {
     let reqPath = req.query.path;
     if (!reqPath || reqPath === 'root' || reqPath === '/' || reqPath === '') {
         return res.json({
@@ -1672,7 +1899,7 @@ app.get('/api/pc/files', (req, res) => {
 });
 
 // PC File Download Endpoint with HTTP Range (206) support
-app.get(['/api/pc/download', '/api/pc/files/download'], (req, res) => {
+app.get(['/api/pc/download', '/api/pc/files/download'], requireDeviceAuth, (req, res) => {
     const filePath = req.query.path;
     if (!filePath || !fs.existsSync(filePath)) {
         return res.status(404).send('File not found');
@@ -1766,9 +1993,9 @@ async function handleP2PFileDownload(msg) {
                 break;
             }
 
-            // Flow control: If DataChannel buffer is filling up, throttle
-            if (activeControlDc && activeControlDc.bufferedAmount) {
-                while (activeControlDc.bufferedAmount() > 256 * 1024) {
+            // Flow control: If WebSocket buffer is filling up, throttle
+            if (activePhoneWs && activePhoneWs.bufferedAmount > 256 * 1024) {
+                while (activePhoneWs && activePhoneWs.bufferedAmount > 256 * 1024) {
                     await new Promise(r => setTimeout(r, 15));
                     if (activeFileDownloads.get(downloadId) === false) break;
                 }
@@ -1819,7 +2046,7 @@ async function handleP2PFileDownload(msg) {
 }
 
 // Launch / Open file directly on Windows PC Desktop
-app.post('/api/pc/open', (req, res) => {
+app.post('/api/pc/open', requireDeviceAuth, (req, res) => {
     const filePath = req.query.path || (req.body && req.body.path);
     if (!filePath || !fs.existsSync(filePath)) {
         return res.status(404).json({ error: 'File not found' });
@@ -1833,7 +2060,7 @@ app.post('/api/pc/open', (req, res) => {
 });
 
 // Get installed Start Menu PC apps with high-res icons
-app.get('/api/pc/apps', (req, res) => {
+app.get('/api/pc/apps', requireDeviceAuth, (req, res) => {
     const cachedPath = path.join(__dirname, '..', 'app_icons', 'installed_apps.json');
     if (fs.existsSync(cachedPath)) {
         try {
@@ -1995,7 +2222,7 @@ function getHardwareTelemetrySnapshot() {
 }
 
 // REST Hardware API
-app.get('/api/pc/hardware', (req, res) => {
+app.get('/api/pc/hardware', requireDeviceAuth, (req, res) => {
     res.json(getHardwareTelemetrySnapshot());
 });
 
@@ -2189,48 +2416,52 @@ function aggregateProcessList(rawProcesses, icons) {
     return aggregated.slice(0, 100);
 }
 
-function getRunningProcessesSnapshot(callback) {
+function fallbackTasklist(callback) {
     const icons = loadAppIconsCache();
-    const psCmd = `Get-Process | Where-Object { $_.Id -gt 4 } | Select-Object Id, ProcessName, MainWindowTitle, WorkingSet64, CPU | ConvertTo-Json -Compress`;
-    
-    child_process.exec(`powershell -NoProfile -Command "${psCmd}"`, { maxBuffer: 8 * 1024 * 1024 }, (err, stdout) => {
-        if (!err && stdout) {
-            try {
-                const raw = JSON.parse(stdout);
-                const arr = Array.isArray(raw) ? raw : [raw];
-                const list = aggregateProcessList(arr, icons);
-                return callback(list);
-            } catch (_) {}
-        }
-
-        // Fallback: tasklist with aggregation
-        child_process.exec('tasklist /FO CSV /NH', (tErr, tStdout) => {
-            if (tErr || !tStdout) return callback([]);
-            const lines = tStdout.trim().split('\n');
-            const rawList = [];
-            for (const line of lines) {
-                const parts = line.split('","').map(s => s.replace(/"/g, '').trim());
-                if (parts.length >= 5) {
-                    const exe = parts[0];
-                    const pid = parseInt(parts[1], 10);
-                    const memStr = parts[4].replace(/[^0-9]/g, '');
-                    const memBytes = (parseInt(memStr, 10) || 0) * 1024;
-                    const procName = exe.replace(/\.exe$/i, '');
-                    if (pid > 4) {
-                        rawList.push({
-                            Id: pid,
-                            ProcessName: procName,
-                            MainWindowTitle: '',
-                            WorkingSet64: memBytes,
-                            CPU: null
-                        });
-                    }
+    child_process.exec('tasklist /FO CSV /NH', (tErr, tStdout) => {
+        if (tErr || !tStdout) return callback([]);
+        const lines = tStdout.trim().split('\n');
+        const rawList = [];
+        for (const line of lines) {
+            const parts = line.split('","').map(s => s.replace(/"/g, '').trim());
+            if (parts.length >= 5) {
+                const exe = parts[0];
+                const pid = parseInt(parts[1], 10);
+                const memStr = parts[4].replace(/[^0-9]/g, '');
+                const memBytes = (parseInt(memStr, 10) || 0) * 1024;
+                const procName = exe.replace(/\.exe$/i, '');
+                if (pid > 4) {
+                    rawList.push({
+                        Id: pid,
+                        ProcessName: procName,
+                        MainWindowTitle: '',
+                        WorkingSet64: memBytes,
+                        CPU: null
+                    });
                 }
             }
-            const list = aggregateProcessList(rawList, icons);
-            callback(list);
-        });
+        }
+        const list = aggregateProcessList(rawList, icons);
+        callback(list);
     });
+}
+
+function getRunningProcessesSnapshot(callback) {
+    if (winBridge && winBridge.stdin && winBridge.stdin.writable) {
+        pendingProcessCallbacks.push(callback);
+        winBridge.stdin.write('GET_PROCESSES\n');
+
+        // Safeguard timeout: 700ms fallback to tasklist if bridge doesn't respond
+        setTimeout(() => {
+            const idx = pendingProcessCallbacks.indexOf(callback);
+            if (idx !== -1) {
+                pendingProcessCallbacks.splice(idx, 1);
+                fallbackTasklist(callback);
+            }
+        }, 700);
+        return;
+    }
+    fallbackTasklist(callback);
 }
 
 const PROTECTED_PROCESSES = ['system', 'csrss.exe', 'winlogon.exe', 'services.exe', 'lsass.exe', 'node.exe', 'anolinkwinbridge.exe'];
@@ -2260,13 +2491,13 @@ function killProcessSafely(pid, exe, callback) {
 }
 
 // REST Process APIs
-app.get('/api/pc/processes', (req, res) => {
+app.get('/api/pc/processes', requireDeviceAuth, (req, res) => {
     getRunningProcessesSnapshot((procs) => {
         res.json({ type: 'pc_processes_list', processes: procs });
     });
 });
 
-app.post('/api/pc/kill', (req, res) => {
+app.post('/api/pc/kill', requireDeviceAuth, (req, res) => {
     const pid = parseInt(req.body.pid, 10);
     killProcessSafely(pid, req.body.exe, (result) => {
         res.json(result);
@@ -2275,7 +2506,7 @@ app.post('/api/pc/kill', (req, res) => {
 
 // Periodic 1-second pulse to connected phone remotes
 setInterval(() => {
-    if (activeControlDc && activeControlDc.isOpen && activeControlDc.isOpen()) {
+    if (activePhoneWs && activePhoneWs.readyState === WebSocket.OPEN) {
         const stats = getHardwareTelemetrySnapshot();
         broadcastToPhoneRemote({
             type: 'pc_hardware_stats',
@@ -2309,7 +2540,7 @@ function getNetworkIps() {
 
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`=======================================================`);
-    console.log(`🚀 Ano-Link Dual-Engine Controller Active!`);
+    console.log(`🚀 Ano-Link Cloudflare Controller Active!`);
     console.log(`🔑 1-Time Pairing PIN:  ${phoneConfig.pairingPin}`);
     console.log(`🔒 Device Token:        ${phoneConfig.deviceToken.substring(0, 16)}... (Auto-Reconnect Enabled)`);
     console.log(`📺 Desktop Framerate:   30 FPS (Hardware Optimized)`);
@@ -2326,7 +2557,94 @@ server.listen(PORT, '0.0.0.0', () => {
 
     // Initialize Cloudflare Quick Tunnel (WAN Relay)
     initCloudflareTunnel();
+
+    // Start Local LAN Wi-Fi UDP Beacon (Fast-Path Auto-Connect)
+    startUdpBeacon();
+
+    // Start Tunnel Health Watchdog
+    startTunnelHealthWatchdog();
 });
+
+let tunnelHealthWatchdogTimer = null;
+let isRestartingTunnel = false;
+let watchdogFailures = 0;
+let tunnelStartTime = 0;
+
+function restartCloudflareTunnel() {
+    if (isRestartingTunnel) return;
+    if (connectionState === 'CONNECTED' || (activePhoneWs && activePhoneWs.readyState === WebSocket.OPEN)) {
+        console.log('[Cloudflare Tunnel] Phone is actively connected; skipping tunnel restart.');
+        watchdogFailures = 0;
+        return;
+    }
+    isRestartingTunnel = true;
+    watchdogFailures = 0;
+    console.log('[Cloudflare Tunnel] 🔄 Restarting Cloudflare Quick Tunnel to recover connection...');
+    activeTunnelUrl = null;
+    if (cloudflaredProc) {
+        try { cloudflaredProc.kill(); } catch (_) {}
+        cloudflaredProc = null;
+    }
+    setTimeout(() => {
+        isRestartingTunnel = false;
+        initCloudflareTunnel();
+    }, 2000);
+}
+
+function startTunnelHealthWatchdog() {
+    if (tunnelHealthWatchdogTimer) return;
+    tunnelHealthWatchdogTimer = setInterval(() => {
+        if (!activeTunnelUrl || connectionState === 'CONNECTED' || (activePhoneWs && activePhoneWs.readyState === WebSocket.OPEN) || isRestartingTunnel) {
+            watchdogFailures = 0;
+            return;
+        }
+        // Allow at least 30s for initial Cloudflare DNS propagation
+        if (Date.now() - tunnelStartTime < 30000) {
+            return;
+        }
+        try {
+            const parsed = new URL(activeTunnelUrl);
+            const req = https.request({
+                hostname: parsed.hostname,
+                port: 443,
+                path: '/api/pc/tunnel',
+                method: 'GET',
+                family: 4,
+                timeout: 15000
+            }, (res) => {
+                if (res.statusCode >= 500) {
+                    watchdogFailures++;
+                    console.warn(`[Cloudflare Tunnel] ⚠️ Liveness probe returned HTTP ${res.statusCode} (${watchdogFailures}/3).`);
+                    if (watchdogFailures >= 3 && connectionState !== 'CONNECTED' && !activePhoneWs) {
+                        restartCloudflareTunnel();
+                    }
+                } else {
+                    watchdogFailures = 0;
+                }
+            });
+            req.on('timeout', () => {
+                try { req.destroy(); } catch (_) {}
+                if (connectionState === 'CONNECTED' || (activePhoneWs && activePhoneWs.readyState === WebSocket.OPEN) || isRestartingTunnel) return;
+                watchdogFailures++;
+                console.warn(`[Cloudflare Tunnel] ⚠️ Liveness probe timed out (${watchdogFailures}/3).`);
+                if (watchdogFailures >= 3 && connectionState !== 'CONNECTED' && !activePhoneWs) {
+                    restartCloudflareTunnel();
+                }
+            });
+            req.on('error', (err) => {
+                if (connectionState === 'CONNECTED' || (activePhoneWs && activePhoneWs.readyState === WebSocket.OPEN) || isRestartingTunnel) return;
+                watchdogFailures++;
+                console.warn(`[Cloudflare Tunnel] ⚠️ Liveness probe notice (${err.message}) (${watchdogFailures}/3).`);
+                if (watchdogFailures >= 3 && connectionState !== 'CONNECTED' && !activePhoneWs) {
+                    restartCloudflareTunnel();
+                }
+            });
+            req.end();
+        } catch (e) {
+            console.warn('[Cloudflare Tunnel] Watchdog parse error:', e.message);
+        }
+    }, 30000);
+}
 
 function initCloudflareTunnel() {
     if (!fs.existsSync(cloudflaredExePath)) {
@@ -2342,22 +2660,24 @@ function initCloudflareTunnel() {
 
         const parseTunnelOutput = (data) => {
             const str = data.toString();
-            const match = str.match(/https:\/\/[a-zA-Z0-9-]+\.trycloudflare\.com/i);
+            // Ignore informational lines containing api.trycloudflare.com
+            const match = str.match(/https:\/\/(?!api\.)[a-zA-Z0-9-]+\.trycloudflare\.com/i);
             if (match && !activeTunnelUrl) {
                 activeTunnelUrl = match[0];
+                tunnelStartTime = Date.now();
+                watchdogFailures = 0;
                 console.log(`=======================================================`);
                 console.log(`🌐 CLOUDFLARE WAN TUNNEL READY!`);
                 console.log(`🔗 Public URL: ${activeTunnelUrl}`);
                 console.log(`📱 Phone can connect from any network using PIN: ${phoneConfig.pairingPin}`);
                 console.log(`=======================================================`);
 
+                try {
+                    fs.writeFileSync(path.join(__dirname, 'tunnel_url.txt'), activeTunnelUrl, 'utf8');
+                } catch (_) {}
+
                 // Broadcast tunnel URL to Cloudflare Worker broker under pairing PIN
-                postSignalMessage('phone', {
-                    type: 'tunnel_ready',
-                    url: activeTunnelUrl,
-                    pairingPin: phoneConfig.pairingPin,
-                    deviceToken: phoneConfig.deviceToken
-                });
+                publishTunnelToBroker(true);
             }
         };
 
@@ -2368,6 +2688,10 @@ function initCloudflareTunnel() {
             console.log(`[Cloudflare Tunnel] Process exited (code ${code}).`);
             cloudflaredProc = null;
             activeTunnelUrl = null;
+            if (!isRestartingTunnel) {
+                console.log(`[Cloudflare Tunnel] Auto-restarting in 3s...`);
+                setTimeout(initCloudflareTunnel, 3000);
+            }
         });
     } catch (err) {
         console.error('[Cloudflare Tunnel] Failed to start cloudflared:', err.message);
@@ -2376,24 +2700,17 @@ function initCloudflareTunnel() {
 
 function gracefulShutdown() {
     console.log('[PC] Gracefully shutting down Ano-Link Server...');
+    stopUdpBeacon();
+    if (tunnelHealthWatchdogTimer) {
+        clearInterval(tunnelHealthWatchdogTimer);
+        tunnelHealthWatchdogTimer = null;
+    }
     try {
         broadcastToPhoneRemote({ type: 'session_close', reason: 'server_shutdown' });
     } catch (_) {}
     if (activePhoneWs) {
         try { activePhoneWs.close(); } catch (_) {}
         activePhoneWs = null;
-    }
-    if (activeControlDc) {
-        try { activeControlDc.close(); } catch (_) {}
-        activeControlDc = null;
-    }
-    if (activeVideoDc) {
-        try { activeVideoDc.close(); } catch (_) {}
-        activeVideoDc = null;
-    }
-    if (activeWebRtcPeer) {
-        try { activeWebRtcPeer.close(); } catch (_) {}
-        activeWebRtcPeer = null;
     }
     if (cloudflaredProc) {
         try { cloudflaredProc.kill(); } catch (_) {}

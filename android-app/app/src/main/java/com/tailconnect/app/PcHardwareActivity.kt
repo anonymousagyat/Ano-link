@@ -20,6 +20,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import kotlinx.coroutines.*
@@ -234,28 +235,16 @@ class PcHardwareActivity : AppCompatActivity(), PcRemoteEventListener {
         llProcEmptyState = findViewById(R.id.llProcEmptyState)
         particleOverlayView = findViewById(R.id.particleOverlayView)
 
-        processAdapter = PcProcessAdapter(displayedProcesses) { item, cardView, position ->
-            performHaptic()
-            particleOverlayView.startDissolve(cardView) {
-                allProcesses.removeAll { it.pid == item.pid }
-                applyProcessFilters()
+        processAdapter = PcProcessAdapter(
+            displayedProcesses,
+            onItemClick = { item, cardView, position ->
+                performHaptic()
+                showProcessInspectorDialog(item, cardView, position)
+            },
+            onEndTaskClick = { item, cardView, position ->
+                terminateProcess(item, cardView)
             }
-
-            // 2. Dispatch kill command to PC over WebRTC
-            val killMsg = JsonObject().apply {
-                addProperty("action", "pc_kill_process")
-                addProperty("pid", item.pid)
-                addProperty("exe", item.exe)
-            }
-            PcRemoteClient.send(killMsg.toString())
-
-            // 3. User feedback toast
-            Toast.makeText(
-                this@PcHardwareActivity,
-                "Terminated ${item.exe} (PID ${item.pid}) • Freed ${item.mem.toInt()} MB",
-                Toast.LENGTH_SHORT
-            ).show()
-        }
+        )
         rvProcesses.layoutManager = LinearLayoutManager(this)
         rvProcesses.adapter = processAdapter
 
@@ -509,14 +498,22 @@ class PcHardwareActivity : AppCompatActivity(), PcRemoteEventListener {
     }
 
     private fun fetchProcessesRest() {
+        val tunnelUrl = PcRemoteClient.getTunnelUrl().trimEnd('/')
+        if (tunnelUrl.isBlank()) return
         activityScope.launch(Dispatchers.IO) {
             try {
-                val host = PcRemoteClient.getPcHost(this@PcHardwareActivity)
-                val url = URL("http://$host:8080/api/pc/processes")
+                val httpBase = if (tunnelUrl.startsWith("ws://", true)) tunnelUrl.replace("ws://", "http://", true)
+                               else if (tunnelUrl.startsWith("wss://", true)) tunnelUrl.replace("wss://", "https://", true)
+                               else tunnelUrl
+                val url = URL("$httpBase/api/pc/processes")
                 val conn = url.openConnection() as HttpURLConnection
                 conn.connectTimeout = 3000
-                conn.readTimeout = 3000
+                conn.readTimeout = 4000
                 conn.requestMethod = "GET"
+                val token = PcRemoteClient.getDeviceToken(this@PcHardwareActivity)
+                if (token.isNotBlank()) {
+                    conn.setRequestProperty("X-Device-Token", token)
+                }
 
                 if (conn.responseCode == 200) {
                     val reader = BufferedReader(InputStreamReader(conn.inputStream))
@@ -572,14 +569,22 @@ class PcHardwareActivity : AppCompatActivity(), PcRemoteEventListener {
     }
 
     private fun fetchInitialRestTelemetry() {
+        val tunnelUrl = PcRemoteClient.getTunnelUrl().trimEnd('/')
+        if (tunnelUrl.isBlank()) return
         activityScope.launch(Dispatchers.IO) {
             try {
-                val host = PcRemoteClient.getPcHost(this@PcHardwareActivity)
-                val url = URL("http://$host:8080/api/pc/hardware")
+                val httpBase = if (tunnelUrl.startsWith("ws://", true)) tunnelUrl.replace("ws://", "http://", true)
+                               else if (tunnelUrl.startsWith("wss://", true)) tunnelUrl.replace("wss://", "https://", true)
+                               else tunnelUrl
+                val url = URL("$httpBase/api/pc/hardware")
                 val conn = url.openConnection() as HttpURLConnection
                 conn.connectTimeout = 3000
-                conn.readTimeout = 3000
+                conn.readTimeout = 4000
                 conn.requestMethod = "GET"
+                val token = PcRemoteClient.getDeviceToken(this@PcHardwareActivity)
+                if (token.isNotBlank()) {
+                    conn.setRequestProperty("X-Device-Token", token)
+                }
 
                 if (conn.responseCode == 200) {
                     val reader = BufferedReader(InputStreamReader(conn.inputStream))
@@ -821,6 +826,80 @@ class PcHardwareActivity : AppCompatActivity(), PcRemoteEventListener {
             }
             else -> {}
         }
+    }
+
+    private fun terminateProcess(item: PcProcessItem, cardView: View) {
+        performHaptic()
+        particleOverlayView.startDissolve(cardView) {
+            allProcesses.removeAll { it.pid == item.pid || (it.exe.isNotBlank() && it.exe.equals(item.exe, ignoreCase = true)) }
+            applyProcessFilters()
+        }
+
+        val killMsg = JsonObject().apply {
+            addProperty("action", "pc_kill_process")
+            addProperty("pid", item.pid)
+            addProperty("exe", item.exe)
+        }
+        PcRemoteClient.send(killMsg.toString())
+
+        Toast.makeText(
+            this@PcHardwareActivity,
+            "Terminated ${item.name} • Freed ${item.mem.toInt()} MB",
+            Toast.LENGTH_SHORT
+        ).show()
+    }
+
+    private fun showProcessInspectorDialog(item: PcProcessItem, cardView: View, position: Int) {
+        val dialog = BottomSheetDialog(this)
+        val view = layoutInflater.inflate(R.layout.dialog_process_inspector, null)
+        dialog.setContentView(view)
+
+        val ivIcon = view.findViewById<ImageView>(R.id.ivInspectorIcon)
+        val tvTitle = view.findViewById<TextView>(R.id.tvInspectorTitle)
+        val tvSubtitle = view.findViewById<TextView>(R.id.tvInspectorSubtitle)
+        val tvCpu = view.findViewById<TextView>(R.id.tvInspectorCpu)
+        val tvMem = view.findViewById<TextView>(R.id.tvInspectorMem)
+        val tvType = view.findViewById<TextView>(R.id.tvInspectorType)
+        val btnFocus = view.findViewById<View>(R.id.btnInspectorFocus)
+        val btnEndTask = view.findViewById<View>(R.id.btnInspectorEndTask)
+
+        tvTitle.text = item.name
+        val exeDisplay = if (item.exe.isNotBlank()) item.exe else "${item.name}.exe"
+        tvSubtitle.text = "$exeDisplay • PID ${item.pid}"
+
+        tvCpu.text = String.format("%.1f%%", item.cpu)
+        tvMem.text = if (item.mem >= 1000f) String.format("%.1f GB", item.mem / 1024f) else String.format("%.0f MB", item.mem)
+
+        val isApp = item.type.equals("app", true)
+        tvType.text = if (isApp) "USER APP" else "BACKGROUND"
+        tvType.setTextColor(if (isApp) Color.parseColor("#10B981") else Color.parseColor("#94A3B8"))
+
+        val iconKey = item.exe.lowercase()
+        val bmp = item.iconBitmap ?: PcProcessAdapter.iconCache.get(iconKey)
+        if (bmp != null) {
+            ivIcon.setImageBitmap(bmp)
+        } else {
+            ivIcon.setImageResource(PcProcessAdapter.getVectorFallback(iconKey))
+        }
+
+        btnFocus.setOnClickListener {
+            dialog.dismiss()
+            performHaptic()
+            val msg = JsonObject().apply {
+                addProperty("action", "pc_focus_window")
+                addProperty("pid", item.pid)
+                addProperty("exe", item.exe)
+            }
+            PcRemoteClient.send(msg.toString())
+            Toast.makeText(this@PcHardwareActivity, "Focusing ${item.name}...", Toast.LENGTH_SHORT).show()
+        }
+
+        btnEndTask.setOnClickListener {
+            dialog.dismiss()
+            terminateProcess(item, cardView)
+        }
+
+        dialog.show()
     }
 
     private fun performHaptic() {

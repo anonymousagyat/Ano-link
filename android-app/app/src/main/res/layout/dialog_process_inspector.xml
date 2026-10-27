@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_sheet_rounded"
+    android:paddingHorizontal="20dp"
+    android:paddingTop="12dp"
+    android:paddingBottom="24dp">
+
+    <!-- Top Drag Handle Pill -->
+    <View
+        android:layout_width="40dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center_horizontal"
+        android:background="@drawable/bg_bottom_sheet_drag_handle"
+        android:layout_marginBottom="16dp" />
+
+    <!-- Process Header: Icon + Title + Exe/PID -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="16dp">
+
+        <FrameLayout
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            android:background="@drawable/bg_hud_pill"
+            android:padding="6dp">
+
+            <ImageView
+                android:id="@+id/ivInspectorIcon"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_proc_default_app"
+                android:contentDescription="Process Icon" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:layout_marginStart="14dp">
+
+            <TextView
+                android:id="@+id/tvInspectorTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Process Name"
+                android:textColor="#F8FAFC"
+                android:textSize="17sp"
+                android:textStyle="bold"
+                android:ellipsize="end"
+                android:maxLines="1" />
+
+            <TextView
+                android:id="@+id/tvInspectorSubtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="process.exe • PID 1234 • 1 Instance"
+                android:textColor="#94A3B8"
+                android:textSize="12sp"
+                android:fontFamily="monospace"
+                android:layout_marginTop="2dp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Telemetry Cards Grid (CPU, RAM, TYPE) -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="20dp">
+
+        <!-- CPU Pill Card -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:background="@drawable/bg_hardware_tile"
+            android:padding="12dp"
+            android:layout_marginEnd="6dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="CPU LOAD"
+                android:textColor="#F59E0B"
+                android:textSize="9.5sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.08" />
+
+            <TextView
+                android:id="@+id/tvInspectorCpu"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0.0%"
+                android:textColor="#F8FAFC"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:fontFamily="monospace"
+                android:layout_marginTop="4dp" />
+        </LinearLayout>
+
+        <!-- RAM Pill Card -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:background="@drawable/bg_hardware_tile"
+            android:padding="12dp"
+            android:layout_marginHorizontal="3dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="MEMORY"
+                android:textColor="#C4B5FD"
+                android:textSize="9.5sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.08" />
+
+            <TextView
+                android:id="@+id/tvInspectorMem"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0 MB"
+                android:textColor="#F8FAFC"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:fontFamily="monospace"
+                android:layout_marginTop="4dp" />
+        </LinearLayout>
+
+        <!-- TYPE Pill Card -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:background="@drawable/bg_hardware_tile"
+            android:padding="12dp"
+            android:layout_marginStart="6dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="CATEGORY"
+                android:textColor="#94A3B8"
+                android:textSize="9.5sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.08" />
+
+            <TextView
+                android:id="@+id/tvInspectorType"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="APP"
+                android:textColor="#10B981"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:fontFamily="monospace"
+                android:layout_marginTop="4dp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Action Buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- Bring to Front / Focus Window -->
+        <LinearLayout
+            android:id="@+id/btnInspectorFocus"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:background="@drawable/bg_rail_tile_active_amethyst"
+            android:clickable="true"
+            android:focusable="true"
+            android:layout_marginBottom="10dp">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_window_stack"
+                app:tint="#C084FC"
+                android:contentDescription="Focus Window" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="BRING WINDOW TO FRONT"
+                android:textColor="#C084FC"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.06"
+                android:layout_marginStart="10dp" />
+        </LinearLayout>
+
+        <!-- Terminate / End Task -->
+        <LinearLayout
+            android:id="@+id/btnInspectorEndTask"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:background="@drawable/bg_rail_tile_power"
+            android:clickable="true"
+            android:focusable="true">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_power"
+                app:tint="#F43F5E"
+                android:contentDescription="End Task" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="END TASK (TERMINATE)"
+                android:textColor="#F43F5E"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.06"
+                android:layout_marginStart="10dp" />
+        </LinearLayout>
+    </LinearLayout>
+
+</LinearLayout>

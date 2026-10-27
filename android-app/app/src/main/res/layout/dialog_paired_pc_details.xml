@@ -126,12 +126,43 @@
                 android:textColor="#94A3B8" />
 
             <TextView
+                android:id="@+id/tvDetailsProtocol"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Pure WebRTC UDP Direct"
+                android:text="Cloudflare Quick Tunnel (WSS)"
                 android:textSize="12sp"
                 android:textStyle="bold"
                 android:textColor="#FFFFFF" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#152033"
+            android:layout_marginVertical="12dp" />
+
+        <!-- Cloudflare Relay URL Row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Cloudflare Relay"
+                android:textSize="12sp"
+                android:textColor="#94A3B8" />
+
+            <TextView
+                android:id="@+id/tvDetailsTunnelUrl"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="*.trycloudflare.com"
+                android:textSize="11.5sp"
+                android:fontFamily="monospace"
+                android:textColor="#C4B5FD" />
         </LinearLayout>
 
         <View

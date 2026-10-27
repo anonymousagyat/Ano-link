@@ -150,18 +150,19 @@ class HardwareGraphView @JvmOverloads constructor(
             canvas.drawLine(x, 0f, x, h, gridPaint)
         }
 
-        // Build line & fill paths
+        // Build smooth cubic bezier line & fill paths
         linePath.reset()
         fillPath.reset()
 
         val stepX = w / (HISTORY_POINTS - 1)
         var lastX = 0f
         var lastY = h
+        var prevX = 0f
+        var prevY = h
 
         for (i in 0 until HISTORY_POINTS) {
             val x = i * stepX
             val ratio = (dataPoints[i] / maxVal).coerceIn(0f, 1f)
-            // Leave a small 4dp padding from top/bottom
             val pad = 4f * resources.displayMetrics.density
             val y = (h - pad) - ratio * (h - pad * 2f)
 
@@ -170,9 +171,13 @@ class HardwareGraphView @JvmOverloads constructor(
                 fillPath.moveTo(x, h)
                 fillPath.lineTo(x, y)
             } else {
-                linePath.lineTo(x, y)
-                fillPath.lineTo(x, y)
+                val midX = (prevX + x) / 2f
+                linePath.cubicTo(midX, prevY, midX, y, x, y)
+                fillPath.cubicTo(midX, prevY, midX, y, x, y)
             }
+
+            prevX = x
+            prevY = y
 
             if (i == HISTORY_POINTS - 1) {
                 lastX = x
